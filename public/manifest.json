@@ -1,0 +1,21 @@
+{
+  "name": "Hot Dog do Vini",
+  "short_name": "HotDog Vini",
+  "description": "Pastéis artesanais em Taquara/RS. Peça pelo iFood ou Anota Aí.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EA1D2C",
+  "theme_color": "#EA1D2C",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/favicon.ico",         "sizes": "48x48",   "type": "image/x-icon" },
+    { "src": "/icon-192.png",        "sizes": "192x192", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icon-512.png",        "sizes": "512x512", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/apple-touch-icon.png","sizes": "180x180", "type": "image/png" }
+  ],
+  "shortcuts": [
+    { "name": "Pedir no iFood",    "url": "https://www.ifood.com.br/delivery/taquara-rs/hot-dog-do-vini-recreio" },
+    { "name": "Pedir pelo Anota Aí","url": "https://pedido.anota.ai/loja/marcos-vinicius-dresbach-do-amaral-ltda?f=msa" }
+  ],
+  "categories": ["food","shopping"]
+}
