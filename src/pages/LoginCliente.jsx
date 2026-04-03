@@ -61,7 +61,14 @@ function LoginCliente() {
 
     if (authError) {
       console.error('Erro no Supabase Auth (Sign Up):', authError);
-      setError(`Erro no cadastro: ${authError.message}`);
+      
+      // Personalizar mensagem para e-mail já cadastrado
+      if (authError.message.includes('User already registered') || authError.status === 422) {
+        setError('Ops, este e-mail já está cadastrado. Faça login ou recupere o acesso.');
+      } else {
+        setError(`Erro no cadastro: ${authError.message}`);
+      }
+      
       setLoading(false);
     } else {
       console.log('Auth realizado com sucesso:', data.user?.id);
