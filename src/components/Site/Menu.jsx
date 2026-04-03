@@ -1,4 +1,5 @@
 import React from 'react';
+import { ShoppingCart, MessageSquare, Utensils } from 'lucide-react';
 import { menuItems, categories } from '../../lib/siteData';
 
 const Menu = ({ activeTab, setActiveTab }) => {
@@ -18,44 +19,77 @@ const Menu = ({ activeTab, setActiveTab }) => {
   const categoryEntries = Object.entries(groupedItems);
 
   return (
-    <div className="bg-[#f7f7f7]" id="cardapio">
-      <div className="tabs-row">
-        <div className="tbin">
+    <section className="vini-site-wrapper" id="cardapio" style={{ backgroundColor: '#f8fafc', padding: '80px 0' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 5%' }}>
+        
+        <h2 className="vini-section-title">
+          <Utensils size={32} color="#dc2626" /> Nosso Cardápio
+        </h2>
+
+        {/* Tab Navigation */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '50px', flexWrap: 'wrap' }}>
           {Object.entries(categories).map(([key, value]) => (
             <button 
               key={key} 
-              className={`tbtn ${activeTab === key ? 'on' : ''}`}
               onClick={() => setActiveTab(key)}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '50px',
+                border: 'none',
+                backgroundColor: activeTab === key ? '#dc2626' : '#fff',
+                color: activeTab === key ? '#fff' : '#64748b',
+                fontWeight: '700',
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s'
+              }}
             >
               {value}
             </button>
           ))}
         </div>
-      </div>
-      <div className="sec">
+
+        {/* Categories and Items */}
         {categoryEntries.map(([category, items]) => (
-          <div key={category} className="cat-group">
-            <div className="cttl">{categories[category]}</div>
-            <div className="mgrid">
+          <div key={category} style={{ marginBottom: '60px' }}>
+            <h3 style={{ 
+              fontSize: '1.5rem', 
+              fontWeight: '700', 
+              marginBottom: '30px', 
+              color: '#1e293b',
+              borderLeft: '4px solid #dc2626',
+              paddingLeft: '15px'
+            }}>
+              {categories[category]}
+            </h3>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+              gap: '30px' 
+            }}>
               {items.map((item) => (
-                <div key={item.title} className="icard">
+                <div key={item.title} className="vini-card">
                   <img 
                     src={item.image} 
                     alt={item.title} 
-                    className="ithumb"
-                    style={{ height: 'auto', width: '100%' }}
+                    className="vini-card-img"
                   />
-                  <div className="ibody">
-                    {item.badge && <span className={`ibadge ${item.badgeClass}`}>{item.badge}</span>}
-                    <div className="iname">{item.title}</div>
-                    <div className="idesc">{item.description}</div>
-                    <div className="ifoot">
-                      <span className="iprice">{item.price}</span>
-                      <div className="ibtns">
-                        <a href={item.ifoodUrl} target="_blank" className={`ibtn ${item.price === 'Ver preço' ? 'ibtn-store' : 'ibtn-r'}`}>
-                          {item.price === 'Ver preço' ? 'Ver no iFood' : '🛒 iFood'}
+                  <div className="vini-card-body">
+                    <h4 className="vini-card-title">{item.title}</h4>
+                    <p className="vini-card-desc">{item.description}</p>
+                    <div style={{ marginTop: 'auto' }}>
+                      <span className="vini-card-price">
+                        {item.price === 'Ver preço' ? 'Consultar via iFood' : `A partir de ${item.price}`}
+                      </span>
+                      <div className="vini-card-actions">
+                        <a href={item.ifoodUrl} target="_blank" className="btn-ifood">
+                          <ShoppingCart size={14} /> iFood
                         </a>
-                        <a href={item.anotaaiUrl} target="_blank" className="ibtn ibtn-g">💬 Anota Aí</a>
+                        <a href={item.anotaaiUrl} target="_blank" className="btn-anota-ai">
+                          <MessageSquare size={14} /> Anota Aí
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -64,14 +98,12 @@ const Menu = ({ activeTab, setActiveTab }) => {
             </div>
           </div>
         ))}
+
+        <div style={{ textAlign: 'center', marginTop: '40px', color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic' }}>
+          * Imagens meramente ilustrativas. Preços sujeitos a alteração sem aviso prévio.
+        </div>
       </div>
-      <div className="sec" style={{ textAlign: 'center', padding: '20px' }}>
-        <p style={{ fontStyle: 'italic', color: '#888', fontSize: '12px' }}>Imagens meramente ilustrativas.</p>
-        <p style={{ fontStyle: 'italic', color: '#888', marginTop: '10px', fontSize: '12px' }}>
-          Este é o cardápio do site. Para itens e preços atualizados, consulte o cardápio disponível no iFood.
-        </p>
-      </div>
-    </div>
+    </section>
   );
 }
 
