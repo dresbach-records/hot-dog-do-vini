@@ -85,13 +85,8 @@ a { text-decoration: none; color: inherit; }
   color: inherit;
 }
 @keyframes blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-.vini-site-wrapper 50% { 
-    opacity: 0.3;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 @keyframes float {
   0%,
@@ -927,4 +922,461 @@ footer {
   width: auto !important;
   height: auto !important;
   object-fit: contain !important;
+}
+
+/* ============================================================
+   VINI'S PWA PORTAL STYLES (MOCKUP PARITY)
+   ============================================================ */
+
+.vini-portal-layout {
+  --p-red: #EA1D2C;
+  --p-bg: #FFFFFF;
+  --p-sidebar-bg: #FFFFFF;
+  --p-border: #E5E7EB;
+  --p-text: #1F2937;
+  --p-text-muted: #6B7280;
+  
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--p-text);
+  background: var(--p-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.vini-portal-header {
+  background: var(--p-red);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 500;
+}
+
+.vini-portal-logo {
+  height: 60px;
+  object-fit: contain;
+  filter: none; /* Removing filter just in case the original logo is already high contrast */
+}
+
+.vini-portal-search-wrap {
+  flex: 1;
+  max-width: 600px;
+  display: flex;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.vini-portal-search-input {
+  flex: 1;
+  border: none;
+  padding: 10px 15px;
+  outline: none;
+  font-size: 14px;
+}
+
+.vini-portal-search-btn {
+  background: #fff;
+  border: none;
+  padding: 0 15px;
+  color: var(--p-red);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vini-portal-header-actions {
+  display: flex;
+  gap: 24px;
+  color: #fff;
+}
+
+.vini-portal-action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Secondary Nav Bar */
+.vini-portal-subnav {
+  background: #fff;
+  padding: 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--p-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.vini-portal-subnav-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--p-red);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.vini-portal-subnav-right {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--p-text-muted);
+}
+
+.vini-portal-subnav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.vini-portal-subnav-item:hover { color: var(--p-red); }
+
+/* Main Shell */
+/* Main Shell & Layout */
+.vini-portal-layout.no-sidebar {
+  display: flex !important;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.vini-portal-shell-full {
+  flex: 1;
+  background: #fff;
+  width: 100%;
+}
+
+.vini-portal-content-full {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+/* User Dropdown Menu */
+.vini-user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: -10px; /* Alinhado um pouco mais para a direita para equilibrar */
+  width: 280px;
+  background: #fff !important;
+  color: #333 !important; /* Corrigindo o texto branco no branco */
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  margin-top: 18px;
+  z-index: 2000;
+  overflow: hidden;
+  border: 1px solid #eee;
+  animation: viniFadeIn 0.2s ease-out;
+  text-align: left;
+}
+
+@keyframes viniFadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.vini-user-dropdown-header {
+  padding: 20px;
+  background: #fdfdfd;
+  border-bottom: 1px solid #eee;
+  color: #333 !important;
+}
+
+.vini-user-dropdown-list {
+  padding: 10px 0;
+  background: #fff;
+}
+
+.vini-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 20px;
+  font-size: 15px;
+  color: #555 !important;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vini-dropdown-item:hover {
+  background: #fdf2f2;
+  color: var(--p-red);
+}
+
+.vini-dropdown-item svg {
+  color: #777;
+}
+
+.vini-dropdown-item:hover svg {
+  color: var(--p-red);
+}
+
+.vini-dropdown-item.highlight-red {
+  color: var(--p-red);
+  font-weight: 700;
+}
+
+.vini-dropdown-item.highlight-red svg {
+  color: var(--p-red);
+}
+
+.vini-dropdown-divider {
+  height: 1px;
+  background: #eee;
+  margin: 8px 0;
+}
+
+.vini-badge-mini {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #EA1D2C;
+  color: #fff;
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 10px;
+  font-weight: 800;
+  border: 2px solid #fff;
+}
+
+/* Saldo Condicional Estilizado */
+.vini-saldo-bar-active {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: #FEF2F2;
+  border-radius: 10px;
+  border: 1px solid #fee2e2;
+}
+
+.vini-saldo-labels {
+  display: flex;
+  flex-direction: column;
+}
+
+.vini-saldo-label-main {
+  font-size: 10px;
+  font-weight: 800;
+  color: #991b1b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vini-saldo-label-sub {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.vini-saldo-val {
+  color: #000;
+  font-weight: 800;
+}
+
+.vini-saldo-val-highlight {
+  color: #16a34a;
+  font-weight: 900;
+}
+
+.vini-portal-section-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.vini-portal-section-subtitle {
+  color: var(--p-text-muted);
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+/* Category Grid - Single Row Compact */
+.vini-portal-category-grid {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 30px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: none; /* Firefox */
+}
+
+.vini-portal-category-grid::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.vini-portal-category-card {
+  flex: 0 0 auto;
+  width: 100px;
+  background: #fff;
+  border: 1px solid var(--p-border);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vini-portal-category-card:hover { 
+  transform: translateY(-4px); 
+  border-color: var(--p-red);
+  box-shadow: 0 4px 12px rgba(234, 29, 44, 0.1);
+}
+
+.vini-portal-category-card.active {
+  border-color: var(--p-red);
+  background: #FEF2F2;
+}
+
+.vini-portal-category-card-img-wrap {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F3F4F6;
+  border-radius: 10px;
+}
+
+.vini-portal-category-card svg {
+  width: 24px;
+  height: 24px;
+}
+
+.vini-portal-category-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: #333;
+}
+
+/* Offers Grid */
+.vini-portal-offers-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.vini-portal-offer-card {
+  background: #fff;
+  border: 1px solid var(--p-border);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.vini-portal-offer-badge {
+  position: absolute;
+  top: 10px;
+  right: 0;
+  background: var(--p-red);
+  color: #fff;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  border-bottom-left-radius: 4px;
+  z-index: 5;
+}
+
+.vini-portal-offer-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.vini-portal-offer-body {
+  padding: 15px;
+}
+
+.vini-portal-offer-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.vini-portal-offer-subtitle {
+  font-size: 11px;
+  color: var(--p-text-muted);
+  margin-bottom: 12px;
+}
+
+.vini-portal-offer-price {
+  color: var(--p-red);
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.vini-portal-promo-badge {
+  display: inline-block;
+  background: #FEF3C7;
+  color: #92400E;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  margin-top: 8px;
+}
+
+/* Footer Admin */
+.vini-portal-footer {
+  border-top: 1px solid var(--p-border);
+  padding: 40px 24px;
+  background: #F9FAFB;
+}
+
+.vini-portal-footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--p-text-muted);
+}
+
+.vini-portal-footer-actions {
+  display: flex;
+  justify-content: center;
+  gap: 50px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid var(--p-border);
+}
+
+.vini-portal-footer-action-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--p-text-muted);
+}
+
+.vini-portal-copyright {
+  text-align: center;
+  font-size: 11px;
+  color: var(--p-text-muted);
+  margin-top: 20px;
+}
+
+@media (max-width: 1024px) {
+  .vini-portal-category-grid, .vini-portal-offers-grid { grid-template-columns: repeat(2, 1fr); }
+  .vini-portal-sidebar { display: none; }
+}
+
+@media (max-width: 640px) {
+  .vini-portal-category-grid, .vini-portal-offers-grid { grid-template-columns: 1fr; }
+  .vini-portal-search-wrap { display: none; }
 }

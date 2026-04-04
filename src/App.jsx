@@ -23,6 +23,8 @@ import Sorteios from './pages/Sorteios';
 import Marketing from './pages/Marketing';
 import Integracoes from './pages/Integracoes';
 import Pagamentos from './pages/Pagamentos';
+import Agendamentos from './pages/Agendamentos';
+import ConveniosAdmin from './pages/ConveniosAdmin';
 
 // Portal do Consumidor Final (Rota Externa Pública)
 import PortalCliente from './pages/PortalCliente';
@@ -75,17 +77,19 @@ function App() {
           } />
 
           {/* == LOGIN ADMIN ERP == */}
-          <Route path="/login" element={session && isAdmin ? <Navigate to="/dashboard" /> : <Login onLogin={() => {}} />} />
+          <Route path="/login" element={session && isAdmin ? <Navigate to="/admin/dashboard" /> : <Login onLogin={() => {}} />} />
 
           {/* == ÁREA ADMINISTRATIVA ERP (PROTEGIDA) == */}
-          <Route path="/*" element={
+          <Route path="/admin/*" element={
             session && isAdmin ? (
               <div className="app-container">
                 <Sidebar onLogout={() => supabase.auth.signOut()} />
                 <main className="main-content">
                   <Routes>
+                    <Route path="/" element={<Navigate to="/admin/dashboard" />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/pedidos" element={<Pedidos />} />
+                    <Route path="/agendamentos" element={<Agendamentos />} />
                     <Route path="/cardapio" element={<Cardapio />} />
                     <Route path="/entregas" element={<Entregas />} />
                     <Route path="/area-entrega" element={<AreaEntrega />} />
@@ -98,10 +102,10 @@ function App() {
                     <Route path="/relatorios" element={<Relatorios />} />
                     <Route path="/marketing" element={<Marketing />} />
                     <Route path="/pagamentos" element={<Pagamentos />} />
+                    <Route path="/convenios" element={<ConveniosAdmin />} />
                     <Route path="/integracoes" element={<Integracoes />} />
                     <Route path="/configuracoes" element={<Configuracoes />} />
-                    <Route path="/" element={<Navigate to="/dashboard" />} />
-                    <Route path="*" element={<Navigate to="/dashboard" />} />
+                    <Route path="*" element={<Navigate to="/admin/dashboard" />} />
                   </Routes>
                 </main>
               </div>
@@ -109,6 +113,9 @@ function App() {
               <Navigate to="/login" />
             )
           } />
+
+          {/* Catch-all for Root level */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
     </ClientesProvider>

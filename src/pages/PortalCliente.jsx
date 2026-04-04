@@ -1,63 +1,62 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { ShoppingBag, CreditCard, Gift, Phone, AlertTriangle, ArrowRight, CheckCircle2, Clock, Copy, Receipt, UtensilsCrossed } from 'lucide-react';
+import { 
+  ShoppingBag, 
+  User, 
+  Search, 
+  Home, 
+  ClipboardList, 
+  Heart, 
+  Headphones, 
+  Store,
+  ChevronRight,
+  LogOut,
+  Star,
+  Wallet,
+  AlertTriangle,
+  Copy,
+  Phone,
+  Gift,
+  Flame,
+  Utensils,
+  Beef,
+  Package,
+  Soup,
+  Beer,
+  Ticket,
+  LifeBuoy,
+  Shield,
+  Settings,
+  CreditCard,
+  ArrowRight
+} from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
 import { supabase } from '../lib/supabaseClient';
+import { menuItems, categories as siteCategories } from '../lib/siteData';
 
-const portalStyles = {
-  container: {
-    fontFamily: "'Inter', sans-serif",
-    backgroundColor: '#f8fafc',
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  header: {
-    backgroundColor: '#b91c1c', 
-    color: '#ffffff',
-    padding: '1.5rem',
-    borderBottomLeftRadius: '24px',
-    borderBottomRightRadius: '24px',
-    boxShadow: '0 4px 20px rgba(185, 28, 28, 0.3)',
-  },
-  content: {
-    flex: 1,
-    padding: '1.5rem',
-    maxWidth: '600px',
-    margin: '0 auto',
-    width: '100%',
-  },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: '16px',
-    padding: '1.5rem',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-    marginBottom: '1.5rem'
-  },
-  button: {
-    width: '100%',
-    padding: '1rem',
-    borderRadius: '12px',
-    border: 'none',
-    fontWeight: '600',
-    fontSize: '1rem',
-    cursor: 'pointer',
-    transition: 'transform 0.2s',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem'
-  }
-};
-
-function PortalCliente({ session }) {
+const PortalCliente = ({ session }) => {
   const { clientes, loading: contextLoading, adicionarCliente } = useClientes();
   const [provisioning, setProvisioning] = useState(false);
   const provisionAttempted = useRef(false);
+  const [showPix, setShowPix] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('destaques');
+  const menuRef = useRef(null);
 
   const clienteLogado = useMemo(() => {
     if (!clientes || !session?.user) return null;
-    return clientes.find(c => c.id_auth === session.user.id);
+    return clientes.find(c => c.codigo_vini === session.user.id);
   }, [clientes, session]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const autoCreateProfile = async () => {
@@ -67,9 +66,9 @@ function PortalCliente({ session }) {
         try {
           await adicionarCliente({
             nome: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-            id_auth: session.user.id,
+            codigo_vini: session.user.id,
             email: session.user.email,
-            total: 0,
+            total_cliente: 0,
             saldo_devedor: 0
           });
         } catch (err) {
@@ -82,151 +81,248 @@ function PortalCliente({ session }) {
     autoCreateProfile();
   }, [clienteLogado, contextLoading, session, adicionarCliente]);
 
-  const catalogoDisponivel = [
-    { id: '101', cat: 'Pastéis Especiais', nome: 'Pastelão Carne Moída C/Queijo', preco: 26.99 },
-    { id: '102', cat: 'Pastéis Especiais', nome: 'Frango com Catupiry', preco: 27.99 },
-    { id: '103', cat: 'Salgados', nome: 'Bacon e Muçarela', preco: 28.99 },
-    { id: '111', cat: 'Bebidas', nome: 'Refri Fruki 600ml', preco: 6.50 },
-  ];
-
-  const fidelidade = useMemo(() => {
-    if (!clienteLogado) return { gastoCliente: 0, saldo: 0, isEligible: false };
+  const stats = useMemo(() => {
+    if (!clienteLogado) return { total: 0, saldo: 0, limite: 150 };
     return { 
-      gastoCliente: Number(clienteLogado.total_cliente || 0), 
-      saldo: Number(clienteLogado.saldo_devedor || 0), 
-      isEligible: Number(clienteLogado.total_cliente || 0) >= 100 && Number(clienteLogado.saldo_devedor || 0) === 0 
+      total: Number(clienteLogado.total_cliente || 0), 
+      saldo: Number(clienteLogado.saldo_devedor || 0),
+      limite: Number(clienteLogado.convenio_limite || 150),
+      disponivel: Number(clienteLogado.convenio_saldo || 150),
+      isConvenioAtivo: clienteLogado.convenio_status === 'ativo'
     };
   }, [clienteLogado]);
 
-  const statusPrazo = useMemo(() => {
-    if (!clienteLogado || !clienteLogado.vencimento) return null;
-    try {
-      const venceEm = new Date(clienteLogado.vencimento + 'T12:00:00');
-      const hoje = new Date(); 
-      venceEm.setHours(0,0,0,0);
-      hoje.setHours(0,0,0,0);
-      
-      if (venceEm < hoje) {
-        const diffTime = Math.abs(hoje - venceEm);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return { msg: `Atrasado há ${diffDays} dias`, severity: 'crimson', bg: '#ffe4e6' };
-      } else if (venceEm.getTime() === hoje.getTime()) {
-        return { msg: 'Vence Hoje', severity: '#b45309', bg: '#fef3c7' };
-      } else {
-        const diffTime = Math.abs(venceEm - hoje);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return { msg: `Vence em ${diffDays} dias`, severity: '#15803d', bg: '#dcfce7' };
-      }
-    } catch(e) { return null; }
-  }, [clienteLogado]);
+  const viniCategories = [
+    { id: 'destaques', name: 'Mais Pedidos', icon: <Flame size={24} color="#EA1D2C" />, bgColor: '#FEF2F2' },
+    { id: 'hotdog', name: 'Hot Dogs', icon: <Utensils size={24} color="#EA1D2C" />, bgColor: '#FFF7ED' },
+    { id: 'burgers', name: 'Burgers', icon: <Beef size={24} color="#EA1D2C" />, bgColor: '#F0FDF4' },
+    { id: 'combos', name: 'Combos', icon: <Package size={24} color="#EA1D2C" />, bgColor: '#F5F3FF' },
+    { id: 'batatas', name: 'Batatas', icon: <Soup size={24} color="#EA1D2C" />, bgColor: '#FFFBEB' },
+    { id: 'bebidas', name: 'Bebidas', icon: <Beer size={24} color="#EA1D2C" />, bgColor: '#EFF6FF' },
+  ];
 
-  const [showPix, setShowPix] = useState(false);
+  const filteredProducts = useMemo(() => {
+    return menuItems.filter(item => item.category === selectedCategory);
+  }, [selectedCategory]);
 
-  // IMPORTANTE: Se não carregou nada ainda ou está criando perfil, MOSTRAR LOADING
-  if (contextLoading || provisioning || (provisionAttempted.current && !clienteLogado)) {
+  const viniOffers = useMemo(() => {
+    return menuItems.filter(item => item.oldPrice).slice(0, 4);
+  }, []);
+
+  if (contextLoading || provisioning) {
     return (
-      <div style={{ ...portalStyles.container, justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-        <h2 style={{ color: '#b91c1c', marginBottom: '1.5rem' }}>Carregando seu portal...</h2>
-        <button 
-          onClick={() => supabase.auth.signOut()} 
-          style={{ ...portalStyles.button, backgroundColor: '#1e293b', color: '#fff', maxWidth: '200px' }}
-        >
-          Cancelar / Sair
-        </button>
-      </div>
-    );
-  }
-
-  // Se o carregamento terminou e mesmo assim não temos cliente (e nem estamos tentando criar agora), algo falhou.
-  if (!clienteLogado) {
-    return (
-      <div style={{ ...portalStyles.container, justifyContent: 'center', alignItems: 'center', padding: '1.5rem' }}>
-        <div style={{ ...portalStyles.card, width: '100%', maxWidth: '400px', textAlign: 'center' }}>
-          <ShoppingBag size={40} color="#dc2626" style={{ marginBottom: '1rem' }} />
-          <h2 style={{ color: '#1e293b' }}>Ops! Perfil não encontrado</h2>
-          <p style={{ color: '#64748b', marginBottom: '2rem' }}>Não conseguimos carregar seus dados. Tente sair e entrar novamente.</p>
-          <button onClick={() => supabase.auth.signOut()} style={{ ...portalStyles.button, backgroundColor: '#1e293b', color: '#fff' }}>Sair</button>
-        </div>
+      <div className="vini-portal-layout" style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <img src="/Logo-VINI.png" alt="Vini's" style={{ width: '80px', marginBottom: '20px' }} />
+        <h2 style={{ color: 'var(--p-red)' }}>Carregando...</h2>
       </div>
     );
   }
 
   return (
-    <div style={portalStyles.container}>
-      <div style={portalStyles.header}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <span style={{ fontWeight: '700', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ShoppingBag size={20} /> Vini's Delivery
-          </span>
-          <button onClick={() => supabase.auth.signOut()} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: '20px', fontSize: '0.8rem', cursor: 'pointer' }}>
-            Sair
+    <div className="vini-portal-layout no-sidebar">
+      {/* Red Header Shell */}
+      <header className="vini-portal-header">
+        <img src="/Logo-VINI.png" alt="Vini Logo" className="vini-portal-logo" onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }} />
+        
+        <div className="vini-portal-search-wrap">
+          <input type="text" className="vini-portal-search-input" placeholder="O que você está buscando hoje?" />
+          <button className="vini-portal-search-btn">
+            <Search size={20} />
           </button>
         </div>
-        <h1 style={{ margin: '0', fontSize: '1.6rem', fontWeight: '600' }}>Olá, {clienteLogado?.nome ? clienteLogado.nome.split(' ')[0] : 'Cliente'} 👋</h1>
-        <p style={{ margin: '0.5rem 0 0', opacity: 0.9, fontSize: '0.85rem' }}>Seu portal financeiro e de fidelidade.</p>
-      </div>
 
-      <div style={portalStyles.content}>
-        {fidelidade.saldo > 0 ? (
-          <div>
-            <div style={{ ...portalStyles.card, backgroundColor: '#fef2f2', border: '1px solid #fca5a5' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                <div style={{ backgroundColor: '#fee2e2', padding: '0.8rem', borderRadius: '12px' }}>
-                  <AlertTriangle color="#dc2626" />
+        <div className="vini-portal-header-actions">
+          <div className="vini-portal-action-item">
+            <ShoppingBag size={24} />
+            <span>Sacola</span>
+          </div>
+          <div className="vini-portal-action-item user-trigger" onClick={() => setShowUserMenu(!showUserMenu)} style={{ position: 'relative' }}>
+            <User size={24} />
+            <span>Minha</span>
+
+            {/* Dropdown Menu */}
+            {showUserMenu && (
+              <div className="vini-user-dropdown" ref={menuRef}>
+                <div className="vini-user-dropdown-header">
+                   <div style={{ fontWeight: '800', fontSize: '18px' }}>Olá, {clienteLogado?.nome?.split(' ')[0] || 'Cliente'}</div>
+                   <div style={{ fontSize: '12px', color: '#999' }}>Acesse seus dados e pedidos</div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <h3 style={{ margin: 0, color: '#991b1b' }}>Fatura Aberta</h3>
-                    {statusPrazo && <span style={{ fontSize: '0.7rem', fontWeight: 'bold', background: statusPrazo.bg, color: statusPrazo.severity, padding: '0.2rem 0.5rem', borderRadius: '10px' }}>{statusPrazo.msg}</span>}
+                
+                <div className="vini-user-dropdown-list">
+                  <div className="vini-dropdown-item"><ClipboardList size={18} /> Pedidos</div>
+                  <div className="vini-dropdown-item highlight-red">
+                    <div style={{ position: 'relative' }}>
+                      <Ticket size={18} />
+                      <span className="vini-badge-mini">34</span>
+                    </div>
+                    Meus Cupons
                   </div>
-                  <div style={{ fontSize: '2.2rem', fontWeight: '800', color: '#7f1d1d', margin: '0.5rem 0' }}>R$ {fidelidade.saldo.toFixed(2).replace('.', ',')}</div>
-                  <button onClick={() => setShowPix(!showPix)} style={{ ...portalStyles.button, backgroundColor: '#dc2626', color: '#fff' }}>PIX Copia e Cola <ArrowRight size={18} /></button>
+                  <div className="vini-dropdown-item"><Heart size={18} /> Favoritos</div>
+                  <div className="vini-dropdown-item"><CreditCard size={18} /> Pagamento</div>
+                  <div className="vini-dropdown-item"><Star size={18} /> Fidelidade</div>
+                  <div className="vini-dropdown-divider"></div>
+                  <div className="vini-dropdown-item"><LifeBuoy size={18} /> Ajuda</div>
+                  <div className="vini-dropdown-item"><Settings size={18} /> Meus dados</div>
+                  <div className="vini-dropdown-item"><Shield size={18} /> Segurança</div>
+                  <div className="vini-dropdown-divider"></div>
+                  <div className="vini-dropdown-item" onClick={() => supabase.auth.signOut()} style={{ color: '#EA1D2C' }}>
+                    <LogOut size={18} /> Sair
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
-        ) : (
-          <div style={{ ...portalStyles.card, backgroundColor: '#f0fdf4', border: '1px solid #86efac' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <CheckCircle2 color="#16a34a" />
-                <h3 style={{ margin: '0', color: '#166534' }}>Tudo Pago!</h3>
+        </div>
+      </header>
+
+      {/* Secondary Navigation */}
+      <nav className="vini-portal-subnav">
+        <div className="vini-portal-subnav-left" style={{ gap: '20px' }}>
+           {/* Conditional Saldo (Only if integration is active) */}
+           {stats.isConvenioAtivo && (
+             <div className="vini-saldo-bar-active">
+                <Wallet size={18} color="var(--p-red)" />
+                <div className="vini-saldo-labels">
+                  <span className="vini-saldo-label-main">LIMITE CONVÊNIO: <span className="vini-saldo-val">R$ {stats.limite.toFixed(2)}</span></span>
+                  <span className="vini-saldo-label-sub">Disponível: <span className="vini-saldo-val-highlight">R$ {stats.disponivel.toFixed(2)}</span></span>
+                </div>
              </div>
-          </div>
-        )}
-
-        <div style={{ ...portalStyles.card, marginTop: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1rem' }}>
-            <Gift color="#6366f1" size={24} />
-            <h3 style={{ margin: 0 }}>Sorteios</h3>
-          </div>
-          <div style={{ backgroundColor: '#f1f5f9', borderRadius: '8px', padding: '1rem', display: 'flex', justifyContent: 'space-between' }}>
-            <div>
-               <div style={{ fontSize: '0.7rem', color: '#64748b' }}>CONSUMO</div>
-               <strong>R$ {fidelidade.gastoCliente.toFixed(2).replace('.', ',')}</strong>
-            </div>
-            <div>
-               <div style={{ fontSize: '0.7rem', color: '#64748b' }}>STATUS</div>
-               <strong style={{ color: fidelidade.isEligible ? '#16a34a' : '#dc2626' }}>{fidelidade.isEligible ? 'Elegível' : 'Bloqueado'}</strong>
-            </div>
-          </div>
+           )}
         </div>
+        <div className="vini-portal-subnav-right">
+           <div className="vini-portal-subnav-item" onClick={() => (window.location.href = '/#cardapio')}><Store size={16} /> Convênios</div>
+           <div className="vini-portal-subnav-item" onClick={() => setSelectedCategory('combos')}><Package size={16} /> Combos</div>
+           <div className="vini-portal-subnav-item" onClick={() => setSelectedCategory('hotdog')}><Utensils size={16} /> Produtos</div>
+           <div className="vini-portal-subnav-item" onClick={() => setSelectedCategory('destaques')}><Flame size={16} /> Ofertas</div>
+           <div className="vini-portal-subnav-item"><Heart size={16} /> Favoritos</div>
+        </div>
+      </nav>
 
-        <div style={{ marginTop: '2rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Bateu Aquela Fome?</h3>
-          {catalogoDisponivel.map(item => (
-            <div key={item.id} style={{ display: 'flex', backgroundColor: '#fff', borderRadius: '12px', padding: '1rem', marginBottom: '0.8rem', gap: '1rem', alignItems: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-              <UtensilsCrossed size={20} color="#cbd5e1" />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>{item.nome}</div>
-                <div style={{ color: '#b91c1c', fontWeight: '700' }}>R$ {item.preco.toFixed(2).replace('.', ',')}</div>
+      {/* Content Shell (No Sidebar) */}
+      <div className="vini-portal-shell-full">
+        <main className="vini-portal-content-full">
+          
+          {/* OFERTAS NO TOPO (AS REQUESTED) */}
+          <h2 className="vini-portal-section-title">Ofertas para Você 🔥</h2>
+          <div className="vini-portal-offers-grid" style={{ marginBottom: '50px' }}>
+            {viniOffers.map(offer => {
+              try {
+                const priceNum = parseFloat(offer.price.replace('R$ ', '').replace(',', '.'));
+                const oldPriceNum = parseFloat(offer.oldPrice.replace('R$ ', '').replace(',', '.'));
+                const discount = Math.round(((oldPriceNum - priceNum) / oldPriceNum) * 100);
+
+                return (
+                  <a key={offer.title} href={offer.ifoodUrl} target="_blank" className="vini-portal-offer-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="vini-portal-offer-badge">{discount}% OFF</div>
+                    <img src={offer.image} alt={offer.title} className="vini-portal-offer-img" />
+                    <div className="vini-portal-offer-body">
+                      <h4 className="vini-portal-offer-title">{offer.title}</h4>
+                      <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{offer.description}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '12px', color: '#999', textDecoration: 'line-through' }}>{offer.oldPrice}</span>
+                        <div className="vini-portal-offer-price">{offer.price}</div>
+                      </div>
+                      <div className="vini-portal-promo-badge">PROMOÇÃO</div>
+                    </div>
+                  </a>
+                );
+              } catch(e) { return null; }
+            })}
+          </div>
+
+          <h2 className="vini-portal-section-title">Nossas Categorias</h2>
+          <p className="vini-portal-section-subtitle">Escolha o que deseja saborear hoje!</p>
+
+          <div className="vini-portal-category-grid" style={{ marginBottom: '40px' }}>
+            {viniCategories.map(cat => (
+              <div 
+                key={cat.id} 
+                className={`vini-portal-category-card ${selectedCategory === cat.id ? 'active' : ''}`} 
+                onClick={() => setSelectedCategory(cat.id)}
+              >
+                <div className="vini-portal-category-card-img-wrap" style={{ backgroundColor: cat.bgColor }}>
+                  {cat.icon}
+                </div>
+                <span className="vini-portal-category-name">{cat.name}</span>
               </div>
-              <button style={{ background: '#f1f5f9', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', color: '#b91c1c', fontWeight: '600' }}>Pedir</button>
+            ))}
+          </div>
+
+          {/* Dynamic Products Grid (Main Filtered Menu) */}
+          <div style={{ marginBottom: '50px' }}>
+            <h2 className="vini-portal-section-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+               {viniCategories.find(c => c.id === selectedCategory)?.name}
+               <span style={{ fontSize: '14px', fontWeight: '400', color: '#999' }}>({filteredProducts.length} itens)</span>
+            </h2>
+            <div className="vini-portal-offers-grid">
+               {filteredProducts.map(product => (
+                  <div key={product.title} className="vini-portal-offer-card">
+                     <img src={product.image} alt={product.title} className="vini-portal-offer-img" />
+                     <div className="vini-portal-offer-body">
+                        <h4 className="vini-portal-offer-title">{product.title}</h4>
+                        <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.description}</p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                           <span className="vini-portal-offer-price">{product.price}</span>
+                           <button style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                              <ArrowRight size={16} color="var(--p-red)" />
+                           </button>
+                        </div>
+                     </div>
+                  </div>
+               ))}
             </div>
-          ))}
-        </div>
+          </div>
+
+          {/* Finance Warning if balance > 0 */}
+          {stats.saldo > 0 && (
+            <div style={{ marginTop: '40px', background: '#FEF2F2', padding: '25px', borderRadius: '16px', display: 'flex', gap: '20px' }}>
+               <AlertTriangle color="var(--p-red)" size={32} />
+               <div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Pendente de Pagamento</h3>
+                  <p style={{ margin: '5px 0 15px', color: '#666' }}>Seu saldo devedor é de R$ {stats.saldo.toFixed(2)}. Pague via PIX para continuar comprando.</p>
+                  <button 
+                    onClick={() => setShowPix(!showPix)}
+                    style={{ background: 'var(--p-red)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}
+                  >
+                    Exibir QR Code PIX
+                  </button>
+                  {showPix && (
+                    <div style={{ marginTop: '15px', background: '#fff', padding: '15px', borderRadius: '8px', border: '2px dashed var(--p-red)' }}>
+                      <code style={{ fontSize: '11px', wordBreak: 'break-all' }}>00020126360014br.gov.bcb.pix0114051048450001855204000053039865802BR5925MARCOS VINICIUS DRESBACH D6009TAQUARA62070503***6304E2D2</code>
+                    </div>
+                  )}
+               </div>
+            </div>
+          )}
+        </main>
       </div>
+
+      {/* Footer Shell */}
+      <footer className="vini-portal-footer">
+        <div className="vini-portal-footer-links">
+          <span>Termos de Uso</span>
+          <span>Política de Reembolso</span>
+          <span>Contato</span>
+        </div>
+        
+        <div className="vini-portal-footer-actions">
+          <div className="vini-portal-footer-action-item">
+             <User size={20} /> Sobre Nós
+          </div>
+          <div className="vini-portal-footer-action-item">
+             <Headphones size={20} /> Central de Ajuda
+          </div>
+          <div className="vini-portal-footer-action-item">
+             <Phone size={20} /> Fale Conosco
+          </div>
+        </div>
+
+        <div className="vini-portal-copyright">
+          © Copyright 2026 - VINI'S - Todos os direitos reservados VINI'S CNPJ 63.073.948/0001-97 / RUA MIGUEL BAUER TAQUARA/RS - CEP 95.600-320
+        </div>
+      </footer>
     </div>
   );
-}
+};
 
 export default PortalCliente;
