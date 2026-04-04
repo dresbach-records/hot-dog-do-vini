@@ -25,6 +25,9 @@ const PAGSEGURO_API = process.env.PAGSEGURO_ENV === 'production'
   ? 'https://api.pagseguro.com' 
   : 'https://sandbox.api.pagseguro.com';
 
+const IFOOD_CLIENT_ID = process.env.IFOOD_CLIENT_ID;
+const IFOOD_CLIENT_SECRET = process.env.IFOOD_CLIENT_SECRET;
+
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:3000'] }));
 app.use(express.json());
 

@@ -32,6 +32,8 @@ import {
 import { useClientes } from '../context/ClientesContext';
 import { supabase } from '../lib/supabaseClient';
 import { menuItems, categories as siteCategories } from '../lib/siteData';
+import ProductModal from '../components/Site/ProductModal';
+import CartDrawer from '../components/Site/CartDrawer';
 
 const PortalCliente = ({ session }) => {
   const { clientes, loading: contextLoading, adicionarCliente } = useClientes();
@@ -40,6 +42,9 @@ const PortalCliente = ({ session }) => {
   const [showPix, setShowPix] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('destaques');
+  const [cartItems, setCartItems] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const menuRef = useRef(null);
 
   const clienteLogado = useMemo(() => {
@@ -109,6 +114,50 @@ const PortalCliente = ({ session }) => {
     return menuItems.filter(item => item.oldPrice).slice(0, 4);
   }, []);
 
+  const handleAddToCart = (product) => {
+    setCartItems(prev => {
+      // Check if item with same observations already exists
+      const existingIdx = prev.findIndex(item => item.title === product.title && item.observations === product.observations);
+      if (existingIdx > -1) {
+        const newItems = [...prev];
+        const item = newItems[existingIdx];
+        const newQty = item.quantity + product.quantity;
+        newItems[existingIdx] = {
+           ...item,
+           quantity: newQty,
+           totalPrice: parseFloat(item.price.replace('R$ ', '').replace(',', '.')) * newQty
+        };
+        return newItems;
+      }
+      return [...prev, product];
+    });
+    setIsCartOpen(true);
+  };
+
+  const updateCartQty = (idx, delta) => {
+    setCartItems(prev => {
+      const newItems = [...prev];
+      const item = newItems[idx];
+      const newQty = Math.max(1, item.quantity + delta);
+      newItems[idx] = {
+        ...item,
+        quantity: newQty,
+        totalPrice: parseFloat(item.price.replace('R$ ', '').replace(',', '.')) * newQty
+      };
+      return newItems;
+    });
+  };
+
+  const removeFromCart = (idx) => {
+    setCartItems(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleCheckout = () => {
+    localStorage.setItem('vini-cart', JSON.stringify(cartItems));
+    window.location.href = '/checkout';
+    setIsCartOpen(false);
+  };
+
   if (contextLoading || provisioning) {
     return (
       <div className="vini-portal-layout" style={{ justifyContent: 'center', alignItems: 'center' }}>
@@ -132,8 +181,11 @@ const PortalCliente = ({ session }) => {
         </div>
 
         <div className="vini-portal-header-actions">
-          <div className="vini-portal-action-item">
-            <ShoppingBag size={24} />
+          <div className="vini-portal-action-item" onClick={() => setIsCartOpen(true)}>
+            <div style={{ position: 'relative' }}>
+              <ShoppingBag size={24} />
+              {cartItems.length > 0 && <span className="vini-cart-badge">{cartItems.length}</span>}
+            </div>
             <span>Sacola</span>
           </div>
           <div className="vini-portal-action-item user-trigger" onClick={() => setShowUserMenu(!showUserMenu)} style={{ position: 'relative' }}>
@@ -149,21 +201,21 @@ const PortalCliente = ({ session }) => {
                 </div>
                 
                 <div className="vini-user-dropdown-list">
-                  <div className="vini-dropdown-item"><ClipboardList size={18} /> Pedidos</div>
-                  <div className="vini-dropdown-item highlight-red">
+                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/pedidos'}><ClipboardList size={18} /> Pedidos</div>
+                  <div className="vini-dropdown-item highlight-red" onClick={() => window.location.href = '/cliente/cupons'}>
                     <div style={{ position: 'relative' }}>
                       <Ticket size={18} />
-                      <span className="vini-badge-mini">34</span>
+                      {/* Badge can be dynamic if we fetch count */}
                     </div>
                     Meus Cupons
                   </div>
                   <div className="vini-dropdown-item"><Heart size={18} /> Favoritos</div>
                   <div className="vini-dropdown-item"><CreditCard size={18} /> Pagamento</div>
-                  <div className="vini-dropdown-item"><Star size={18} /> Fidelidade</div>
+                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/fidelidade'}><Star size={18} /> Fidelidade</div>
                   <div className="vini-dropdown-divider"></div>
-                  <div className="vini-dropdown-item"><LifeBuoy size={18} /> Ajuda</div>
-                  <div className="vini-dropdown-item"><Settings size={18} /> Meus dados</div>
-                  <div className="vini-dropdown-item"><Shield size={18} /> Segurança</div>
+                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/ajuda'}><LifeBuoy size={18} /> Ajuda</div>
+                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/perfil'}><Settings size={18} /> Meus dados</div>
+                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/perfil'}><Shield size={18} /> Segurança</div>
                   <div className="vini-dropdown-divider"></div>
                   <div className="vini-dropdown-item" onClick={() => supabase.auth.signOut()} style={{ color: '#EA1D2C' }}>
                     <LogOut size={18} /> Sair
@@ -190,11 +242,11 @@ const PortalCliente = ({ session }) => {
            )}
         </div>
         <div className="vini-portal-subnav-right">
-           <div className="vini-portal-subnav-item" onClick={() => (window.location.href = '/#cardapio')}><Store size={16} /> Convênios</div>
+           <div className="vini-portal-subnav-item" onClick={() => window.location.href = '/convenios'}><Store size={16} /> Convênios</div>
            <div className="vini-portal-subnav-item" onClick={() => setSelectedCategory('combos')}><Package size={16} /> Combos</div>
            <div className="vini-portal-subnav-item" onClick={() => setSelectedCategory('hotdog')}><Utensils size={16} /> Produtos</div>
            <div className="vini-portal-subnav-item" onClick={() => setSelectedCategory('destaques')}><Flame size={16} /> Ofertas</div>
-           <div className="vini-portal-subnav-item"><Heart size={16} /> Favoritos</div>
+           <div className="vini-portal-subnav-item" onClick={() => window.location.href = '/cliente/pedidos'}><Heart size={16} /> Meus Pedidos</div>
         </div>
       </nav>
 
@@ -212,19 +264,24 @@ const PortalCliente = ({ session }) => {
                 const discount = Math.round(((oldPriceNum - priceNum) / oldPriceNum) * 100);
 
                 return (
-                  <a key={offer.title} href={offer.ifoodUrl} target="_blank" className="vini-portal-offer-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div className="vini-portal-offer-badge">{discount}% OFF</div>
-                    <img src={offer.image} alt={offer.title} className="vini-portal-offer-img" />
-                    <div className="vini-portal-offer-body">
-                      <h4 className="vini-portal-offer-title">{offer.title}</h4>
-                      <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{offer.description}</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '12px', color: '#999', textDecoration: 'line-through' }}>{offer.oldPrice}</span>
-                        <div className="vini-portal-offer-price">{offer.price}</div>
+                    <div 
+                      key={offer.title} 
+                      className="vini-portal-offer-card" 
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => setSelectedProduct(offer)}
+                    >
+                      <div className="vini-portal-offer-badge">{discount}% OFF</div>
+                      <img src={offer.image} alt={offer.title} className="vini-portal-offer-img" />
+                      <div className="vini-portal-offer-body">
+                        <h4 className="vini-portal-offer-title">{offer.title}</h4>
+                        <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{offer.description}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '12px', color: '#999', textDecoration: 'line-through' }}>{offer.oldPrice}</span>
+                          <div className="vini-portal-offer-price">{offer.price}</div>
+                        </div>
+                        <div className="vini-portal-promo-badge">PROMOÇÃO</div>
                       </div>
-                      <div className="vini-portal-promo-badge">PROMOÇÃO</div>
                     </div>
-                  </a>
                 );
               } catch(e) { return null; }
             })}
@@ -255,8 +312,8 @@ const PortalCliente = ({ session }) => {
                <span style={{ fontSize: '14px', fontWeight: '400', color: '#999' }}>({filteredProducts.length} itens)</span>
             </h2>
             <div className="vini-portal-offers-grid">
-               {filteredProducts.map(product => (
-                  <div key={product.title} className="vini-portal-offer-card">
+                {filteredProducts.map(product => (
+                  <div key={product.title} className="vini-portal-offer-card" style={{ cursor: 'pointer' }} onClick={() => setSelectedProduct(product)}>
                      <img src={product.image} alt={product.title} className="vini-portal-offer-img" />
                      <div className="vini-portal-offer-body">
                         <h4 className="vini-portal-offer-title">{product.title}</h4>
@@ -321,6 +378,22 @@ const PortalCliente = ({ session }) => {
           © Copyright 2026 - VINI'S - Todos os direitos reservados VINI'S CNPJ 63.073.948/0001-97 / RUA MIGUEL BAUER TAQUARA/RS - CEP 95.600-320
         </div>
       </footer>
+
+      {/* MODALS */}
+      <ProductModal 
+        product={selectedProduct} 
+        onClose={() => setSelectedProduct(null)} 
+        onAddToCart={handleAddToCart}
+      />
+
+      <CartDrawer 
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        items={cartItems}
+        onUpdateQty={updateCartQty}
+        onRemove={removeFromCart}
+        onCheckout={handleCheckout}
+      />
     </div>
   );
 };

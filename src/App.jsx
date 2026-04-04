@@ -28,6 +28,15 @@ import ConveniosAdmin from './pages/ConveniosAdmin';
 
 // Portal do Consumidor Final (Rota Externa Pública)
 import PortalCliente from './pages/PortalCliente';
+import ConveniosFlow from './pages/ConveniosFlow';
+import Checkout from './pages/Checkout';
+
+// Portal Components
+import MeusPedidos from './pages/Portal/MeusPedidos';
+import Perfil from './pages/Portal/Perfil';
+import Fidelidade from './pages/Portal/Fidelidade';
+import Cupons from './pages/Portal/Cupons';
+import Ajuda from './pages/Portal/Ajuda';
 
 // Contexto Global
 import { ClientesProvider } from './context/ClientesContext';
@@ -74,6 +83,34 @@ function App() {
           {/* == PORTAL DO CLIENTE (PROTEGIDO) == */}
           <Route path="/cliente.vinis" element={
             session && !isAdmin ? <PortalCliente session={session} /> : <Navigate to="/login.vinis" />
+          } />
+
+          <Route path="/convenios" element={
+            session && !isAdmin ? <ConveniosFlow session={session} /> : <Navigate to="/login.vinis" />
+          } />
+
+          <Route path="/checkout" element={
+            session && !isAdmin ? <Checkout session={session} /> : <Navigate to="/login.vinis" />
+          } />
+
+          <Route path="/cliente/pedidos" element={
+            session && !isAdmin ? <MeusPedidos session={session} /> : <Navigate to="/login.vinis" />
+          } />
+          
+          <Route path="/cliente/perfil" element={
+            session && !isAdmin ? <Perfil session={session} /> : <Navigate to="/login.vinis" />
+          } />
+
+          <Route path="/cliente/fidelidade" element={
+            session && !isAdmin ? <Fidelidade session={session} /> : <Navigate to="/login.vinis" />
+          } />
+
+          <Route path="/cliente/cupons" element={
+            session && !isAdmin ? <Cupons session={session} /> : <Navigate to="/login.vinis" />
+          } />
+
+          <Route path="/cliente/ajuda" element={
+            session && !isAdmin ? <Ajuda session={session} /> : <Navigate to="/login.vinis" />
           } />
 
           {/* == LOGIN ADMIN ERP == */}

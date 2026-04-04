@@ -52,10 +52,13 @@ const Menu = ({ activeTab, setActiveTab }) => {
                     <div className="ifoot">
                       <span className="iprice">{item.price}</span>
                       <div className="ibtns">
-                        <a href={item.ifoodUrl} target="_blank" className={`ibtn ${item.price === 'Ver preço' ? 'ibtn-store' : 'ibtn-r'}`}>
-                          {item.price === 'Ver preço' ? 'Ver no iFood' : '🛒 iFood'}
-                        </a>
-                        <a href={item.anotaaiUrl} target="_blank" className="ibtn ibtn-g">💬 Anota Aí</a>
+                        <button 
+                          onClick={() => window.location.href = '/login.vinis'} 
+                          className="ibtn ibtn-r"
+                          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                        >
+                          🛒 Comprar no Portal
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -68,7 +71,7 @@ const Menu = ({ activeTab, setActiveTab }) => {
       <div className="sec" style={{ textAlign: 'center', padding: '20px' }}>
         <p style={{ fontStyle: 'italic', color: '#888', fontSize: '12px' }}>Imagens meramente ilustrativas.</p>
         <p style={{ fontStyle: 'italic', color: '#888', marginTop: '10px', fontSize: '12px' }}>
-          Este é o cardápio do site. Para itens e preços atualizados, consulte o cardápio disponível no iFood.
+          Para convênios corporativos, acesse o portal administrativo.
         </p>
       </div>
     </div>
