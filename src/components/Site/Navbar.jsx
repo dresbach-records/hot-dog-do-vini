@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart, MessageSquare, Clock } from 'lucide-react';
+import { ShoppingCart, MessageSquare, Clock, User } from 'lucide-react';
 
 const Navbar = () => (
   <header className="vini-site-wrapper">
@@ -18,7 +18,10 @@ const Navbar = () => (
         <a href="#como-pedir">Como Pedir</a>
       </div>
       
-      <div className="nbtns" style={{ display: 'flex', gap: '10px' }}>
+      <div className="nbtns" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <Link to="/login.vinis" className="btn-login">
+           <User size={16} /> Entrar
+        </Link>
         <a href="https://www.ifood.com.br/delivery/taquara-rs/hot-dog-do-vini-recreio" target="_blank" className="btn-ifood">
            <ShoppingCart size={16} /> iFood
         </a>

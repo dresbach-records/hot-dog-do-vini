@@ -87,7 +87,7 @@ a { text-decoration: none; color: inherit; }
   100% {
     opacity: 1;
   }
-.vini-site-wrapper 50% { 
+  50% { 
     opacity: 0.3;
   }
 }
@@ -739,8 +739,19 @@ h1 .acc {
   background: var(--red2);
   transform: translateY(-1px)
 }
-  grid-template-columns: 1.4fr 1fr 1fr;
-  gap: 36px
+.vini-site-wrapper footer {
+  background: var(--vini-dark);
+  padding: 80px 5% 0;
+  margin-top: 0;
+}
+
+.fti {
+  display: grid;
+  grid-template-columns: 1.5fr 0.8fr 1.2fr 0.8fr;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: 60px;
 }
 .fbrand {
   position: relative;
@@ -780,18 +791,18 @@ h1 .acc {
   transition: background .15s
 }
 .flink-r {
-  background: rgba(234, 29, 44, .13);
-  color: #FF8A93
+  background: rgba(234, 29, 44, 0.13);
+  color: #fff !important;
 }
 .flink-r:hover {
-  background: rgba(234, 29, 44, .22)
+  background: rgba(234, 29, 44, 0.22);
 }
 .flink-g {
-  background: rgba(37, 211, 102, .1);
-  color: #6EE7B7
+  background: rgba(37, 211, 102, 0.1);
+  color: #fff !important;
 }
 .flink-g:hover {
-  background: rgba(37, 211, 102, .2)
+  background: rgba(37, 211, 102, 0.2);
 }
 .fct {
   font-size: 10px;
@@ -805,25 +816,35 @@ h1 .acc {
   list-style: none
 }
 .flist li {
-  padding: 4px 0;
-  font-size: 12px;
-  color: rgba(255, 255, 255, .45);
-  border-bottom: 1px solid rgba(255, 255, 255, .05)
+  padding: 6px 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.flist li a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.flist li a:hover {
+  color: #fff;
 }
 .flist li:last-child {
   border: none
 }
 .fbot {
-  border-top: 1px solid rgba(255, 255, 255, .07);
-  padding: 13px 24px;
-  max-width: 1080px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 25px 5%;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
-  color: rgba(255, 255, 255, .22);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
   flex-wrap: wrap;
-  gap: 8px
+  gap: 20px;
 }
 /* FLOATS */
 .floats {
@@ -955,9 +976,27 @@ h1 .acc {
 }
 
 .vini-site-wrapper .btn-ifood:hover, 
-.vini-site-wrapper .btn-anota-ai:hover {
+.vini-site-wrapper .btn-anota-ai:hover,
+.vini-site-wrapper .btn-login:hover {
   transform: translateY(-3px) scale(1.02);
   filter: brightness(1.1);
+}
+
+.vini-site-wrapper .btn-login {
+  background: var(--vini-bg) !important;
+  color: var(--vini-dark) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 50px !important;
+  padding: 12px 24px !important;
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+  height: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
 }
 
 /* --- Menu Cards --- */
