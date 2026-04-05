@@ -10,7 +10,7 @@ const PublicNotice = () => {
   }
 
   return (
-    <div className="public-notice-wrapper site-container" style={{ padding: '0 20px', marginTop: '-30px', position: 'relative', zIndex: 10 }}>
+    <div className="public-notice-wrapper site-container" style={{ padding: '40px 20px', position: 'relative', zIndex: 10 }}>
       <div className="public-notice-content">
         <div className="pn-icon">
           <AlertTriangle size={32} color="#dc2626" />
