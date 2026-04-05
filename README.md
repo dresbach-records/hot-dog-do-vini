@@ -1,64 +1,90 @@
-# 🌭 Vini's Delivery ERP & Marketing System - V2
+# 🌭 Vini's Delivery — ERP & PWA Portal (10/10)
 
-Bem-vindo ao sistema de gestão e portal oficial do **Vini's Delivery**. Este projeto unifica o site institucional da marca com um ERP (Enterprise Resource Planning) completo para gestão de pedidos, fiados, fidelidade e marketing.
-
-## 🚀 Novidades da Versão 2.0 (Integração Total)
-
-Recentemente, o sistema passou por uma grande reformulação técnica para unificar a experiência do cliente com a gestão administrativa:
-
-- **Site Institucional Integrado**: O site de marketing foi migrado para a raiz do ERP, permitindo que o cliente navegue e faça login no mesmo ambiente.
-- **Portal do Cliente Robusto**: Uma área exclusiva para o cliente acompanhar seu status financeiro, extrato de fiados e progresso em programas de fidelidade.
-- **Fluxo de Autenticação Inteligente**: Login diferenciado para administradores e clientes, com botões de retorno ao site e recuperação de senha por e-mail.
-- **Proteção Anti-Quebra (Scope CSS)**: Estilos do site institucional isolados para garantir que os dashboards administrativos permaneçam intactos.
-- **Auto-Provisionamento**: Clientes novos que se cadastram pelo site têm seus perfis de gestão criados automaticamente em tempo real.
-
-## 🛠️ Tecnologias Utilizadas
-
-- **Frontend**: React.js + Vite (Performance e HMR)
-- **Estilização**: Tailwind CSS + CSS Scoped (para a Landing Page)
-- **Backend/DB**: Supabase (Auth, Database e Storage)
-- **Ícones**: Lucide React
-- **Navegação**: React Router DOM (v6)
-
-## 🏗️ Estrutura do Projeto
-
-```bash
-├── src/
-│   ├── components/
-│   │   ├── Site/          # Componentes da Landing Page (Hero, Menu, Footer...)
-│   │   └── Layout/        # Componentes globais do ERP (Sidebar, Navbar...)
-│   ├── context/
-│   │   └── ClientesContext # Gerenciamento de estado global de clientes
-│   ├── pages/
-│   │   ├── PortalCliente.jsx # Área exclusiva do cliente
-│   │   ├── Dashboard.jsx     # Painel Administrativo
-│   │   └── LoginCliente.jsx  # Tela de acesso dedicada ao usuário final
-│   └── lib/
-│       └── supabaseClient.js # Configuração de conexão ao backend
-└── public/ # Assets estáticos e imagens
-```
-
-## 🔐 Configuração de Segurança
-
-O projeto utiliza variáveis de ambiente (`.env`) para proteger dados sensíveis. Certifique-se de configurar as seguintes chaves localmente (não enviadas ao GitHub por segurança):
-
-- `VITE_SUPABASE_URL`: URL do seu projeto Supabase.
-- `VITE_SUPABASE_ANON_KEY`: Chave pública para comunicação frontend.
-
-## 📝 Primeiros Passos
-
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/dresbach-records/hot-dog-do-vini.git
-   ```
-2. Instale as dependências:
-   ```bash
-   npm install
-   ```
-3. Rode o servidor de desenvolvimento:
-   ```bash
-   npm run dev
-   ```
+Bem-vindo ao repositório oficial do sistema **Vini's Delivery**. Este projeto foi evoluído hoje para uma arquitetura industrial de alta disponibilidade, segurança e escalabilidade.
 
 ---
-*Vini's Delivery - Qualidade e Gestão em um só lugar.*
+
+## 🚀 Arquitetura Geral (Zero Trust)
+
+O sistema segue o princípio de **"Confiança Zero"** no frontend. Toda a lógica crítica de negócios, cálculos de preços e validações de integridade são executadas exclusivamente no servidor (Backend), protegendo o sistema contra manipulações e fraudes.
+
+### 🏗️ Estrutura de Pastas (Modular)
+
+```text
+/
+├── backend/               # Servidor Node.js (Express) modularizado
+│   ├── src/
+│   │   ├── modules/       # Domínios de negócio (Orders, Products, Integrations)
+│   │   ├── config/        # Supabase Service Role & Env
+│   │   ├── middlewares/   # Auth JWT, Rate Limit, Error Global
+│   │   └── routes/        # Roteamento central /api
+│   └── server.js          # Ponto de entrada (Porta 3001)
+│
+├── src/ (Frontend)        # Portal PWA em React + Vite
+│   ├── services/          # api.js (Axios Centralizado)
+│   ├── components/        # Componentes UI (Modular CSS)
+│   └── pages/             # Fluxos de Checkout e Portal Cliente
+│
+└── .env                   # Chaves de Ambiente (Públicas)
+```
+
+---
+
+## 🔐 Segurança & Resiliência (Padrão 10/10)
+
+### ✅ Barreira de Preço Autoritária
+O backend **ignora** valores monetários vindos do frontend. Todo o total de pedido é recalculado consultando o banco de dados oficial (Supabase) via `SERVICE_ROLE_KEY`.
+
+### ✅ Idempotência Técnica
+Proteção contra pedidos duplicados. O sistema valida cliques acidentais e evita múltiplos processamentos para o mesmo usuário em uma janela de 30 segundos.
+
+### ✅ Validação de Esquema (Zod)
+Todos os contratos de entrada (payloads) são validados rigidamente antes de qualquer processamento lógico.
+
+### ✅ Tratamento Modular de Erros
+Diferenciação clara entre:
+- **Erro 400 (Zod)**: Feedback imediato ao front sobre dados inválidos.
+- **Erro 500 (Server)**: Logging estruturado e supressão de stack traces em produção.
+
+---
+
+## 📡 Integrações & Proxy Seguro
+
+- **iFood Merchant API**: Fluxo OAuth completo, sincronização de pedidos e status (confirm, dispatch, cancel) com logs estruturados.
+- **PagSeguro**: Geração de pagamentos (Pix/Cartão) com conversão de centavos segura no backend.
+
+---
+
+## 💻 Desenvolvimento Local
+
+### 1. Requisitos
+- Node.js v18+
+- Supabase projeto ativo (URL e Chaves `ANON` e `SERVICE_ROLE`)
+
+### 2. Configuração de Ambiente (`.env`)
+Certifique-se de ter os dois arquivos configurados:
+
+- **Raiz (`.env`)**: Chaves `VITE_` públicas.
+- **Backend (`backend/.env`)**: Chaves secretas (`SUPABASE_SERVICE_ROLE_KEY`, `IFOOD_CLIENT_SECRET`, etc.).
+
+### 3. Iniciar Servidores
+```bash
+npm install     # Instala dependências root
+npm run dev     # Inicia Frontend (5173) e Backend (3001) simultaneamente
+```
+
+---
+
+## 🚢 Deploy (Padrão Sênior)
+
+O deploy ideal utiliza o fluxo:
+1. **Frontend**: Vercel (conectado via `VITE_API_URL`).
+2. **Backend**: Railway / VPS (conectado ao Supabase Admin).
+
+> [!CAUTION]
+> **Atenção**: Nunca exponha a sua `SERVICE_ROLE_KEY` no frontend ou em commits git. Ela deve estar apenas em seu ambiente de servidor seguro.
+
+---
+
+## 📜 Licença
+© 2026 Vini's Delivery — Todos os direitos reservados.
