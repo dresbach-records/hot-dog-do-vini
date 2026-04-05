@@ -54,28 +54,40 @@ const Perfil = ({ session }) => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (saving) return;
+    
     setSaving(true);
     setSuccess(false);
 
     try {
-      const { error } = await supabase
-        .from('clientes')
-        .update({
-          nome: formData.nome,
-          telefone: formData.telefone,
-          cpf: formData.cpf,
-          endereco_padrao: formData.endereco
-        })
-        .eq('codigo_vini', session.user.id);
+      // Limpeza básica dos dados
+      const payload = {
+        nome: formData.nome.trim(),
+        telefone: formData.telefone.trim(),
+        cpf: formData.cpf.trim().replace(/\D/g, ''), // Salva apenas números
+        endereco_padrao: {
+          ...formData.endereco,
+          updated_at: new Date().toISOString()
+        }
+      };
 
-      if (!error) {
+      const { data, error } = await supabase
+        .from('clientes')
+        .update(payload)
+        .eq('codigo_vini', session.user.id)
+        .select();
+
+      if (error) throw error;
+
+      if (data) {
         setSuccess(true);
+        // Atualiza localmente para feedback imediato
+        localStorage.setItem('vini_perfil_cache', JSON.stringify(payload));
         setTimeout(() => setSuccess(false), 3000);
-      } else {
-        alert("Erro ao salvar perfil.");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Erro detalhado ao salvar perfil:", err);
+      alert(`Erro: ${err.message || 'Verifique sua conexão e tente novamente.'}`);
     } finally {
       setSaving(false);
     }

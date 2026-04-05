@@ -67,7 +67,42 @@ function App() {
       setSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    // Bloqueio de PrintScreen (Aviso no console e redução de opacidade)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        console.log("Proteção de Conteúdo Ativada!");
+      }
+    };
+
+    // Bloqueio de Atalhos e Teclas de Cópia
+    const handleKeyDown = (e) => {
+      // Bloqueia F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+S, Ctrl+C, Ctrl+P
+      if (
+        e.keyCode === 123 || 
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) ||
+        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 67 || e.keyCode === 80))
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    // Bloqueio de Clique Direito
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      return false;
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('contextmenu', handleContextMenu);
+
+    return () => {
+      subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
   }, []);
 
   if (loading) return (

@@ -66,6 +66,31 @@ const PortalCliente = ({ session }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Auto-Logout por Inatividade (30 Minutos)
+  useEffect(() => {
+    let idleTimer;
+    
+    const resetTimer = () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        console.log("Deslogando por inatividade...");
+        supabase.auth.signOut();
+        window.location.href = '/login.vinis';
+      }, 30 * 60 * 1000); // 30 minutos em ms
+    };
+
+    // Listeners de atividade
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(name => document.addEventListener(name, resetTimer));
+
+    resetTimer(); // Inicia o timer
+
+    return () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      events.forEach(name => document.removeEventListener(name, resetTimer));
+    };
+  }, []);
+
   useEffect(() => {
     const autoCreateProfile = async () => {
       if (!contextLoading && !clienteLogado && session?.user && !provisionAttempted.current) {
