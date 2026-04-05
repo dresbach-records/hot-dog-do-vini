@@ -39,7 +39,9 @@ const Footer = () => (
         <a href="mailto:juridico@hotdogdovini.com.br">Jurídico</a>
       </div>
       <div className="fbot-cnpj">HOT DOG DO VINI LTDA CNPJ 61.073.344/0001-97</div>
-      <div className="fbot-dev">Desenvolvido por Dresbach Media Ltda</div>
+      <div className="fbot-dev">
+        Desenvolvido por Marcos Dresbach by <a href="https://www.google.com/search?q=antigravity" target="_blank" rel="noreferrer" style={{ color: 'inherit', fontWeight: 'bold' }}>Antigravity</a>
+      </div>
     </div>
   </footer>
 );

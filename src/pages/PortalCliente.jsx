@@ -462,10 +462,12 @@ const PortalCliente = ({ session }) => {
           </div>
         </div>
 
-        <div className="vini-portal-copyright">
+        <div className="vini-portal-copyright" style={{ marginTop: '1.5rem', opacity: 0.8, fontSize: '0.75rem' }}>
           © 2026 VINI'S INDUSTRIAL — O verdadeiro hot dog taquarense. 
           <br/>
           HOT DOG DO VINI.LTDA | CNPJ 63.073.948/0001-97
+          <br/>
+          Desenvolvido por Marcos Dresbach by <a href="https://www.google.com/search?q=antigravity" target="_blank" rel="noreferrer" style={{ color: 'inherit', fontWeight: 'bold' }}>Antigravity</a>
         </div>
       </footer>
 
