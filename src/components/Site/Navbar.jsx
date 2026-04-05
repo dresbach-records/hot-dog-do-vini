@@ -1,29 +1,34 @@
-import { Link } from 'react-router-dom';
-import { User, MenuSquare, Utensils } from 'lucide-react';
+import { User, MenuSquare, Utensils, Circle } from 'lucide-react';
+import { useSettings } from '../../context/SettingsContext';
 
-const Navbar = () => (
-  <nav className="nav-clean">
-    <div className="ni">
-      <a href="#" className="nl">
-        <img src="/Logo-VINI.png" alt="Hot Dog do Vini" className="nav-logo-img" />
-      </a>
-      
-      <div className="nav-right-links">
-        <Link to="/login.vinis" className="nav-item-clean">
-           <User size={18} /> CLIENTE
-        </Link>
-        <a href="#cardapio" className="nav-item-clean">
-           <MenuSquare size={18} /> Cardápio
+const Navbar = () => {
+  const { publicNotice } = useSettings();
+  const isOpen = publicNotice?.salesEnabled;
+
+  return (
+    <nav className="nav-clean">
+      <div className="ni">
+        <a href="#" className="nl">
+          <img src="/Logo-VINI.png" alt="Hot Dog do Vini" className="nav-logo-img" />
         </a>
-        <a href="https://www.ifood.com.br/delivery/taquara-rs/hot-dog-do-vini-recreio" target="_blank" className="nav-item-clean">
-           <Utensils size={18} /> iFood
-        </a>
-        <a href="https://pedido.anota.ai/loja/marcos-vinicius-dresbach-do-amaral-ltda?f=msa" target="_blank" className="nav-item-clean font-semibold">
-           Anota Aí
-        </a>
+        
+        <div className="nav-right-links">
+          {/* Status da Loja */}
+          <div className={`vini-status-badge ${isOpen ? 'open' : 'closed'}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '800', backgroundColor: isOpen ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: isOpen ? '#22c55e' : '#ef4444', border: `1px solid ${isOpen ? '#22c55e40' : '#ef444440'}` }}>
+            <Circle size={8} fill="currentColor" stroke="none" />
+            {isOpen ? 'ABERTO AGORA' : 'FECHADO'}
+          </div>
+
+          <Link to="/login.vinis" className="nav-item-clean">
+             <User size={18} /> CLIENTE
+          </Link>
+          <a href="#cardapio" className="nav-item-clean">
+             <MenuSquare size={18} /> Cardápio
+          </a>
+        </div>
       </div>
-    </div>
-  </nav>
-);
+    </nav>
+  );
+};
 
 export default Navbar;
