@@ -53,11 +53,11 @@ const Menu = ({ activeTab, setActiveTab }) => {
                       <span className="iprice">{item.price}</span>
                       <div className="ibtns">
                         <button 
-                          onClick={() => window.location.href = '/login.vinis'} 
+                          onClick={() => window.location.href = `/login.vinis?redirectTo=/cliente.vinis`} 
                           className="ibtn ibtn-r"
                           style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                         >
-                          🛒 Comprar no Portal
+                          🛒 Ver Oferta no Portal
                         </button>
                       </div>
                     </div>

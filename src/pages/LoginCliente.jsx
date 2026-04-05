@@ -39,7 +39,9 @@ function LoginCliente() {
       setError('Acesso negado. Verifique seu e-mail e senha.');
       setLoading(false);
     } else {
-      navigate('/cliente.vinis');
+      const searchParams = new URLSearchParams(location.search);
+      const redirect = searchParams.get('redirectTo');
+      navigate(redirect || '/cliente.vinis');
     }
   };
 

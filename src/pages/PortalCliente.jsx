@@ -172,56 +172,73 @@ const PortalCliente = ({ session }) => {
 
   return (
     <div className="vini-portal-layout no-sidebar portal-container">
-      {/* Red Header Shell */}
+      {/* Red Header Shell — PREMIUM */}
       <header className="vini-portal-header">
-        <img src="/Logo-VINI.png" alt="Vini Logo" className="vini-portal-logo" onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }} />
+        <div className="vini-portal-header-left">
+          <img 
+            src="/Logo-VINI.png" 
+            alt="Vini Logo" 
+            className="vini-portal-logo" 
+            onClick={() => window.location.href = '/'} 
+            style={{ cursor: 'pointer' }} 
+          />
+        </div>
         
         <div className="vini-portal-search-wrap">
-          <input type="text" className="vini-portal-search-input" placeholder="O que você está buscando hoje?" />
+          <input 
+            type="text" 
+            className="vini-portal-search-input" 
+            placeholder="Qual é a sua fome de hoje? 🌭" 
+          />
           <button className="vini-portal-search-btn">
-            <Search size={20} />
+            <Search size={20} strokeWidth={3} />
           </button>
         </div>
 
         <div className="vini-portal-header-actions">
           <div className="vini-portal-action-item" onClick={() => setIsCartOpen(true)}>
             <div style={{ position: 'relative' }}>
-              <ShoppingBag size={24} />
+              <ShoppingBag size={28} strokeWidth={2.5} />
               {cartItems.length > 0 && <span className="vini-badge-cart">{cartItems.length}</span>}
             </div>
             <span>Sacola</span>
           </div>
+
           <div className="vini-portal-action-item user-trigger" onClick={() => setShowUserMenu(!showUserMenu)} style={{ position: 'relative' }}>
-            <User size={24} />
+            <User size={28} strokeWidth={2.5} />
             <span>Minha</span>
 
-            {/* Dropdown Menu */}
+            {/* Dropdown Menu Premium */}
             {showUserMenu && (
               <div className="vini-user-dropdown" ref={menuRef}>
                 <div className="vini-user-dropdown-header">
-                   <div style={{ fontWeight: '800', fontSize: '18px' }}>Olá, {clienteLogado?.nome?.split(' ')[0] || 'Cliente'}</div>
-                   <div style={{ fontSize: '12px', color: '#999' }}>Acesse seus dados e pedidos</div>
+                   <div style={{ fontWeight: '900', fontSize: '18px', color: '#111' }}>
+                     Olá, {clienteLogado?.nome?.split(' ')[0] || 'Vini Fan'} 👋
+                   </div>
+                   <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                     Explore seu portal exclusivo
+                   </div>
                 </div>
                 
                 <div className="vini-user-dropdown-list">
-                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/pedidos'}><ClipboardList size={18} /> Pedidos</div>
-                  <div className="vini-dropdown-item highlight-red" onClick={() => window.location.href = '/cliente/cupons'}>
-                    <div style={{ position: 'relative' }}>
-                      <Ticket size={18} />
-                      {/* vini-badge can be dynamic if we fetch count */}
-                    </div>
-                    Meus Cupons
+                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/pedidos'}>
+                    <ClipboardList size={20} color="#64748b" /> Meus Pedidos
                   </div>
-                  <div className="vini-dropdown-item"><Heart size={18} /> Favoritos</div>
-                  <div className="vini-dropdown-item"><CreditCard size={18} /> Pagamento</div>
-                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/fidelidade'}><Star size={18} /> Fidelidade</div>
+                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/cupons'}>
+                    <Ticket size={20} color="#EA1D2C" /> Meus Cupons
+                  </div>
+                  <div className="vini-dropdown-item">
+                    <Heart size={20} color="#64748b" /> Favoritos
+                  </div>
+                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/fidelidade'}>
+                    <Star size={20} color="#F59E0B" /> Fidelidade Vini
+                  </div>
                   <div className="vini-dropdown-divider"></div>
-                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/ajuda'}><LifeBuoy size={18} /> Ajuda</div>
-                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/perfil'}><Settings size={18} /> Meus dados</div>
-                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/perfil'}><Shield size={18} /> Segurança</div>
-                  <div className="vini-dropdown-divider"></div>
+                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/perfil'}>
+                    <Settings size={20} color="#64748b" /> Meus Dados
+                  </div>
                   <div className="vini-dropdown-item" onClick={() => supabase.auth.signOut()} style={{ color: '#EA1D2C' }}>
-                    <LogOut size={18} /> Sair
+                    <LogOut size={20} /> Encerrar Sessão
                   </div>
                 </div>
               </div>
@@ -230,26 +247,37 @@ const PortalCliente = ({ session }) => {
         </div>
       </header>
 
-      {/* Secondary Navigation */}
+      {/* Secondary Navigation — PREMIUM STICKY */}
       <nav className="vini-portal-subnav">
-        <div className="vini-portal-subnav-left" style={{ gap: '20px' }}>
-           {/* Conditional Saldo (Only if integration is active) */}
-           {stats.isConvenioAtivo && (
+        <div className="vini-portal-subnav-left">
+           {stats.isConvenioAtivo ? (
              <div className="vini-saldo-bar-active">
-                <Wallet size={18} color="var(--p-red)" />
+                <Wallet size={20} color="#EA1D2C" strokeWidth={2.5} />
                 <div className="vini-saldo-labels">
-                  <span className="vini-saldo-label-main">LIMITE CONVÊNIO: <span className="vini-saldo-val">R$ {stats.limite.toFixed(2)}</span></span>
-                  <span className="vini-saldo-label-sub">Disponível: <span className="vini-saldo-val-highlight">R$ {stats.disponivel.toFixed(2)}</span></span>
+                  <span className="vini-saldo-label-main">SALDO CONVÊNIO</span>
+                  <span className="vini-saldo-label-sub">
+                    Disponível: <span className="vini-saldo-val-highlight">R$ {stats.disponivel.toFixed(2).replace('.', ',')}</span>
+                  </span>
                 </div>
+             </div>
+           ) : (
+             <div className="vini-saldo-bar-active" style={{ background: '#f8fafc', borderColor: '#e2e8f0' }}>
+                <Gift size={20} color="#64748b" />
+                <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>CADASTRE SEU CONVÊNIO</span>
              </div>
            )}
         </div>
+        
         <div className="vini-portal-subnav-right">
-           <div className="vini-portal-subnav-item" onClick={() => window.location.href = '/convenios'}><Store size={16} /> Convênios</div>
-           <div className="vini-portal-subnav-item" onClick={() => setSelectedCategory('combos')}><Package size={16} /> Combos</div>
-           <div className="vini-portal-subnav-item" onClick={() => setSelectedCategory('hotdog')}><Utensils size={16} /> Produtos</div>
-           <div className="vini-portal-subnav-item" onClick={() => setSelectedCategory('destaques')}><Flame size={16} /> Ofertas</div>
-           <div className="vini-portal-subnav-item" onClick={() => window.location.href = '/cliente/pedidos'}><Heart size={16} /> Meus Pedidos</div>
+           <div className={`vini-portal-subnav-item ${selectedCategory === 'combos' ? 'active' : ''}`} onClick={() => setSelectedCategory('combos')}>
+             <Package size={18} /> <span>Combos</span>
+           </div>
+           <div className={`vini-portal-subnav-item ${selectedCategory === 'hotdog' ? 'active' : ''}`} onClick={() => setSelectedCategory('hotdog')}>
+             <Utensils size={18} /> <span>Hot Dogs</span>
+           </div>
+           <div className="vini-portal-subnav-item" onClick={() => window.location.href = '/convenios'}>
+             <Store size={18} /> <span>Empresas</span>
+           </div>
         </div>
       </nav>
 
@@ -257,8 +285,29 @@ const PortalCliente = ({ session }) => {
       <div className="vini-portal-shell-full">
         <main className="vini-portal-content-full">
           
-          {/* OFERTAS NO TOPO (AS REQUESTED) */}
-          <h2 className="vini-portal-section-title">Ofertas para Você 🔥</h2>
+          {contextLoading ? (
+            <div className="vini-skeleton-container">
+               <div className="vini-skeleton" style={{ height: '40px', width: '300px', marginBottom: '20px' }}></div>
+               <div className="vini-portal-offers-grid">
+                  {[1,2,3,4].map(i => <div key={i} className="vini-skeleton" style={{ height: '300px' }}></div>)}
+               </div>
+            </div>
+          ) : (
+            <>
+              {/* OFERTAS NO TOPO — PREMIUM CARDS */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
+                <div>
+                  <h2 className="vini-portal-section-title">Ofertas Imperdíveis 🔥</h2>
+                  <p className="vini-portal-section-subtitle">Os favoritos do Vini com preços especiais</p>
+                </div>
+                <button 
+                  className="vini-portal-subnav-item" 
+                  onClick={() => setSelectedCategory('destaques')}
+                  style={{ background: 'none', border: 'none', color: '#EA1D2C', marginBottom: '20px' }}
+                >
+                  Ver todas <ArrowRight size={16} />
+                </button>
+              </div>
           <div className="vini-portal-offers-grid" style={{ marginBottom: '50px' }}>
             {viniOffers.map(offer => {
               try {
@@ -354,31 +403,36 @@ const PortalCliente = ({ session }) => {
                </div>
             </div>
           )}
+            </>
+          )}
         </main>
       </div>
 
-      {/* Footer Shell */}
+      {/* Footer Shell — PREMIUM */}
       <footer className="vini-portal-footer">
         <div className="vini-portal-footer-links">
-          <span>Termos de Uso</span>
-          <span>Política de Reembolso</span>
-          <span>Contato</span>
+          <span>Quem Somos</span>
+          <span>Privacidade</span>
+          <span>Termos</span>
+          <span>Franquias</span>
         </div>
         
         <div className="vini-portal-footer-actions">
           <div className="vini-portal-footer-action-item">
-             <User size={20} /> Sobre Nós
+             <User size={22} color="#EA1D2C" /> Sou Parceiro
           </div>
           <div className="vini-portal-footer-action-item">
-             <Headphones size={20} /> Central de Ajuda
+             <Headphones size={22} color="#EA1D2C" /> Ajuda
           </div>
           <div className="vini-portal-footer-action-item">
-             <Phone size={20} /> Fale Conosco
+             <Phone size={22} color="#EA1D2C" /> (51) 99765-4321
           </div>
         </div>
 
         <div className="vini-portal-copyright">
-          © Copyright 2026 - VINI'S - Todos os direitos reservados VINI'S CNPJ 63.073.948/0001-97 / RUA MIGUEL BAUER TAQUARA/RS - CEP 95.600-320
+          © 2026 VINI'S INDUSTRIAL — O verdadeiro hot dog taquarense. 
+          <br/>
+          HOT DOG DO VINI.LTDA | CNPJ 63.073.948/0001-97
         </div>
       </footer>
 

@@ -3,10 +3,13 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: join(__dirname, '../../../.env') });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const __root = join(__dirname, '../../../');
+dotenv.config({ path: join(__root, '.env') });
+dotenv.config({ path: join(__root, 'backend/.env') });
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
