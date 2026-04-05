@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Search, Plus, User, FileText, Edit, X, Save } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
+import { useNavigate } from 'react-router-dom';
 import '../styles/admin/caixa.css';
 
 function Caixa() {
+  const navigate = useNavigate();
   const { clientes, pagamentosConfirmados, atualizarCliente } = useClientes();
   // Filtramos os clientes que possuem saldo devedor/status pendente para exibir como "Fiados" 
   // (ou exibimos todos se for um PDV geral).
@@ -124,7 +126,7 @@ function Caixa() {
                 <h4 className="text-green">R$ {(clientes.filter(c => pagamentosConfirmados.includes(c.nome)).reduce((acc, curr) => acc + (curr.total_pago || curr.total_cliente || 0), 0) + clientesFiados.reduce((acc, curr) => acc + (typeof curr.valor === 'number' ? curr.valor : (curr.saldo_devedor || curr.total_cliente || 0)), 0)).toFixed(2).replace('.', ',')}</h4>
               </div>
             </div>
-            <button className="vini-btn-outline">Fechar Caixa</button>
+            <button className="vini-btn-outline" onClick={() => navigate('/admin/fechamento-caixa')}>Fechar Caixa</button>
           </div>
         </div>
       </div>

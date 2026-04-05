@@ -9,7 +9,10 @@ export const ClientesProvider = ({ children }) => {
     total_pedidos: 0,
     total_vendas_estimado: 0,
     total_recebido_confirmado: 0,
-    total_em_aberto_estimado: 0
+    total_em_aberto_estimado: 0,
+    ticket_medio: 0,
+    top_produtos: [],
+    vendas_por_bairro: []
   });
   const [pagamentosConfirmados, setPagamentosConfirmados] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,23 +47,59 @@ export const ClientesProvider = ({ children }) => {
       let totalPendentes = 0;
       let countPedidos = 0;
       const pagosIds = [];
+      const produtoMap = {};
+      const bairroMap = {};
 
       clientesData?.forEach(c => {
         totalVendas += Number(c.total_cliente || 0);
         totalPago += Number(c.total_pago || 0);
         totalPendentes += Number(c.saldo_devedor || 0);
-        countPedidos += c.pedidos?.length || 0;
+        const customerPedidos = c.pedidos || [];
+        // Corrigindo contagem de pedidos
+        let subTotalPedidos = customerPedidos.length;
         
+        customerPedidos.forEach(p => {
+          countPedidos++; // Incremento global de pedidos
+          
+          // Processar Bairros
+          const bairro = p.endereco_entrega?.bairro || 'Balcão/Outros';
+          bairroMap[bairro] = (bairroMap[bairro] || 0) + Number(p.total || 0);
+
+          // Processar Produtos (Snapshot real do JSON do pedido)
+          if (p.itens) {
+            const itensArr = Array.isArray(p.itens) ? p.itens : [];
+            itensArr.forEach(item => {
+              const name = item.titulo || item.name || 'Produto Desconhecido';
+              const qtd = Number(item.qtd || 1);
+              produtoMap[name] = (produtoMap[name] || 0) + qtd;
+            });
+          }
+        });
+
         if (Number(c.saldo_devedor) === 0 && Number(c.total_cliente) > 0) {
           pagosIds.push(c.id);
         }
       });
 
+      // Formatar Top Produtos
+      const topProdList = Object.entries(produtoMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, qty]) => ({ name, qty }));
+
+      // Formatar Vendas por Bairro
+      const bairroList = Object.entries(bairroMap)
+        .map(([name, valor]) => ({ name, valor }))
+        .sort((a, b) => b.valor - a.valor);
+
       setResumo({
         total_pedidos: countPedidos,
         total_vendas_estimado: totalVendas,
         total_recebido_confirmado: totalPago,
-        total_em_aberto_estimado: totalPendentes
+        total_em_aberto_estimado: totalPendentes,
+        ticket_medio: countPedidos > 0 ? (totalVendas / countPedidos) : 0,
+        top_produtos: topProdList,
+        vendas_por_bairro: bairroList
       });
       setPagamentosConfirmados(pagosIds);
     }

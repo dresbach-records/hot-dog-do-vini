@@ -56,7 +56,18 @@ function Relatorios() {
           <div className="stat-info">
             <span className="stat-label">Total Vendido</span>
             <h3 className="stat-value">R$ {(resumo.total_vendas_estimado || 0).toFixed(2).replace('.', ',')}</h3>
-            <span className="stat-trend neutral">Resumo Geral</span>
+            <span className="stat-trend neutral">Total de {resumo.total_pedidos} pedidos</span>
+          </div>
+        </div>
+
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
+          <div className="stat-icon-wrapper bg-purple-light">
+            <ShoppingBag size={24} color="var(--c-purple)" />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Ticket Médio</span>
+            <h3 className="stat-value">R$ {(resumo.ticket_medio || 0).toFixed(2).replace('.', ',')}</h3>
+            <span className="stat-trend positive">Gasto por Cliente</span>
           </div>
         </div>
 
@@ -67,7 +78,7 @@ function Relatorios() {
           <div className="stat-info">
             <span className="stat-label">Total Recebido</span>
             <h3 className="stat-value text-positive">R$ {(resumo.total_recebido_confirmado || 0).toFixed(2).replace('.', ',')}</h3>
-            <span className="stat-trend positive">Dinheiro no Caixa</span>
+            <span className="stat-trend positive">No Bolso</span>
           </div>
         </div>
 
@@ -120,7 +131,7 @@ function Relatorios() {
           </div>
         </div>
 
-        {/* Gráfico Ranking Devedores */}
+        {/* Gráfico Maiores Devedores (Movido) */}
         <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
           <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Maiores Valores Pendentes</h3>
           <div style={{ width: '100%', height: 300 }}>
@@ -130,8 +141,46 @@ function Relatorios() {
                 <XAxis type="number" hide />
                 <YAxis dataKey="name" type="category" stroke="var(--text-secondary)" fontSize={12} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value.toFixed(2)}`} />
-                <Bar dataKey="valor" fill="var(--c-red)" radius={[0, 4, 4, 0]} barSize={30} />
+                <Bar dataKey="valor" fill="var(--c-red)" radius={[0, 4, 4, 0]} barSize={25} />
               </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* TOP PRODUTOS (NOVO) */}
+        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Produtos Mais Vendidos 🔥</h3>
+          <div style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <BarChart data={resumo.top_produtos} layout="vertical" margin={{ left: 40 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-color)" />
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" stroke="var(--text-secondary)" fontSize={11} axisLine={false} tickLine={false} width={120} />
+                <Tooltip contentStyle={customTooltipStyle} />
+                <Bar dataKey="qty" fill="var(--c-yellow)" radius={[0, 4, 4, 0]} barSize={25} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* VENDAS POR BAIRRO (NOVO) */}
+        <div className="vini-glass-panel" style={{ padding: '1.5rem', gridColumn: '1 / -1' }}>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Faturamento por Bairro 📍</h3>
+          <div style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <AreaChart data={resumo.vendas_por_bairro}>
+                <defs>
+                  <linearGradient id="colorBairro" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--c-blue)" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="var(--c-blue)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
+                <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={12} axisLine={false} tickLine={false} />
+                <YAxis stroke="var(--text-secondary)" fontSize={12} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${v}`} />
+                <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value.toFixed(2)}`} />
+                <Area type="monotone" dataKey="valor" stroke="var(--c-blue)" fillOpacity={1} fill="url(#colorBairro)" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>

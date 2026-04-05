@@ -165,15 +165,27 @@ function Sidebar({ onLogout }) {
                   </NavLink>
                 </li>
                 <li>
+                  <NavLink to="/admin/cupons" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <Ticket size={20} color="var(--c-yellow)" />
+                    <span>Cupons (Promo Sex)</span>
+                  </NavLink>
+                </li>
+                <li>
                   <NavLink to="/admin/marketing" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-                    <Ticket size={20} />
-                    <span>Marketing</span>
+                    <Megaphone size={20} />
+                    <span>Campanhas Whats</span>
                   </NavLink>
                 </li>
                 <li>
                   <NavLink to="/admin/pagamentos" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <CreditCard size={20} />
                     <span>Pagamentos</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/fiscal" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <FileText size={20} />
+                    <span>Módulo Fiscal</span>
                   </NavLink>
                 </li>
                 <li>

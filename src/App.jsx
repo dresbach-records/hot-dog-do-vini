@@ -24,9 +24,14 @@ import Relatorios from './pages/Relatorios';
 import Sorteios from './pages/Sorteios';
 import Marketing from './pages/Marketing';
 import Integracoes from './pages/Integracoes';
-import Pagamentos from './pages/Pagamentos';
-import Agendamentos from './pages/Agendamentos';
 import ConveniosAdmin from './pages/ConveniosAdmin';
+import FechamentoCaixa from './pages/FechamentoCaixa';
+import ViniBot from './pages/ViniBot';
+import Impressao from './pages/Impressao';
+import Motoboys from './pages/Motoboys';
+import Fiscal from './pages/Fiscal';
+import PDVBalcao from './pages/PDVBalcao';
+import Estoque from './pages/Estoque';
 
 // Portal do Consumidor Final (Rota Externa Pública)
 import PortalCliente from './pages/PortalCliente';
@@ -137,6 +142,9 @@ function App() {
                     <Route path="clientes" element={<Clientes />} />
                     <Route path="fidelidade" element={<Sorteios />} />
                     <Route path="caixa" element={<Caixa />} />
+                    <Route path="fechamento-caixa" element={<FechamentoCaixa />} />
+                    <Route path="vini-bot" element={<ViniBot />} />
+                    <Route path="impressao" element={<Impressao />} />
                     <Route path="despesas" element={<Financeiro />} />
                     <Route path="rh" element={<RH />} />
                     <Route path="filiais" element={<Filiais />} />
@@ -146,6 +154,10 @@ function App() {
                     <Route path="convenios" element={<ConveniosAdmin />} />
                     <Route path="integracoes" element={<Integracoes />} />
                     <Route path="configuracoes" element={<Configuracoes />} />
+                    <Route path="motoboys" element={<Motoboys />} />
+                    <Route path="fiscal" element={<Fiscal />} />
+                    <Route path="pdv-balcao" element={<PDVBalcao />} />
+                    <Route path="estoque" element={<Estoque />} />
                     <Route path="*" element={<Navigate to="/admin/dashboard" />} />
                   </Routes>
                 </main>
