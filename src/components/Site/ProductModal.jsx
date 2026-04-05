@@ -69,7 +69,7 @@ const ProductModal = ({ product, onClose, onAddToCart }) => {
               />
             </div>
 
-            {publicNotice.salesEnabled ? (
+            {publicNotice?.salesEnabled ? (
               <button className="vini-modal-add-btn" onClick={handleAdd}>
                 <ShoppingBag size={20} />
                 Adicionar à sacola — R$ {(parseFloat(product.price.replace('R$ ', '').replace(',', '.')) * quantity).toFixed(2).replace('.', ',')}
