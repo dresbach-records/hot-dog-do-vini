@@ -15,9 +15,7 @@ import {
   Ticket
 } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
-import { supabase } from '../lib/supabaseClient';
-import { useNavigate } from 'react-router-dom';
-import '../styles/cliente/sacola.css';
+import api from '../services/api';
 
 const Checkout = ({ session }) => {
   const { clientes, loading: contextLoading } = useClientes();
@@ -26,7 +24,11 @@ const Checkout = ({ session }) => {
     street: 'Rua Miguel Bauer',
     number: '123',
     neighborhood: 'Recreio',
-    city: 'Taquara/RS'
+    city: 'Taquara',
+    complement: '',
+    bairro: 'Recreio',
+    city: 'Taquara',
+    cep: '95600-000'
   });
 
   const cliente = clientes.find(c => c.codigo_vini === session?.user?.id);
@@ -38,8 +40,9 @@ const Checkout = ({ session }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Nota: Cálculos visuais permanecem para UX, mas o backend IRÁ IGNORAR e recalcular.
   const subtotal = cartItems.reduce((acc, item) => acc + (item.totalPrice || 0), 0);
-  const taxaEntrega = 0; // Grátis por enquanto
+  const taxaEntrega = 0;
   const total = subtotal + taxaEntrega;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -69,47 +72,41 @@ const Checkout = ({ session }) => {
 
     setIsSubmitting(true);
     try {
-      // 1. Criar o pedido
-      const { data: pedido, error: errPedido } = await supabase
-        .from('pedidos')
-        .insert({
-          cliente_id: cliente.id,
-          plataforma: 'vinis',
-          status: 'pendente',
-          tipo_entrega: 'delivery_proprio',
-          endereco_entrega: address,
-          forma_pagamento: paymentMethod,
-          total: total,
-          taxa_entrega: taxaEntrega,
-          itens: cartItems,
-          codigo_pedido_curto: `#${Math.floor(Math.random() * 9000) + 1000}`
-        })
-        .select()
-        .single();
+      // 🚀 Chamada profissional ao novo Backend (10/10)
+      const payload = {
+        cliente: {
+          nome: cliente?.nome || 'Cliente Vini',
+          email: session?.user?.email,
+          telefone: cliente?.telefone
+        },
+        itens: cartItems.map(item => ({
+          id: item.id,
+          quantidade: item.qtd || item.quantity || 1
+        })),
+        endereco: {
+          rua: address.street,
+          numero: address.number,
+          bairro: address.neighborhood,
+          cidade: 'Taquara',
+          cep: '95600-000'
+        },
+        pagamento: {
+          metodo: paymentMethod
+        }
+      };
 
-      if (errPedido) throw errPedido;
+      const result = await api.post('/orders', payload);
 
-      // 2. Se for convênio, debitar saldo (Opcional se houver trigger, mas vamos garantir)
-      if (paymentMethod === 'convenio') {
-         const { error: errSaldo } = await supabase
-           .from('clientes')
-           .update({ 
-             convenio_saldo: convenioSaldo - total,
-             total_cliente: Number(cliente.total_cliente) + total 
-           })
-           .eq('id', cliente.id);
-         
-         if (errSaldo) console.error("Erro ao debitar saldo:", errSaldo);
+      if (result.success) {
+        localStorage.removeItem('vini-cart');
+        alert(result.message || "Pedido realizado com sucesso!");
+        window.location.href = '/cliente/pedidos';
+      } else {
+        throw new Error(result.error);
       }
-
-      // 3. Limpar carrinho
-      localStorage.removeItem('vini-cart');
-      
-      alert("Pedido realizado com sucesso!");
-      window.location.href = '/cliente/pedidos';
     } catch (err) {
-      console.error(err);
-      alert("Erro ao processar pedido. Tente novamente.");
+      console.error('[Checkout Error]', err);
+      alert(typeof err === 'string' ? err : "Erro ao processar pedido. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }

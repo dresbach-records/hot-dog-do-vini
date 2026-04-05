@@ -25,7 +25,7 @@ export const CreateOrderSchema = z.object({
     cep: z.string()
   }),
   pagamento: z.object({
-    metodo: z.enum(['pix', 'cartao', 'convenio']),
+    metodo: z.enum(['pix', 'cartao', 'convenio', 'va']),
     tipo_resgate: z.string().optional() // Para convênios
   }),
   agendamento: z.object({

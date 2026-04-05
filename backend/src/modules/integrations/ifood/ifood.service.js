@@ -71,6 +71,36 @@ export const ifoodService = {
   },
 
   /**
+   * Inicia fluxo OAuth (UserCode)
+   */
+  async authStart() {
+    const config = { clientId: process.env.IFOOD_CLIENT_ID };
+    const response = await axios.post(`${IFOOD_AUTH}/oauth/userCode`, new URLSearchParams({
+      clientId: config.clientId,
+    }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 5000 });
+    return response.data;
+  },
+
+  /**
+   * Finaliza OAuth com Authorization Code
+   */
+  async authConfirm(authorizationCode) {
+    const config = {
+      clientId: process.env.IFOOD_CLIENT_ID,
+      clientSecret: process.env.IFOOD_CLIENT_SECRET
+    };
+    const response = await axios.post(`${IFOOD_AUTH}/oauth/token`, new URLSearchParams({
+      grantType: 'authorization_code',
+      code: authorizationCode,
+      clientId: config.clientId,
+      clientSecret: config.clientSecret,
+    }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 5000 });
+
+    this.salvarTokens(response.data);
+    return { success: true, message: 'iFood conectado com sucesso!' };
+  },
+
+  /**
    * Orquestração de Pedidos iFood (Proxy Seguro)
    */
   async listOrders() {
@@ -86,12 +116,69 @@ export const ifoodService = {
   /**
    * Detalhes do Pedido iFood
    */
-  async getOrderDetails(orderId) {
+  /**
+   * Status: Confirmar Pedido
+   */
+  async confirmOrder(orderId) {
     const token = await this.getAccessToken();
-    const response = await axios.get(`${IFOOD_API}/order/v1.0/orders/${orderId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-      timeout: 5000
+    await axios.post(`${IFOOD_API}/order/v1.0/orders/${orderId}/confirm`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
     });
-    return response.data;
+    return { success: true };
+  },
+
+  /**
+   * Status: Iniciar Preparação
+   */
+  async startPreparation(orderId) {
+    const token = await this.getAccessToken();
+    await axios.post(`${IFOOD_API}/order/v1.0/orders/${orderId}/startPreparation`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return { success: true };
+  },
+
+  /**
+   * Status: Pronto para Retirada / Despacho
+   */
+  async readyToPickup(orderId) {
+    const token = await this.getAccessToken();
+    await axios.post(`${IFOOD_API}/order/v1.0/orders/${orderId}/readyToPickup`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return { success: true };
+  },
+
+  /**
+   * Status: Despachar
+   */
+  async dispatch(orderId) {
+    const token = await this.getAccessToken();
+    await axios.post(`${IFOOD_API}/order/v1.0/orders/${orderId}/dispatch`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return { success: true };
+  },
+
+  /**
+   * Status: Cancelar
+   */
+  async cancelOrder(orderId, reason) {
+    const token = await this.getAccessToken();
+    await axios.post(`${IFOOD_API}/order/v1.0/orders/${orderId}/cancel`, reason, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return { success: true };
+  },
+
+  /**
+   * Solicitar Entregador iFood (Logística)
+   */
+  async requestLogistic(orderId) {
+    const token = await this.getAccessToken();
+    await axios.post(`${IFOOD_API}/order/v1.0/orders/${orderId}/dispatch`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return { success: true };
   }
 };

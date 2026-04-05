@@ -20,6 +20,27 @@ router.use('/orders', ordersRoutes);
  * Proxy Seguro para Merchant API
  */
 
+// Login iFood: Inicia Fluxo
+router.post('/ifood/auth/start', async (req, res) => {
+  try {
+    const data = await ifoodService.authStart();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Login iFood: Confirma
+router.post('/ifood/auth/confirm', async (req, res) => {
+  try {
+    const { authorizationCode } = req.body;
+    const result = await ifoodService.authConfirm(authorizationCode);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // Status iFood
 router.get('/ifood/status', async (req, res) => {
   try {
