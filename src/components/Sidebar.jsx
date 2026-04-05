@@ -8,7 +8,7 @@ import {
 import './Sidebar.css';
 
 function Sidebar({ onLogout }) {
-  const [openSection, setOpenSection] = useState(null); // 'delivery', 'erp', 'perf' or null
+  const [openSection, setOpenSection] = useState('delivery'); // 'delivery', 'automacao', 'erp', 'perf' or null
 
   const toggleSection = (section) => {
     setOpenSection(openSection === section ? null : section);
@@ -41,31 +41,57 @@ function Sidebar({ onLogout }) {
                 <li>
                   <NavLink to="/admin/pedidos" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <ClipboardList size={20} />
-                    <span>Pedidos</span>
+                    <span>Pedidos (Kanban)</span>
                   </NavLink>
                 </li>
                 <li>
                   <NavLink to="/admin/cardapio" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <UtensilsCrossed size={20} />
-                    <span>Cardápio</span>
+                    <span>Cardápio Digital</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/admin/entregas" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/motoboys" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <Bike size={20} />
-                    <span>Entregas</span>
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/admin/area-entrega" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-                    <MapPin size={20} />
-                    <span>Área de Entrega</span>
+                    <span>Equipe Motoboys</span>
                   </NavLink>
                 </li>
                 <li>
                   <NavLink to="/admin/clientes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <UsersRound size={20} />
-                    <span>Clientes</span>
+                    <span>Base de Clientes</span>
+                  </NavLink>
+                </li>
+              </ul>
+            )}
+          </div>
+
+          <div className="nav-section">
+            <h3 
+              className="nav-section-title collapsible" 
+              onClick={() => toggleSection('automacao')}
+            >
+              <span>Automação</span>
+              {openSection === 'automacao' ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </h3>
+            {openSection === 'automacao' && (
+              <ul className="submenu">
+                <li>
+                  <NavLink to="/admin/vini-bot" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <Flame size={20} color="#EA1D2C" />
+                    <span>Vini Bot (Whats)</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/impressao" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <Receipt size={20} />
+                    <span>Config. Impressora</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/auto-atendimento" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <Store size={20} />
+                    <span>Auto-atendimento</span>
                   </NavLink>
                 </li>
               </ul>
