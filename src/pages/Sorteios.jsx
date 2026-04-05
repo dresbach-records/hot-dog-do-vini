@@ -5,7 +5,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import '../assets/styles/Dashboard.css';
+import '../styles/admin/dashboard.css';
 
 function Sorteios() {
   const { clientes, pagamentosConfirmados } = useClientes();
@@ -103,7 +103,7 @@ function Sorteios() {
           <p className="text-secondary">Sorteio igualitário por Cliente (ID), independente do valor ultrapassado da meta.</p>
         </div>
         <button 
-          className={`btn ${isSorting ? 'btn-outline' : 'btn-primary'}`} 
+          className={`btn ${isSorting ? 'vini-btn-outline' : 'vini-btn-primary'}`} 
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', transform: isSorting ? 'scale(0.98)' : 'scale(1)', transition: 'all 0.2s' }}
           onClick={handleRealizarSorteio}
           disabled={isSorting}
@@ -130,7 +130,7 @@ function Sorteios() {
 
       {/* LINHA 1: KPIs */}
       <section className="stats-grid" style={{ marginBottom: '2rem' }}>
-        <div className="stat-card glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="stat-icon-wrapper bg-green-light">
             <Users size={24} color="var(--c-green)" />
           </div>
@@ -141,7 +141,7 @@ function Sorteios() {
           </div>
         </div>
 
-        <div className="stat-card glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="stat-icon-wrapper" style={{ background: 'var(--bg-active)' }}>
             <DollarSign size={24} color="var(--c-blue)" />
           </div>
@@ -152,7 +152,7 @@ function Sorteios() {
           </div>
         </div>
 
-        <div className="stat-card glass-panel" style={{ padding: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
           <div className="stat-icon-wrapper bg-red-light">
             <Ban size={24} color="var(--c-red)" />
           </div>
@@ -166,7 +166,7 @@ function Sorteios() {
 
       {/* LINHA 2: GRÁFICOS (Elegibilidade e Tops) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
           <div className="section-header" style={{ marginBottom: '0.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>ELEGÍVEIS VS BLOQUEADOS</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Status da carteira de clientes</span>
@@ -184,7 +184,7 @@ function Sorteios() {
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
           <div className="section-header" style={{ marginBottom: '0.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>TOP CLIENTES POR COMPRA</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Ranking geral de consumidores</span>
@@ -206,7 +206,7 @@ function Sorteios() {
       {/* LINHA 3: TABELA E HISTÓRICO */}
       <div style={{ display: 'grid', gridTemplateColumns: 'reapete(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
         
-        <div className="glass-panel" style={{ padding: '0', overflow: 'hidden', flex: 2 }}>
+        <div className="vini-glass-panel" style={{ padding: '0', overflow: 'hidden', flex: 2 }}>
           <div className="section-header" style={{ padding: '1.5rem 1.5rem 0.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>Base de Clientes (Fidelidade)</h3>
           </div>
@@ -231,7 +231,7 @@ function Sorteios() {
                       R$ {c.valorFiado.toFixed(2).replace('.', ',')}
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <span className={`badge ${c.isEligible ? 'success' : 'negative'}`} style={{ whiteSpace: 'nowrap' }} title={c.razaoBloqueio}>
+                      <span className={`vini-badge ${c.isEligible ? 'success' : 'negative'}`} style={{ whiteSpace: 'nowrap' }} title={c.razaoBloqueio}>
                         {c.statusFidelidade}
                       </span>
                       {!c.isEligible && <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>{c.razaoBloqueio}</span>}
@@ -243,7 +243,7 @@ function Sorteios() {
           </div>
         </div>
 
-        <div className="glass-panel" style={{ padding: '1.5rem', flex: 1, minWidth: '300px' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem', flex: 1, minWidth: '300px' }}>
           <div className="section-header" style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <History size={18} /> Histórico Sorteios

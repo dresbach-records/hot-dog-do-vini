@@ -62,17 +62,35 @@ export const ClientesProvider = ({ children }) => {
     fetchData();
   }, []);
 
-  // Adicionar Cliente no Banco Real
+  // Adicionar Cliente no Banco Real (com verificação de duplicidade)
   const adicionarCliente = async (dados) => {
+    // 1. Verificar se o cliente já existe por ID de Auth ou Email
+    const { data: existing, error: checkError } = await supabase
+      .from('clientes')
+      .select('id')
+      .or(`id_auth.eq.${dados.id_auth},email.eq.${dados.email}`)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('Erro ao verificar existência do cliente:', checkError);
+    }
+
+    if (existing) {
+      console.log('Cliente já cadastrado no banco de dados.');
+      return { success: true, data: existing, alreadyExists: true };
+    }
+
+    // 2. Se não existir, insere
     const { data, error } = await supabase
       .from('clientes')
       .insert([{
         nome: dados.nome,
-        id_auth: dados.id_auth, // Link com o Supabase Auth se houver
-        total_cliente: dados.total || 0,
+        email: dados.email,
+        id_auth: dados.id_auth,
+        total_cliente: dados.total_cliente || 0,
         total_pago: dados.total_pago || 0,
         saldo_devedor: dados.saldo_devedor || 0,
-        vencimento: dados.vencimento || null
+        convenio_status: 'inativo'
       }])
       .select();
 

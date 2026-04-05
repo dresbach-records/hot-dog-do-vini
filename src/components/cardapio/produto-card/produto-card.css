@@ -1,0 +1,114 @@
+.vini-card-produto {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.vini-card-produto:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--c-red);
+}
+
+.vini-card-produto.paused {
+  opacity: 0.6;
+  filter: grayscale(0.5);
+}
+
+.vini-card-img {
+  height: 150px;
+  position: relative;
+  overflow: hidden;
+}
+
+.vini-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vini-card-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  padding: 5px;
+  border-radius: var(--radius-md);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.vini-card-produto:hover .vini-card-actions {
+  opacity: 1;
+}
+
+.vini-btn-icon {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  padding: 6px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vini-btn-icon:hover {
+  background: var(--c-red);
+  transform: scale(1.1);
+}
+
+.vini-card-info {
+  padding: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.vini-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.vini-card-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.vini-card-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 2.4rem;
+}
+
+.vini-card-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vini-card-price {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--c-red);
+}

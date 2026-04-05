@@ -119,7 +119,7 @@ function App() {
           {/* == ÁREA ADMINISTRATIVA ERP (PROTEGIDA) == */}
           <Route path="/admin/*" element={
             session && isAdmin ? (
-              <div className="app-container">
+              <div className="app-container admin-container">
                 <Sidebar onLogout={() => supabase.auth.signOut()} />
                 <main className="main-content">
                   <Routes>

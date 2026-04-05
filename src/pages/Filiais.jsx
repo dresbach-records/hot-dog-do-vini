@@ -11,7 +11,7 @@ function Filiais() {
       </header>
 
       <div className="caixa-content">
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="section-header-row">
             <h3>Unidades Vini's</h3>
           </div>
@@ -37,7 +37,7 @@ function Filiais() {
                   <td>Vini / Ana</td>
                   <td>R$ 40.000,00</td>
                   <td><span className="text-positive">+8% acima</span></td>
-                  <td><span className="badge success">Operando</span></td>
+                  <td><span className="vini-badge-success">Operando</span></td>
                 </tr>
                 <tr>
                   <td>
@@ -49,7 +49,7 @@ function Filiais() {
                   <td>Carlos</td>
                   <td>R$ 25.000,00</td>
                   <td><span className="text-negative">-2% abaixo</span></td>
-                  <td><span className="badge success">Operando</span></td>
+                  <td><span className="vini-badge-success">Operando</span></td>
                 </tr>
               </tbody>
             </table>

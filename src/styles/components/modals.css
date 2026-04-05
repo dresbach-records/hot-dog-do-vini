@@ -1,0 +1,75 @@
+/* --- BASE MODAL --- */
+.vini-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.vini-modal-content {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  width: 95%;
+  max-width: 500px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* --- DOMAIN SCOPED MODALS/DROPDOWNS --- */
+
+/* Client Portal Dropdowns */
+.portal-container .vini-user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: -10px;
+  width: 280px;
+  background: #fff;
+  color: #1F2937;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  margin-top: 18px;
+  z-index: 2000;
+  overflow: hidden;
+  border: 1px solid #E5E7EB;
+  animation: viniFadeIn 0.2s ease-out;
+  text-align: left;
+}
+
+@keyframes viniFadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.portal-container .vini-user-dropdown-header {
+  padding: 20px;
+  background: #fdfdfd;
+  border-bottom: 1px solid #eee;
+}
+
+.portal-container .vini-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 20px;
+  font-size: 15px;
+  color: #4B5563;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.portal-container .vini-dropdown-item:hover {
+  background: #fdf2f2;
+  color: #EA1D2C;
+}
+

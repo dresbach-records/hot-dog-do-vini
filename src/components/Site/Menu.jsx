@@ -46,7 +46,7 @@ const Menu = ({ activeTab, setActiveTab }) => {
                     style={{ height: 'auto', width: '100%' }}
                   />
                   <div className="ibody">
-                    {item.badge && <span className={`ibadge ${item.badgeClass}`}>{item.badge}</span>}
+                    {item.badge && <span className={`ivini-badge ${item.badgeClass}`}>{item.badge}</span>}
                     <div className="iname">{item.title}</div>
                     <div className="idesc">{item.description}</div>
                     <div className="ifoot">

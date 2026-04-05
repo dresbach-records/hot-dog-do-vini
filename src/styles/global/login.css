@@ -1,3 +1,4 @@
+/* Global Login Styles */
 .login-container {
   min-height: 100vh;
   width: 100vw;
@@ -5,7 +6,6 @@
   align-items: center;
   justify-content: center;
   background: var(--bg-base);
-  /* Optional: a subtle gradient background using brand colors very lightly */
   background-image: radial-gradient(circle at 100% 0%, rgba(244, 162, 97, 0.15) 0%, transparent 40%),
                     radial-gradient(circle at 0% 100%, rgba(230, 57, 70, 0.1) 0%, transparent 40%);
 }
@@ -43,17 +43,6 @@
   box-shadow: var(--shadow-glow);
 }
 
-.login-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.login-header p {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
 .login-form {
   display: flex;
   flex-direction: column;
@@ -64,12 +53,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.form-group label {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-secondary);
 }
 
 .input-wrapper {
@@ -100,37 +83,4 @@
 .input-wrapper input:focus {
   border-color: var(--c-red);
   box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: -0.5rem;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.forgot-password {
-  font-size: 0.85rem;
-  color: var(--c-red);
-  font-weight: 500;
-}
-
-.forgot-password:hover {
-  text-decoration: underline;
-}
-
-.login-btn {
-  width: 100%;
-  padding: 0.9rem;
-  font-size: 1rem;
-  margin-top: 0.5rem;
 }

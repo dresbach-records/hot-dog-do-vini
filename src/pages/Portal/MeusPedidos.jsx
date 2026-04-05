@@ -65,7 +65,7 @@ const MeusPedidos = ({ session }) => {
                 <div className="vini-pedido-header">
                   <div className="vini-pedido-id">Pedido {pedido.codigo_pedido_curto || `#${pedido.id.slice(0, 4)}`}</div>
                   <div 
-                    className="vini-status-badge" 
+                    className="vini-badge-status" 
                     style={{ backgroundColor: getStatusColor(pedido.status) + '20', color: getStatusColor(pedido.status) }}
                   >
                     {pedido.status.toUpperCase()}
@@ -103,7 +103,7 @@ const MeusPedidos = ({ session }) => {
         .vini-pedido-card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; }
         .vini-pedido-header { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px dashed #eee; padding-bottom: 10px; }
         .vini-pedido-id { font-weight: 800; color: #333; }
-        .vini-status-badge { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 6px; }
+        .vini-badge-status { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 6px; }
         
         .vini-pedido-body { margin-bottom: 15px; }
         .vini-pedido-items { font-size: 14px; color: #666; display: block; margin-bottom: 5px; }

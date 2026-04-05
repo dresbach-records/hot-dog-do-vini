@@ -15,7 +15,7 @@ function Sidebar({ onLogout }) {
   };
 
   return (
-    <aside className="sidebar glass-panel">
+    <aside className="sidebar vini-glass-panel">
       <div className="sidebar-header" style={{ padding: '0.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
         <div className="logo-container" style={{ background: 'transparent', textAlign: 'center', width: '100%' }}>
           <img 

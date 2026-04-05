@@ -1,0 +1,85 @@
+/* --- BASE BUTTON --- */
+.vini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+/* Variants */
+.vini-btn-primary {
+  background: linear-gradient(135deg, var(--c-red), var(--c-red-dark));
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.vini-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+.vini-btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.vini-btn-outline:hover {
+  border-color: var(--text-primary);
+}
+
+/* --- DOMAIN SCOPED BUTTONS --- */
+
+/* Admin ERP Scoped */
+.admin-container .vini-btn-action {
+  color: var(--c-red);
+  background: rgba(230, 57, 70, 0.15);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: var(--radius-md);
+}
+
+.admin-container .vini-btn-action:hover {
+  background: var(--c-red);
+  color: #fff;
+}
+
+/* Site Navbar Scoped */
+.site-navbar .vini-btn-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 15px;
+  border-radius: 22px;
+  font-size: 13px;
+  font-weight: 800;
+  transition: all .18s;
+  white-space: nowrap;
+}
+
+.site-navbar .vini-btn-nav-red { background: #EA1D2C; color: #fff; }
+.site-navbar .vini-btn-nav-green { background: #25D366; color: #fff; }
+
+/* Client Portal Scoped */
+.portal-container .vini-btn-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 11px;
+  border-radius: 18px;
+  font-size: 10px;
+  font-weight: 800;
+  transition: all .15s;
+}
+
+.portal-container .vini-btn-item-red { background: #FFEBEC; color: #EA1D2C; }
+.portal-container .vini-btn-item-green { background: #DCFCE7; color: #15803D; }
+

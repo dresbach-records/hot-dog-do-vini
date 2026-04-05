@@ -1,5 +1,5 @@
 import React from 'react';
-import '../assets/styles/Dashboard.css';
+import '../styles/admin/dashboard.css';
 
 function Pagamentos() {
   return (
@@ -11,7 +11,7 @@ function Pagamentos() {
         </div>
       </header>
       <div className="dashboard-content">
-        <div className="glass-panel" style={{ padding: '2rem' }}>
+        <div className="vini-glass-panel" style={{ padding: '2rem' }}>
           <p>Módulo de Pagamentos em construção...</p>
         </div>
       </div>

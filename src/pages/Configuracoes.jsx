@@ -11,7 +11,7 @@ function Configuracoes() {
       </header>
 
       <div className="caixa-content">
-        <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           <div className="config-section">
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
@@ -74,7 +74,7 @@ function Configuracoes() {
         </div>
 
         <div className="side-panel">
-          <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+          <div className="vini-glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Clock size={18} color="var(--c-red)" />
               Horário de Atendimento
@@ -95,7 +95,7 @@ function Configuracoes() {
             </ul>
           </div>
 
-          <div className="glass-panel" style={{ padding: '1.5rem' }}>
+          <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
             <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <MapPin size={18} color="var(--c-yellow)" />
               Logística e Agendamentos

@@ -35,3 +35,9 @@ tmp/
 !public/*.webp
 !public/*.ico
 !public/*.svg
+
+# Blueprints (Contém dados sensíveis)
+blueprint.md
+architecture.md
+tasks.md
+

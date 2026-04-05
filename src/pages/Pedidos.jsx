@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, ArrowRight, ArrowLeft, MoreHorizontal, AlertCircle, CheckCircle2, Truck, ChefHat } from 'lucide-react';
-import '../assets/styles/Dashboard.css';
-import '../assets/styles/Pedidos.css';
+import '../styles/admin/pedidos.css';
 
 const MOCK_ORDERS = [
   { id: '1024', customer: 'João Silva', items: '1x X-Tudo Artesanal, 2x Coca-cola 350ml, 1x Porção de Fritas', total: 64.90, time: '2m', status: 'novos' },
@@ -53,7 +52,7 @@ function Pedidos() {
             <StatusIcon status={status} />
             {title}
           </div>
-          <span className="kanban-badge">{columnOrders.length}</span>
+          <span className="vini-badge-kanban">{columnOrders.length}</span>
         </div>
         
         <div className="kanban-cards-container">
@@ -109,7 +108,7 @@ function Pedidos() {
           <h2>Kanban de Pedidos</h2>
           <p>Gerencie o fluxo de preparação e entrega em tempo real.</p>
         </div>
-        <button className="btn btn-primary">
+        <button className="btn vini-btn-primary">
           + Novo Pedido Manual
         </button>
       </header>

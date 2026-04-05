@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Plus, User, FileText, Edit, X, Save } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
-import '../assets/styles/Caixa.css';
+import '../styles/admin/caixa.css';
 
 function Caixa() {
   const { clientes, pagamentosConfirmados, atualizarCliente } = useClientes();
@@ -33,14 +33,14 @@ function Caixa() {
           <p className="text-secondary">Gerenciamento de vendas diárias e controle de fiados.</p>
         </div>
         <div className="header-actions">
-          <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button className="vini-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Plus size={18} /> Nova Venda
           </button>
         </div>
       </header>
 
       <div className="caixa-content">
-        <div className="fiados-section glass-panel">
+        <div className="fiados-section vini-glass-panel">
           <div className="section-header-row">
             <h3>Controle de Fiados</h3>
             <div className="search-bar">
@@ -83,18 +83,18 @@ function Caixa() {
                     </td>
                     <td>{cliente.pedidos ? cliente.pedidos[0]?.data || 'Recente' : 'Recente'}</td>
                     <td>
-                      <span className={`badge ${cliente.status === 'PENDENTE' ? 'warning' : 'success'}`}>
+                      <span className={`vini-badge ${cliente.status === 'PENDENTE' ? 'warning' : 'success'}`}>
                         {cliente.status}
                       </span>
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         {valorExibicao > 0 ? (
-                          <button className="btn-action">Receber</button>
+                          <button className="vini-btn-action">Receber</button>
                         ) : (
-                          <button className="btn-action secondary"><FileText size={16} /></button>
+                          <button className="vini-btn-action secondary"><FileText size={16} /></button>
                         )}
-                        <button className="btn-action secondary" onClick={() => handleEditClick({ ...cliente, valor: valorExibicao })} title="Editar Cliente">
+                        <button className="vini-btn-action secondary" onClick={() => handleEditClick({ ...cliente, valor: valorExibicao })} title="Editar Cliente">
                           <Edit size={16} />
                         </button>
                       </div>
@@ -107,7 +107,7 @@ function Caixa() {
         </div>
 
         <div className="side-panel">
-          <div className="resumo-caixa glass-panel">
+          <div className="resumo-caixa vini-glass-panel">
             <h3>Resumo do Caixa (Hoje)</h3>
             <div className="resumo-stats">
               <div className="resumo-item">
@@ -124,14 +124,14 @@ function Caixa() {
                 <h4 className="text-green">R$ {(clientes.filter(c => pagamentosConfirmados.includes(c.nome)).reduce((acc, curr) => acc + (curr.total_pago || curr.total_cliente || 0), 0) + clientesFiados.reduce((acc, curr) => acc + (typeof curr.valor === 'number' ? curr.valor : (curr.saldo_devedor || curr.total_cliente || 0)), 0)).toFixed(2).replace('.', ',')}</h4>
               </div>
             </div>
-            <button className="btn-outline">Fechar Caixa</button>
+            <button className="vini-btn-outline">Fechar Caixa</button>
           </div>
         </div>
       </div>
 
       {editingClient && (
         <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={() => setEditingClient(null)}>
-          <div className="modal-content glass-panel" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+          <div className="modal-content vini-glass-panel" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header" style={{ marginBottom: '1.5rem' }}>
               <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Edit color="var(--c-blue)" size={20} />
@@ -190,7 +190,7 @@ function Caixa() {
                 <button type="button" className="btn" onClick={() => setEditingClient(null)}>
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button type="submit" className="vini-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Save size={16} /> Salvar Alterações
                 </button>
               </div>

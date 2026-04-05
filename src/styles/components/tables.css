@@ -1,0 +1,62 @@
+/* --- BASE TABLE CONTAINER --- */
+.vini-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+}
+
+/* --- DOMAIN SCOPED TABLES --- */
+
+/* Admin ERP Scoped */
+.admin-container .vini-data-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 800px;
+}
+
+.admin-container .vini-data-table th {
+  text-align: left;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: #F9FAFB;
+}
+
+.admin-container .vini-data-table td {
+  border-bottom: 1px solid #F3F4F6;
+  padding: 1rem;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  background: #fff;
+}
+
+.admin-container .vini-data-table tr:hover td {
+  background: #F9FAFB;
+}
+
+/* Cell Components */
+.vini-table-client-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.vini-avatar {
+  border-radius: var(--radius-full);
+  background: #E5E7EB;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+

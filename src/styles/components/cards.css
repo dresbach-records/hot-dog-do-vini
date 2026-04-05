@@ -1,0 +1,82 @@
+/* --- BASE GLASS PANEL --- */
+.vini-glass-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(8px);
+}
+
+/* --- DOMAIN SCOPED CARDS --- */
+
+/* Admin ERP Scoped */
+.admin-container .vini-card-stat {
+  padding: 1.5rem;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-container .vini-card-stat:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--c-red);
+}
+
+/* Site Marketing Scoped */
+.site-container .vini-card-product {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #E8E8E8;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.site-container .vini-card-product:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
+  transform: translateY(-2px);
+  border-color: #EA1D2C;
+}
+
+.site-container .vini-card-benefit {
+  background: #F7F7F7;
+  border-radius: 14px;
+  border: 1.5px solid #E8E8E8;
+  padding: 24px;
+  transition: box-shadow 0.2s;
+}
+
+/* Client Portal Scoped */
+.portal-container .vini-card-offer {
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.portal-container .vini-card-category {
+  flex: 0 0 auto;
+  width: 100px;
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.portal-container .vini-card-category.active {
+  border-color: #EA1D2C;
+  background: #FEF2F2;
+}
+

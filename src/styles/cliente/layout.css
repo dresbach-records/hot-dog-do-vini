@@ -1,0 +1,112 @@
+/* Consumer Portal Shell Layout */
+.vini-portal-layout {
+  --p-red: #EA1D2C;
+  --p-bg: #FFFFFF;
+  --p-sidebar-bg: #FFFFFF;
+  --p-border: #E5E7EB;
+  --p-text: #1F2937;
+  --p-text-muted: #6B7280;
+  
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--p-text);
+  background: var(--p-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.vini-portal-header {
+  background: var(--p-red);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 500;
+}
+
+.vini-portal-logo {
+  height: 60px;
+  object-fit: contain;
+}
+
+.vini-portal-search-wrap {
+  flex: 1;
+  max-width: 600px;
+  display: flex;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.vini-portal-search-input {
+  flex: 1;
+  border: none;
+  padding: 10px 15px;
+  outline: none;
+  font-size: 14px;
+}
+
+.vini-portal-search-btn {
+  background: #fff;
+  border: none;
+  padding: 0 15px;
+  color: var(--p-red);
+  cursor: pointer;
+}
+
+.vini-portal-header-actions {
+  display: flex;
+  gap: 24px;
+  color: #fff;
+}
+
+/* Secondary Nav */
+.vini-portal-subnav {
+  background: #fff;
+  padding: 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--p-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+/* Main Shell & Layout */
+.vini-portal-layout.no-sidebar {
+  display: flex !important;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.vini-portal-shell-full {
+  flex: 1;
+  background: #fff;
+  width: 100%;
+}
+
+.vini-portal-content-full {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+/* Footer Admin */
+.vini-portal-footer {
+  border-top: 1px solid var(--p-border);
+  padding: 40px 24px;
+  background: #F9FAFB;
+}
+
+.vini-portal-footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--p-text-muted);
+}

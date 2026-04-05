@@ -4,7 +4,7 @@ import {
   DollarSign, Briefcase, FileText, AlertCircle, TrendingUp
 } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
-import '../assets/styles/Dashboard.css';
+import '../styles/admin/convenios.css';
 
 function ConveniosAdmin() {
   const { clientes, empresas, solicitacoes, gerenciarSolicitacao, loading } = useClientes();
@@ -66,17 +66,17 @@ function ConveniosAdmin() {
                     {new Date(sol.created_at).toLocaleDateString('pt-BR')}
                   </td>
                   <td style={{ padding: '1rem' }}>
-                    <span className={`badge ${sol.status === 'pendente_gestor' ? 'warning' : sol.status === 'ativo' ? 'success' : 'danger'}`}>
+                    <span className={`vini-badge ${sol.status === 'pendente_gestor' ? 'warning' : sol.status === 'ativo' ? 'success' : 'danger'}`}>
                        {sol.status === 'pendente_gestor' ? 'Pendente' : sol.status === 'ativo' ? 'Ativo' : 'Rejeitado'}
                     </span>
                   </td>
                   <td style={{ padding: '1rem' }}>
                     {sol.status === 'pendente_gestor' && (
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button className="btn-action success" onClick={() => handleSolicitacao(sol, 'ativo')} title="Aprovar">
+                        <button className="vini-btn-action success" onClick={() => handleSolicitacao(sol, 'ativo')} title="Aprovar">
                           <Check size={16} />
                         </button>
-                        <button className="btn-action danger" onClick={() => handleSolicitacao(sol, 'rejeitado')} title="Rejeitar">
+                        <button className="vini-btn-action danger" onClick={() => handleSolicitacao(sol, 'rejeitado')} title="Rejeitar">
                           <X size={16} />
                         </button>
                       </div>
@@ -102,13 +102,13 @@ function ConveniosAdmin() {
         {empresas.map((emp, i) => {
           const numFuncionarios = clientes.filter(c => c.convenio_empresa_id === emp.id && c.convenio_status === 'ativo').length;
           return (
-            <div key={i} className="glass-panel" style={{ padding: '1.5rem' }}>
+            <div key={i} className="vini-glass-panel" style={{ padding: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                    <div style={{ background: emp.cor_primaria || 'var(--c-blue)', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
                       <Building2 size={24} />
                    </div>
                    <div style={{ textAlign: 'right' }}>
-                      <span className={`badge ${emp.ativo ? 'success' : 'secondary'}`}>{emp.ativo ? 'ATIVA' : 'INATIVA'}</span>
+                      <span className={`vini-badge ${emp.ativo ? 'success' : 'secondary'}`}>{emp.ativo ? 'ATIVA' : 'INATIVA'}</span>
                    </div>
                 </div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '0.2rem' }}>{emp.nome}</h3>
@@ -133,7 +133,7 @@ function ConveniosAdmin() {
           );
         })}
         <button 
-           className="glass-panel" 
+           className="vini-glass-panel" 
            style={{ border: '2px dashed var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '2rem', cursor: 'pointer', background: 'transparent' }}
            onClick={() => alert('Abrir modal de cadastro de empresa...')}
         >
@@ -187,7 +187,7 @@ function ConveniosAdmin() {
         </div>
 
         {activeTab === 'solicitacoes' ? (
-           <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+           <div className="vini-glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
               {renderSolicitacoes()}
            </div>
         ) : (

@@ -1,0 +1,28 @@
+/* Admin Convenience Management */
+.convenios-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.convenio-card {
+  padding: 1.5rem;
+}
+
+.approval-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.approval-badge.pending { background: #fef3c7; color: #92400e; }
+.approval-badge.active { background: #dcfce7; color: #166534; }
+.approval-badge.blocked { background: #fee2e2; color: #991b1b; }
+
+.limit-input {
+  width: 100px;
+  padding: 5px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}

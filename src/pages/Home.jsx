@@ -8,6 +8,10 @@ import Menu from '../components/Site/Menu';
 import HowToOrder from '../components/Site/HowToOrder';
 import Footer from '../components/Site/Footer';
 import Floats from '../components/Site/Floats';
+import '../styles/site/layout.css';
+import '../styles/site/hero.css';
+import '../styles/site/home.css';
+import '../styles/site/footer.css';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('todos');
@@ -34,7 +38,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="vini-site-wrapper">
+    <div className="vini-site-wrapper site-container">
       <Topbar />
       <Navbar />
       <Hero />

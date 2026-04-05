@@ -1,0 +1,48 @@
+/* Convenience / Corporate Integration Styles */
+.vini-saldo-bar-active {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: #FEF2F2;
+  border-radius: 10px;
+  border: 1px solid #fee2e2;
+}
+
+.vini-saldo-labels {
+  display: flex;
+  flex-direction: column;
+}
+
+.vini-saldo-label-main {
+  font-size: 10px;
+  font-weight: 800;
+  color: #991b1b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vini-saldo-label-sub {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.vini-saldo-val {
+  color: #000;
+  font-weight: 800;
+}
+
+.vini-saldo-val-highlight {
+  color: #16a34a;
+  font-weight: 900;
+}
+
+.vini-pm-lock-msg {
+  position: absolute;
+  right: 15px;
+  bottom: 10px;
+  font-size: 10px;
+  color: #999;
+  font-style: italic;
+}

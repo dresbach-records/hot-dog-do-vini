@@ -11,7 +11,7 @@ function RH() {
       </header>
 
       <div className="caixa-content">
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="section-header-row">
             <h3>Quadro de Colaboradores</h3>
           </div>
@@ -36,7 +36,7 @@ function RH() {
                   </td>
                   <td>Atendente</td>
                   <td>Filial Centro (Matriz)</td>
-                  <td><span className="badge success">Ativo</span></td>
+                  <td><span className="vini-badge-success">Ativo</span></td>
                   <td>Nov/2024</td>
                 </tr>
                 <tr>
@@ -48,7 +48,7 @@ function RH() {
                   </td>
                   <td>Chapeiro</td>
                   <td>Filial Sul</td>
-                  <td><span className="badge success">Ativo</span></td>
+                  <td><span className="vini-badge-success">Ativo</span></td>
                   <td>Jan/2025</td>
                 </tr>
               </tbody>
@@ -57,7 +57,7 @@ function RH() {
         </div>
 
         <div className="side-panel">
-          <div className="resumo-caixa glass-panel">
+          <div className="resumo-caixa vini-glass-panel">
             <h3>Documentos (Avisos)</h3>
             <div className="resumo-stats">
                <div className="resumo-item">
@@ -65,14 +65,14 @@ function RH() {
                     <FileCheck size={16} color="var(--c-yellow)" />
                     <span>Fechamento da folha (Out)</span>
                  </div>
-                 <span className="badge warning" style={{width: 'max-content'}}>Pendente</span>
+                 <span className="vini-badge-warning" style={{width: 'max-content'}}>Pendente</span>
                </div>
                <div className="resumo-item" style={{ marginTop: '1rem' }}>
                  <div className="client-cell">
                     <FileCheck size={16} color="#4ade80" />
                     <span>ASO Ana Silva</span>
                  </div>
-                 <span className="badge success" style={{width: 'max-content'}}>Em dia</span>
+                 <span className="vini-badge-success" style={{width: 'max-content'}}>Em dia</span>
                </div>
             </div>
           </div>

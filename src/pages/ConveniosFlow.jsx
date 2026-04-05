@@ -226,7 +226,7 @@ const ConveniosFlow = ({ session }) => {
               </div>
               <div className="vini-status-row">
                 <span>Status:</span>
-                <span className={`badge ${existingSolicitation?.status || 'pendente'}`}>
+                <span className={`vini-badge ${existingSolicitation?.status || 'pendente'}`}>
                   {existingSolicitation?.status === 'pendente_gestor' ? 'Aguardando Gestor' : 
                    existingSolicitation?.status === 'ativo' ? 'Aprovado' : 'Em Análise'}
                 </span>

@@ -4,7 +4,7 @@ import {
   ChevronDown, ChevronRight, ShoppingBag, AlertCircle, Plus, X,
   TrendingUp, Truck
 } from 'lucide-react';
-import '../assets/styles/Dashboard.css';
+import '../styles/admin/dashboard.css';
 import { useClientes } from '../context/ClientesContext';
 
 // Horário limite para agendamento do dia seguinte
@@ -137,7 +137,7 @@ export default function Agendamentos() {
             <Clock size={13}/>
             {dentroDoHorario ? `Aberto até ${HORARIO_LIMITE}` : `Encerrado (limite: ${HORARIO_LIMITE})`}
           </div>
-          <button className="btn btn-primary" onClick={() => setShowNovoAgendamento(true)}
+          <button className="btn vini-btn-primary" onClick={() => setShowNovoAgendamento(true)}
             style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <Plus size={14}/> Novo Agendamento
           </button>
@@ -173,14 +173,14 @@ export default function Agendamentos() {
 
       {/* MÉTRICAS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div className="metric-card glass-panel">
+        <div className="metric-card vini-glass-panel">
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <Calendar size={13}/> Entrega Amanhã
           </div>
           <div style={{ fontSize: '2rem', fontWeight: '800' }}>{agendamentos.length}</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>pedidos agendados</div>
         </div>
-        <div className="metric-card glass-panel">
+        <div className="metric-card vini-glass-panel">
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <Building2 size={13}/> Grupo Cris du
           </div>
@@ -189,14 +189,14 @@ export default function Agendamentos() {
           </div>
           <div style={{ fontSize: '0.8rem', color: '#ea3800' }}>R$ {totalCrisDu.toFixed(2).replace('.', ',')}</div>
         </div>
-        <div className="metric-card glass-panel">
+        <div className="metric-card vini-glass-panel">
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <AlertCircle size={13}/> Pendentes
           </div>
           <div style={{ fontSize: '2rem', fontWeight: '800', color: '#f59e0b' }}>{pendentes}</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>aguardando confirmação</div>
         </div>
-        <div className="metric-card glass-panel">
+        <div className="metric-card vini-glass-panel">
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <TrendingUp size={13}/> Total Agendado
           </div>
@@ -228,7 +228,7 @@ export default function Agendamentos() {
 
       {/* GRUPOS */}
       {Object.entries(grupos).map(([grupo, pedidos]) => (
-        <div key={grupo} className="glass-panel" style={{ marginBottom: '1rem', overflow: 'hidden' }}>
+        <div key={grupo} className="vini-glass-panel" style={{ marginBottom: '1rem', overflow: 'hidden' }}>
           {/* Header do grupo */}
           <div 
             style={{ 
@@ -255,7 +255,7 @@ export default function Agendamentos() {
             {/* Confirmar em lote */}
             {pedidos.some(p => p.status === 'pendente') && (
               <button 
-                className="btn btn-primary" 
+                className="btn vini-btn-primary" 
                 style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', whiteSpace: 'nowrap' }}
                 onClick={e => { e.stopPropagation(); confirmarEmLote(grupo); }}
               >
@@ -373,7 +373,7 @@ export default function Agendamentos() {
                     style={{ width: '100%', padding: '0.6rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-surface-elevated)', color: 'var(--text-primary)', boxSizing: 'border-box' }}/>
                 </div>
               </div>
-              <button className="btn btn-primary" onClick={adicionarAgendamento}
+              <button className="btn vini-btn-primary" onClick={adicionarAgendamento}
                 style={{ marginTop: '0.5rem', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                 <Calendar size={16}/> Agendar para Amanhã — {amanha}
               </button>

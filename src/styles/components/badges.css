@@ -1,0 +1,73 @@
+/* --- BASE BADGE --- */
+.vini-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Status Variants */
+.vini-badge-success { background: #DCFCE7; color: #166534; }
+.vini-badge-warning { background: #FEF3C7; color: #92400E; }
+.vini-badge-danger { background: #FEE2E2; color: #991B1B; }
+
+/* --- DOMAIN SCOPED BADGES --- */
+
+/* Site Marketing Scoped */
+.site-container .vini-badge-market {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .7px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 16px;
+  margin-bottom: 6px;
+}
+
+.site-container .vini-badge-market-bestseller { background: #FFF3C4; color: #92600A; }
+.site-container .vini-badge-market-special { background: #F3E8FF; color: #6B21A8; }
+
+/* Client Portal Scoped */
+.portal-container .vini-badge-mini {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #EA1D2C;
+  color: #fff;
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 10px;
+  font-weight: 800;
+  border: 2px solid #fff;
+}
+
+.portal-container .vini-badge-offer {
+  position: absolute;
+  top: 10px;
+  right: 0;
+  background: #EA1D2C;
+  color: #fff;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  border-bottom-left-radius: 4px;
+  z-index: 5;
+}
+
+.portal-container .vini-badge-promo {
+  display: inline-block;
+  background: #FEF3C7;
+  color: #92400E;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  margin-top: 8px;
+}
+

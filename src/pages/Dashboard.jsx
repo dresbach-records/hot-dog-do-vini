@@ -5,7 +5,7 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
-import '../assets/styles/Dashboard.css';
+import '../styles/admin/dashboard.css';
 
 // --- MOCK DATA PARA GRÁFICOS HISTÓRICOS INEXISTENTES NO CONTEXTO ATUAL ---
 const MOCK_FATURAMENTO_DIARIO = [
@@ -114,7 +114,7 @@ function Dashboard() {
 
       {/* 8. KPI (CARDS NO TOPO) */}
       <section className="stats-grid" style={{ marginBottom: '2rem' }}>
-        <div className="stat-card glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="stat-icon-wrapper" style={{ background: 'var(--bg-active)' }}>
             <DollarSign size={24} color="var(--c-blue)" />
           </div>
@@ -125,7 +125,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="stat-card glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="stat-icon-wrapper bg-green-light">
             <Activity size={24} color="var(--c-green)" />
           </div>
@@ -138,7 +138,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="stat-card glass-panel" style={{ padding: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
           <div className="stat-icon-wrapper bg-red-light">
             <AlertCircle size={24} color="var(--c-red)" />
           </div>
@@ -151,7 +151,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="stat-card glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="stat-icon-wrapper yellow">
             <ShoppingCart size={24} />
           </div>
@@ -167,7 +167,7 @@ function Dashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         
         {/* 1. FATURAMENTO */}
-        <div className="glass-panel" style={{ padding: '1.5rem', flex: 2 }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem', flex: 2 }}>
           <div className="section-header" style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>FATURAMENTO</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--c-blue)' }}>Evolução de vendas por dia</span>
@@ -186,7 +186,7 @@ function Dashboard() {
         </div>
 
         {/* 2. RECEBIDO VS EM ABERTO */}
-        <div className="glass-panel" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div className="section-header" style={{ marginBottom: '0.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>RECEBIDO VS EM ABERTO</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--c-red)' }}>Indicador crítico de liquidez (Dados Reais)</span>
@@ -220,7 +220,7 @@ function Dashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
 
         {/* 3. CLIENTES DEVEDORES */}
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="section-header" style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>CLIENTES DEVEDORES</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Ranking (Dados Reais do Caixa)</span>
@@ -243,7 +243,7 @@ function Dashboard() {
         </div>
 
         {/* 4. PRODUTOS MAIS VENDIDOS */}
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="section-header" style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>PRODUTOS MAIS VENDIDOS</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>O que mais sai na cozinha</span>
@@ -262,7 +262,7 @@ function Dashboard() {
         </div>
 
         {/* 5. VENDAS POR DIA DA SEMANA */}
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="section-header" style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>VENDAS POR DIA</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Média semanal financeira</span>
@@ -281,7 +281,7 @@ function Dashboard() {
         </div>
 
         {/* 6. FIADO POR VENCIMENTO */}
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="section-header" style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>FIADO VENCIMENTO</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Visão temporal do risco</span>
@@ -304,7 +304,7 @@ function Dashboard() {
         </div>
 
         {/* 7. FLUXO DE CAIXA */}
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="section-header" style={{ marginBottom: '1.5rem' }}>
             <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>FLUXO DE CAIXA</h3>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Entradas x Saídas Reais</span>

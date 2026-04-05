@@ -17,6 +17,7 @@ import {
 import { useClientes } from '../context/ClientesContext';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import '../styles/cliente/sacola.css';
 
 const Checkout = ({ session }) => {
   const { clientes, loading: contextLoading } = useClientes();
@@ -51,7 +52,7 @@ const Checkout = ({ session }) => {
       name: 'Convênio Corporativo', 
       icon: <Building2 size={24} />, 
       disabled: !isConvenioAtivo,
-      badge: !isConvenioAtivo ? 'Não Ativo' : `Saldo: R$ ${convenioSaldo.toFixed(2)}`
+      'vini-badge': !isConvenioAtivo ? 'Não Ativo' : `Saldo: R$ ${convenioSaldo.toFixed(2)}`
     }
   ];
 
@@ -150,7 +151,7 @@ const Checkout = ({ session }) => {
              </div>
              <div className="vini-delivery-time">
                 <span>Hoje, entre <strong>19:30 e 20:00</strong></span>
-                <div className="vini-time-badge">30-45 min</div>
+                <div className="vini-badge-time">30-45 min</div>
              </div>
           </section>
 
@@ -184,10 +185,10 @@ const Checkout = ({ session }) => {
                   </div>
                   <div className="vini-pm-info">
                     <span className="vini-pm-name">{opt.name}</span>
-                    {opt.badge && (
-                      <span className={`vini-pm-badge ${opt.disabled ? 'locked' : 'available'}`}>
+                    {opt['vini-badge'] && (
+                      <span className={`vini-badge-pm ${opt.disabled ? 'locked' : 'available'}`}>
                          {opt.disabled ? <Lock size={12} /> : null}
-                         {opt.badge}
+                         {opt['vini-badge']}
                       </span>
                     )}
                   </div>
@@ -222,7 +223,7 @@ const Checkout = ({ session }) => {
       </main>
 
       <footer className="vini-checkout-footer">
-        <div className="vini-security-badge">
+        <div className="vini-badge-security">
            <ShieldCheck size={16} color="#22C55E" />
            <span>Transação Segura</span>
         </div>
@@ -231,176 +232,7 @@ const Checkout = ({ session }) => {
         </button>
       </footer>
 
-      <style jsx>{`
-        .vini-checkout-container {
-          min-height: 100vh;
-          background: #f8f8fb;
-          display: flex;
-          flex-direction: column;
-        }
-        .vini-checkout-header {
-          background: #fff;
-          padding: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          border-bottom: 1px solid #f0f0f0;
-          position: sticky;
-          top: 0;
-          z-index: 100;
-        }
-        .vini-back-btn { background: none; border: none; cursor: pointer; color: #333; }
-        .vini-checkout-header-title { font-weight: 800; font-size: 18px; }
-        
-        .vini-checkout-content {
-          flex: 1;
-          max-width: 700px;
-          margin: 0 auto;
-          width: 100%;
-          padding: 20px;
-        }
-        
-        .vini-checkout-section {
-          background: #fff;
-          border-radius: 20px;
-          padding: 24px;
-          margin-bottom: 20px;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        }
-        .vini-section-header {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 20px;
-        }
-        .vini-section-header h3 { margin: 0; font-size: 18px; font-weight: 800; }
-        
-        .vini-address-card {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          background: #fcfcfc;
-          padding: 15px;
-          border-radius: 12px;
-          border: 1px solid #f0f0f0;
-        }
-        .vini-address-info span { display: block; font-weight: 700; font-size: 15px; }
-        .vini-address-info p { margin: 2px 0 0; font-size: 13px; color: #999; }
-        .vini-edit-btn { margin-left: auto; background: none; border: none; color: var(--p-red); font-weight: 700; cursor: pointer; }
-        
-        .vini-delivery-time {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .vini-time-badge {
-          background: #f0fdf4;
-          color: #16a34a;
-          padding: 5px 12px;
-          border-radius: 8px;
-          font-weight: 700;
-          font-size: 12px;
-        }
-        
-        .vini-coupon-btn {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          color: var(--p-red);
-          font-weight: 700;
-          cursor: pointer;
-        }
-        
-        .vini-payment-options {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .vini-pm-card {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          padding: 18px;
-          border-radius: 16px;
-          border: 2px solid #f5f5f5;
-          cursor: pointer;
-          transition: all 0.2s;
-          position: relative;
-        }
-        .vini-pm-card.active { border-color: var(--p-red); background: #fef2f2; }
-        .vini-pm-card.disabled { opacity: 0.6; background: #fafafa; cursor: not-allowed; }
-        
-        .vini-pm-icon {
-          background: #fff;
-          padding: 8px;
-          border-radius: 10px;
-          border: 1px solid #eee;
-          color: #666;
-        }
-        .vini-pm-name { display: block; font-weight: 700; font-size: 15px; }
-        .vini-pm-badge {
-          font-size: 11px;
-          padding: 2px 8px;
-          border-radius: 10px;
-          font-weight: 700;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-        }
-        .vini-pm-badge.available { background: #f0fdf4; color: #16a34a; }
-        .vini-pm-badge.locked { background: #f5f5f5; color: #999; }
-        
-        .vini-pm-lock-msg {
-          position: absolute;
-          right: 15px;
-          bottom: 10px;
-          font-size: 10px;
-          color: #999;
-          font-style: italic;
-        }
-        
-        .vini-resumo h3 { margin-bottom: 20px; }
-        .vini-resumo-row {
-          display: flex;
-          justify-content: space-between;
-          padding: 8px 0;
-          color: #666;
-        }
-        .vini-resumo-row .free { color: #16a34a; font-weight: 700; }
-        .vini-resumo-row.total {
-          padding-top: 15px;
-          margin-top: 10px;
-          border-top: 1px dashed #eee;
-          color: #000;
-          font-weight: 900;
-          font-size: 20px;
-        }
-        
-        .vini-checkout-footer {
-          padding: 25px;
-          background: #fff;
-          border-top: 1px solid #f0f0f0;
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-          align-items: center;
-        }
-        .vini-security-badge { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #666; font-weight: 600; }
-        .vini-submit-btn {
-          width: 100%;
-          max-width: 500px;
-          background: var(--p-red);
-          color: #fff;
-          border: none;
-          padding: 20px;
-          border-radius: 16px;
-          font-size: 18px;
-          font-weight: 800;
-          cursor: pointer;
-          transition: transform 0.2s;
-        }
-        .vini-submit-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-      `}</style>
+
     </div>
   );
 };

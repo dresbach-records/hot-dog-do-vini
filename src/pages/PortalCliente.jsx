@@ -34,6 +34,9 @@ import { supabase } from '../lib/supabaseClient';
 import { menuItems, categories as siteCategories } from '../lib/siteData';
 import ProductModal from '../components/Site/ProductModal';
 import CartDrawer from '../components/Site/CartDrawer';
+import '../styles/cliente/layout.css';
+import '../styles/cliente/dashboard.css';
+import '../styles/cliente/convenios.css';
 
 const PortalCliente = ({ session }) => {
   const { clientes, loading: contextLoading, adicionarCliente } = useClientes();
@@ -168,7 +171,7 @@ const PortalCliente = ({ session }) => {
   }
 
   return (
-    <div className="vini-portal-layout no-sidebar">
+    <div className="vini-portal-layout no-sidebar portal-container">
       {/* Red Header Shell */}
       <header className="vini-portal-header">
         <img src="/Logo-VINI.png" alt="Vini Logo" className="vini-portal-logo" onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }} />
@@ -184,7 +187,7 @@ const PortalCliente = ({ session }) => {
           <div className="vini-portal-action-item" onClick={() => setIsCartOpen(true)}>
             <div style={{ position: 'relative' }}>
               <ShoppingBag size={24} />
-              {cartItems.length > 0 && <span className="vini-cart-badge">{cartItems.length}</span>}
+              {cartItems.length > 0 && <span className="vini-badge-cart">{cartItems.length}</span>}
             </div>
             <span>Sacola</span>
           </div>
@@ -205,7 +208,7 @@ const PortalCliente = ({ session }) => {
                   <div className="vini-dropdown-item highlight-red" onClick={() => window.location.href = '/cliente/cupons'}>
                     <div style={{ position: 'relative' }}>
                       <Ticket size={18} />
-                      {/* Badge can be dynamic if we fetch count */}
+                      {/* vini-badge can be dynamic if we fetch count */}
                     </div>
                     Meus Cupons
                   </div>
@@ -270,7 +273,7 @@ const PortalCliente = ({ session }) => {
                       style={{ cursor: 'pointer' }}
                       onClick={() => setSelectedProduct(offer)}
                     >
-                      <div className="vini-portal-offer-badge">{discount}% OFF</div>
+                      <div className="vini-badge-offer">{discount}% OFF</div>
                       <img src={offer.image} alt={offer.title} className="vini-portal-offer-img" />
                       <div className="vini-portal-offer-body">
                         <h4 className="vini-portal-offer-title">{offer.title}</h4>
@@ -279,7 +282,7 @@ const PortalCliente = ({ session }) => {
                           <span style={{ fontSize: '12px', color: '#999', textDecoration: 'line-through' }}>{offer.oldPrice}</span>
                           <div className="vini-portal-offer-price">{offer.price}</div>
                         </div>
-                        <div className="vini-portal-promo-badge">PROMOÇÃO</div>
+                        <div className="vini-badge-promo">PROMOÇÃO</div>
                       </div>
                     </div>
                 );

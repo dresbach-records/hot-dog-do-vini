@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Flame, Lock, Mail, AlertCircle, ArrowLeft } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import '../assets/styles/Login.css';
+import '../styles/global/login.css';
 
 function Login({ onLogin }) {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ function Login({ onLogin }) {
 
   return (
     <div className="login-container animate-fade-in">
-      <div className="login-card glass-panel" style={{ position: 'relative' }}>
+      <div className="login-card vini-glass-panel" style={{ position: 'relative' }}>
         <button 
           onClick={() => navigate('/')} 
           style={{ position: 'absolute', left: '20px', top: '20px', display: 'flex', alignItems: 'center', gap: '5px', color: '#64748b', fontSize: '0.8rem', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}
@@ -51,7 +51,7 @@ function Login({ onLogin }) {
         </div>
 
         {error && (
-          <div className="error-badge" style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', border: '1px solid #fca5a5' }}>
+          <div className="error-vini-badge" style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '0.8rem', borderRadius: '8px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', border: '1px solid #fca5a5' }}>
             <AlertCircle size={18} /> {error}
           </div>
         )}
@@ -92,7 +92,7 @@ function Login({ onLogin }) {
             <button type="button" className="forgot-password" style={{ background: 'none', border: 'none', color: 'var(--c-red)', cursor: 'pointer', padding: 0 }}>Esqueceu a senha?</button>
           </div>
 
-          <button type="submit" className="btn-primary login-btn" disabled={loading}>
+          <button type="submit" className="vini-btn-primary login-btn" disabled={loading}>
             {loading ? 'Verificando...' : 'Acessar ERP'}
           </button>
         </form>

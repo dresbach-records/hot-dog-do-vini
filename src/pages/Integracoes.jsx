@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../assets/styles/Dashboard.css';
+import '../styles/admin/dashboard.css';
 
 function Integracoes() {
   const [ifoodActive, setIfoodActive] = useState(false);
@@ -16,7 +16,7 @@ function Integracoes() {
       
       <div className="metrics-grid" style={{ marginTop: '2rem' }}>
         {/* IFood Integration Card */}
-        <div className="metric-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="metric-card vini-glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0, color: 'var(--c-red)' }}>iFood</h3>
             <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '40px', height: '20px' }}>
@@ -41,13 +41,13 @@ function Integracoes() {
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
             Receba pedidos do iFood diretamente no painel do Vini's. Sincronize cardápio e status de entrega.
           </p>
-          <button className="btn btn-primary" style={{ marginTop: 'auto', alignSelf: 'flex-start' }} disabled={!ifoodActive}>
+          <button className="btn vini-btn-primary" style={{ marginTop: 'auto', alignSelf: 'flex-start' }} disabled={!ifoodActive}>
             Configurar Credenciais
           </button>
         </div>
 
         {/* Anota AI Integration Card */}
-        <div className="metric-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="metric-card vini-glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0, color: '#00d1b2' }}>Anota AI</h3>
             <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '40px', height: '20px' }}>
@@ -72,13 +72,13 @@ function Integracoes() {
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
             Atendente virtual via WhatsApp. Integre os pedidos do robô direto na sua tela de gestão.
           </p>
-          <button className="btn btn-primary" style={{ marginTop: 'auto', alignSelf: 'flex-start' }} disabled={!anotaAiActive}>
+          <button className="btn vini-btn-primary" style={{ marginTop: 'auto', alignSelf: 'flex-start' }} disabled={!anotaAiActive}>
             Sincronizar Catálogo
           </button>
         </div>
 
         {/* Impressora Integration Card */}
-        <div className="metric-card glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="metric-card vini-glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0 }}>Impressora Térmica</h3>
             <span style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem', background: 'rgba(255,255,255,0.1)', borderRadius: '4px' }}>Local</span>

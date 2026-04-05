@@ -1,0 +1,83 @@
+.vini-categoria-sidebar {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  width: 280px;
+  flex-shrink: 0;
+  height: fit-content;
+  position: sticky;
+  top: 2rem;
+}
+
+.sidebar-title {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.categoria-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cat-item, .cat-item-main {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.cat-item:hover, .cat-item-main:hover {
+  background: #f9fafb;
+}
+
+.cat-item.active, .cat-item-wrapper.active .cat-item-main {
+  background: #fef2f2;
+  color: var(--c-red);
+}
+
+.cat-item-wrapper {
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-md);
+  transition: background 0.2s;
+}
+
+.cat-item-wrapper:hover {
+  background: #f9fafb;
+}
+
+.cat-item-wrapper.active {
+  background: #fef2f2;
+}
+
+.cat-btn-delete {
+  background: none;
+  border: none;
+  color: #d1d5db;
+  padding: 12px 15px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.cat-btn-delete:hover {
+  color: #ef4444;
+}

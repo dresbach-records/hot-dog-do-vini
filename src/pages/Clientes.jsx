@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, Phone, MapPin, DollarSign, Activity, Settings } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
-import '../assets/styles/Dashboard.css';
+import '../styles/admin/dashboard.css';
 
 function Clientes() {
   const { clientes } = useClientes();
@@ -13,13 +13,13 @@ function Clientes() {
           <h2>Cadastro de Clientes</h2>
           <p>Base unificada de clientes: Histórico de pedidos, endereços e financeiro.</p>
         </div>
-        <button className="btn btn-primary">
+        <button className="btn vini-btn-primary">
           + Novo Cliente
         </button>
       </header>
       
       <div className="dashboard-content" style={{ display: 'block' }}>
-        <div className="glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+        <div className="vini-glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
           <div className="table-responsive">
             <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -66,11 +66,11 @@ function Clientes() {
                       <td style={{ padding: '1rem' }}>
                         {cliente.status === 'PENDENTE' || cliente.saldo_devedor > 0 ? (
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span className="badge warning" style={{ width: 'fit-content' }}>Devedor</span>
+                            <span className="vini-badge-warning" style={{ width: 'fit-content' }}>Devedor</span>
                             <span style={{ fontSize: '0.8rem', color: 'var(--c-yellow)', marginTop: '0.2rem' }}>R$ {saldoFormatado}</span>
                           </div>
                         ) : (
-                          <span className="badge success">Em Dia</span>
+                          <span className="vini-badge-success">Em Dia</span>
                         )}
                       </td>
                       <td style={{ padding: '1rem', fontWeight: '500' }}>
@@ -81,10 +81,10 @@ function Clientes() {
                       </td>
                       <td style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button className="btn-action secondary" title="Detalhes do Cliente">
+                          <button className="vini-btn-action secondary" title="Detalhes do Cliente">
                             <Activity size={16} />
                           </button>
-                          <button className="btn-action secondary" title="Configurações Conta">
+                          <button className="vini-btn-action secondary" title="Configurações Conta">
                             <Settings size={16} />
                           </button>
                         </div>

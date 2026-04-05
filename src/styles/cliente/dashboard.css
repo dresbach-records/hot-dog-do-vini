@@ -1,0 +1,80 @@
+/* Client Dashboard / Home View */
+.vini-portal-section-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: var(--p-text);
+}
+
+.vini-portal-section-subtitle {
+  color: var(--p-text-muted);
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+/* Category Grid - Single Row Compact */
+.vini-portal-category-grid {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 30px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: none;
+}
+
+.vini-portal-category-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.vini-portal-category-card-img-wrap {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F3F4F6;
+  border-radius: 10px;
+}
+
+/* Offers Grid */
+.vini-portal-offers-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.vini-portal-offer-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.vini-portal-offer-body {
+  padding: 15px;
+}
+
+.vini-portal-offer-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.vini-portal-offer-subtitle {
+  font-size: 11px;
+  color: var(--p-text-muted);
+  margin-bottom: 12px;
+}
+
+.vini-portal-offer-price {
+  color: var(--p-red);
+  font-weight: 800;
+  font-size: 18px;
+}
+
+@media (max-width: 1024px) {
+  .vini-portal-category-grid, .vini-portal-offers-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .vini-portal-offers-grid { grid-template-columns: 1fr; }
+}
