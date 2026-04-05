@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { X, Minus, Plus, ShoppingBag, AlertCircle } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import './ProductModal.css';

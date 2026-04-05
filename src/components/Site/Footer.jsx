@@ -6,10 +6,7 @@ const Footer = () => (
           <img src="/Logo-VINI.png" alt="Hot Dog do Vini" className="fbrand-logo" />
         </div>
         <div className="fdesc">O melhor hot dog artesanal de Taquara/RS. Feito na hora e entregue quentinho na sua casa.</div>
-        <div className="flinks">
-          <a href="https://www.ifood.com.br/delivery/taquara-rs/hot-dog-do-vini-recreio" target="_blank" rel="noreferrer" className="flink flink-ifood">🔥 Pedir no iFood</a>
-          <a href="https://pedido.anota.ai/loja/marcos-vinicius-dresbach-do-amaral-ltda?f=msa" target="_blank" rel="noreferrer" className="flink flink-anota">💬 Pedir pelo Anota Aí</a>
-        </div>
+        <div className="fdesc">O melhor hot dog artesanal de Taquara/RS. Feito na hora e entregue quentinho na sua casa.</div>
       </div>
       <div className="footer-col-nav">
         <div className="fct">Navegação</div>
