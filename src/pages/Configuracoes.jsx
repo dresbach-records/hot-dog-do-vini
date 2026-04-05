@@ -98,6 +98,24 @@ function Configuracoes() {
                 </label>
               </div>
 
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                <div>
+                  <h4 style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.25rem' }}>Status das Vendas</h4>
+                  <p className="text-secondary" style={{ fontSize: '0.85rem' }}>Bloquear ou liberar novos pedidos no site e portal do cliente.</p>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', background: publicNotice.salesEnabled ? '#dcfce7' : '#fee2e2', padding: '10px 20px', borderRadius: '30px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={publicNotice.salesEnabled} 
+                    onChange={(e) => updatePublicNotice({ salesEnabled: e.target.checked })} 
+                    style={{ width: '18px', height: '18px', accentColor: publicNotice.salesEnabled ? '#16a34a' : '#ea1d2c', cursor: 'pointer' }}
+                  />
+                  <span style={{ marginLeft: '10px', fontWeight: 'bold', color: publicNotice.salesEnabled ? '#16a34a' : '#dc2626' }}>
+                    {publicNotice.salesEnabled ? 'Vendas Liberadas' : 'Vendas Bloqueadas'}
+                  </span>
+                </label>
+              </div>
+
               {publicNotice.enabled && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
                   <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

@@ -14,6 +14,7 @@ export const SettingsProvider = ({ children }) => {
   // Default values
   const defaultNotice = {
     enabled: true,
+    salesEnabled: false, // Inicia bloqueado conforme solicitado
     title: 'Atenção',
     message: 'Estamos fechados temporariamente devido a problemas no abastecimento de água pela Corsan em Taquara.\nPrezamos pela qualidade dos nossos produtos e pelo bom atendimento, por isso retomaremos as atividades assim que a situação for normalizada.\nAgradecemos a compreensão'
   };
