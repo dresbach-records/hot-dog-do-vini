@@ -1,6 +1,8 @@
-import { Building2, Mail, Phone, Clock, MapPin, CreditCard, Link as LinkIcon } from 'lucide-react';
+import { Building2, Mail, Phone, Clock, MapPin, CreditCard, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 function Configuracoes() {
+  const { publicNotice, updatePublicNotice } = useSettings();
   return (
     <div className="dashboard-page animate-fade-in">
       <header className="page-header">
@@ -68,6 +70,56 @@ function Configuracoes() {
                 <span className="text-secondary" style={{ fontSize: '0.85rem' }}>Plataformas</span>
                 <p style={{ fontWeight: '500' }}>iFood / Deias</p>
               </div>
+            </div>
+          </div>
+
+          <div className="config-section" style={{ marginTop: '2rem' }}>
+            <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', color: '#ea1d2c' }}>
+              <AlertTriangle size={20} color="#ea1d2c" />
+              Gestão de Alertas Públicos
+            </h3>
+            
+            <div style={{ background: 'var(--c-background)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h4 style={{ fontWeight: '700', fontSize: '1.1rem', marginBottom: '0.25rem' }}>Aviso na Página Inicial</h4>
+                  <p className="text-secondary" style={{ fontSize: '0.85rem' }}>Exibir uma mensagem flutuante de emergência abaixo do Menu Principal para os visitantes.</p>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', background: publicNotice.enabled ? '#fee2e2' : '#3f3f46', padding: '10px 20px', borderRadius: '30px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={publicNotice.enabled} 
+                    onChange={(e) => updatePublicNotice({ enabled: e.target.checked })} 
+                    style={{ width: '18px', height: '18px', accentColor: '#ea1d2c', cursor: 'pointer' }}
+                  />
+                  <span style={{ marginLeft: '10px', fontWeight: 'bold', color: publicNotice.enabled ? '#dc2626' : '#a1a1aa' }}>
+                    {publicNotice.enabled ? 'Aviso Ativo' : 'Oculto'}
+                  </span>
+                </label>
+              </div>
+
+              {publicNotice.enabled && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+                  <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <label style={{ fontWeight: '600', fontSize: '0.9rem', color: '#e4e4e7' }}>Título da Mensagem</label>
+                    <input 
+                      type="text" 
+                      value={publicNotice.title} 
+                      onChange={(e) => updatePublicNotice({ title: e.target.value })}
+                      style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff', width: '100%', fontSize: '1rem' }}
+                    />
+                  </div>
+                  
+                  <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <label style={{ fontWeight: '600', fontSize: '0.9rem', color: '#e4e4e7' }}>Detalhes do Aviso</label>
+                    <textarea 
+                      value={publicNotice.message} 
+                      onChange={(e) => updatePublicNotice({ message: e.target.value })}
+                      style={{ padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff', width: '100%', minHeight: '120px', resize: 'vertical', fontSize: '1rem', fontFamily: 'inherit' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

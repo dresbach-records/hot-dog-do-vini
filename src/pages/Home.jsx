@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Topbar from '../components/Site/Topbar';
 import Navbar from '../components/Site/Navbar';
 import Hero from '../components/Site/Hero';
+import PublicNotice from '../components/Site/PublicNotice';
 import Platforms from '../components/Site/PlatformStrip';
 import InfoBand from '../components/Site/InfoBand';
 import Menu from '../components/Site/Menu';
@@ -14,34 +14,15 @@ import '../styles/site/home.css';
 import '../styles/site/footer.css';
 
 const Home = () => {
-  const [activeTab, setActiveTab] = useState('todos');
+  const [activeTab, setActiveTab] = useState('promocoes');
 
-  useEffect(() => {
-    // Configuração do Áudio (Conforme original)
-    const audio = new Audio('/audio/hotdog-do-vini.mp3');
-    audio.volume = 0.4;
 
-    const playAudio = () => {
-      audio.play().catch(error => {
-        console.log('Interação necessária para áudio:', error);
-      });
-      // Remove o listener após a primeira interação para não tocar repetidamente
-      document.removeEventListener('click', playAudio);
-    };
-
-    document.addEventListener('click', playAudio);
-
-    return () => {
-      document.removeEventListener('click', playAudio);
-      audio.pause();
-    };
-  }, []);
 
   return (
     <div className="vini-site-wrapper site-container">
-      <Topbar />
       <Navbar />
       <Hero />
+      <PublicNotice />
       <Platforms />
       <InfoBand />
       <Menu activeTab={activeTab} setActiveTab={setActiveTab} />

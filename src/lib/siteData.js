@@ -1,23 +1,23 @@
 export const menuItems = [
   {
-    category: 'destaques',
-    title: 'Combo Família Simples',
+    category: 'promocoes',
+    title: 'Super Combo Família Simples',
     description: '04 dog duplo + refrigerante 2 litros. Dog Duplo: Pão macio, 2 salsichas, tomate, maionese gourmet, ketchup e mostarda. Serve bem 4 pessoas.',
     price: 'R$ 84,00',
     oldPrice: 'R$ 96,00',
-    badge: 'Mais Pedido',
+    badge: '12% OFF',
     badgeClass: 'bs',
     image: '/fotos/combofanmfel.avif',
     ifoodUrl: 'https://www.ifood.com.br/delivery/taquara-rs/hot-dog-do-vini-recreio',
     anotaaiUrl: 'https://pedido.anota.ai/loja/marcos-vinicius-dresbach-do-amaral-ltda?f=msa',
   },
   {
-    category: 'destaques',
-    title: 'Combo Casal Supremo',
+    category: 'promocoes',
+    title: 'Combo Casal Supremo Oferta',
     description: '02 dog frango + 02 batata frita individual + 1 refrigerante 600ml. Dog Frango: Pão prensado, salsicha, frango desfiado com tempero secreto, tomate, maionese, ketchup e mostarda.',
     price: 'R$ 69,00',
     oldPrice: 'R$ 78,00',
-    badge: 'Popular',
+    badge: 'Desconto',
     badgeClass: 'bd',
     image: '/fotos/cobocasal.jpg',
     ifoodUrl: 'https://www.ifood.com.br/delivery/taquara-rs/hot-dog-do-vini-recreio',
@@ -411,11 +411,11 @@ export const menuItems = [
 ];
 
 export const categories = {
-  todos: 'Todos',
-  destaques: '🔥 Os Mais Pedidos',
-  hotdog: '🌭 Clássicos Prensados',
-  burgers: '🍔 Burgers do Vini',
-  combos: '🎁 Combos Econômicos',
-  batatas: '🍟 Batatas Prime',
-  bebidas: '🥤 Bebidas',
+  promocoes: 'Promoções',
+  destaques: 'Mais Pedidos',
+  hotdog: 'Hot Dogs',
+  burgers: 'Burgers',
+  combos: 'Combos',
+  batatas: 'Batatas',
+  bebidas: 'Bebidas',
 };

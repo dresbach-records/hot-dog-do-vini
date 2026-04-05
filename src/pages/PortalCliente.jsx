@@ -110,6 +110,7 @@ const PortalCliente = ({ session }) => {
   ];
 
   const filteredProducts = useMemo(() => {
+    if (selectedCategory === 'todos') return menuItems;
     return menuItems.filter(item => item.category === selectedCategory);
   }, [selectedCategory]);
 
@@ -302,10 +303,10 @@ const PortalCliente = ({ session }) => {
                 </div>
                 <button 
                   className="vini-portal-subnav-item" 
-                  onClick={() => setSelectedCategory('destaques')}
+                  onClick={() => setSelectedCategory('todos')}
                   style={{ background: 'none', border: 'none', color: '#EA1D2C', marginBottom: '20px' }}
                 >
-                  Ver todas <ArrowRight size={16} />
+                  Ver todos <ArrowRight size={16} />
                 </button>
               </div>
           <div className="vini-portal-offers-grid" style={{ marginBottom: '50px' }}>
@@ -360,7 +361,7 @@ const PortalCliente = ({ session }) => {
           {/* Dynamic Products Grid (Main Filtered Menu) */}
           <div style={{ marginBottom: '50px' }}>
             <h2 className="vini-portal-section-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-               {viniCategories.find(c => c.id === selectedCategory)?.name}
+               {selectedCategory === 'todos' ? 'Todos os Produtos' : viniCategories.find(c => c.id === selectedCategory)?.name}
                <span style={{ fontSize: '14px', fontWeight: '400', color: '#999' }}>({filteredProducts.length} itens)</span>
             </h2>
             <div className="vini-portal-offers-grid">

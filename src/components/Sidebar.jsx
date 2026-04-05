@@ -39,31 +39,31 @@ function Sidebar({ onLogout }) {
             {openSection === 'delivery' && (
               <ul className="submenu">
                 <li>
-                  <NavLink to="/pedidos" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/pedidos" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <ClipboardList size={20} />
                     <span>Pedidos</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/cardapio" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/cardapio" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <UtensilsCrossed size={20} />
                     <span>Cardápio</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/entregas" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/entregas" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <Bike size={20} />
                     <span>Entregas</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/area-entrega" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/area-entrega" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <MapPin size={20} />
                     <span>Área de Entrega</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/clientes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/clientes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <UsersRound size={20} />
                     <span>Clientes</span>
                   </NavLink>
@@ -83,37 +83,37 @@ function Sidebar({ onLogout }) {
             {openSection === 'erp' && (
               <ul className="submenu">
                 <li>
-                  <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/dashboard" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <LayoutDashboard size={20} />
                     <span>Dashboard Geral</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/caixa" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/caixa" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <ShoppingBag size={20} />
                     <span>PDV & Caixa</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/despesas" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/despesas" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <Receipt size={20} />
                     <span>Finanças & Insumos</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/rh" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/rh" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <Users size={20} />
                     <span>RH & Escala</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/filiais" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/filiais" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <Store size={20} />
                     <span>Múltiplas Filiais</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/relatorios" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/relatorios" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <BarChart3 size={20} />
                     <span>Dados & BI</span>
                   </NavLink>
@@ -133,25 +133,25 @@ function Sidebar({ onLogout }) {
             {openSection === 'perf' && (
               <ul className="submenu">
                 <li>
-                  <NavLink to="/fidelidade" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/fidelidade" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <Gift size={20} />
                     <span>Fidelidade & Sorteios</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/marketing" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/marketing" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <Ticket size={20} />
                     <span>Marketing</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/pagamentos" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/pagamentos" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <CreditCard size={20} />
                     <span>Pagamentos</span>
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/integracoes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                  <NavLink to="/admin/integracoes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <Link size={20} />
                     <span>Integrações</span>
                   </NavLink>
@@ -163,7 +163,7 @@ function Sidebar({ onLogout }) {
       </div>
 
       <div className="sidebar-footer">
-        <NavLink to="/configuracoes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+        <NavLink to="/admin/configuracoes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           <Settings size={20} />
           <span>Configurações</span>
         </NavLink>

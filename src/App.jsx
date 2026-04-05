@@ -12,6 +12,8 @@ import Login from './pages/Login';
 import LoginCliente from './pages/LoginCliente';
 import Home from './pages/Home';
 
+// Import Admin Layout Styles
+import './styles/admin/layout.css';
 // Novos módulos Delivery
 import Pedidos from './pages/Pedidos';
 import Cardapio from './pages/Cardapio';
@@ -40,6 +42,7 @@ import Ajuda from './pages/Portal/Ajuda';
 
 // Contexto Global
 import { ClientesProvider } from './context/ClientesContext';
+import { SettingsProvider } from './context/SettingsContext';
 
 import './App.css';
 
@@ -71,7 +74,8 @@ function App() {
   const isAdmin = session?.user?.user_metadata?.role !== 'cliente';
 
   return (
-    <ClientesProvider>
+    <SettingsProvider>
+      <ClientesProvider>
       <Router>
         <Routes>
           {/* == LANDING PAGE PÚBLICA (RAIZ) == */}
@@ -123,25 +127,25 @@ function App() {
                 <Sidebar onLogout={() => supabase.auth.signOut()} />
                 <main className="main-content">
                   <Routes>
-                    <Route path="/" element={<Navigate to="/admin/dashboard" />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/pedidos" element={<Pedidos />} />
-                    <Route path="/agendamentos" element={<Agendamentos />} />
-                    <Route path="/cardapio" element={<Cardapio />} />
-                    <Route path="/entregas" element={<Entregas />} />
-                    <Route path="/area-entrega" element={<AreaEntrega />} />
-                    <Route path="/clientes" element={<Clientes />} />
-                    <Route path="/fidelidade" element={<Sorteios />} />
-                    <Route path="/caixa" element={<Caixa />} />
-                    <Route path="/despesas" element={<Financeiro />} />
-                    <Route path="/rh" element={<RH />} />
-                    <Route path="/filiais" element={<Filiais />} />
-                    <Route path="/relatorios" element={<Relatorios />} />
-                    <Route path="/marketing" element={<Marketing />} />
-                    <Route path="/pagamentos" element={<Pagamentos />} />
-                    <Route path="/convenios" element={<ConveniosAdmin />} />
-                    <Route path="/integracoes" element={<Integracoes />} />
-                    <Route path="/configuracoes" element={<Configuracoes />} />
+                    <Route path="" element={<Navigate to="/admin/dashboard" />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="pedidos" element={<Pedidos />} />
+                    <Route path="agendamentos" element={<Agendamentos />} />
+                    <Route path="cardapio" element={<Cardapio />} />
+                    <Route path="entregas" element={<Entregas />} />
+                    <Route path="area-entrega" element={<AreaEntrega />} />
+                    <Route path="clientes" element={<Clientes />} />
+                    <Route path="fidelidade" element={<Sorteios />} />
+                    <Route path="caixa" element={<Caixa />} />
+                    <Route path="despesas" element={<Financeiro />} />
+                    <Route path="rh" element={<RH />} />
+                    <Route path="filiais" element={<Filiais />} />
+                    <Route path="relatorios" element={<Relatorios />} />
+                    <Route path="marketing" element={<Marketing />} />
+                    <Route path="pagamentos" element={<Pagamentos />} />
+                    <Route path="convenios" element={<ConveniosAdmin />} />
+                    <Route path="integracoes" element={<Integracoes />} />
+                    <Route path="configuracoes" element={<Configuracoes />} />
                     <Route path="*" element={<Navigate to="/admin/dashboard" />} />
                   </Routes>
                 </main>
@@ -156,6 +160,7 @@ function App() {
         </Routes>
       </Router>
     </ClientesProvider>
+    </SettingsProvider>
   );
 }
 
