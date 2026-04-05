@@ -262,9 +262,16 @@ const PortalCliente = ({ session }) => {
                 </div>
              </div>
            ) : (
-             <div className="vini-saldo-bar-active" style={{ background: '#f8fafc', borderColor: '#e2e8f0' }}>
-                <Gift size={20} color="#64748b" />
-                <span style={{ fontSize: '12px', fontWeight: '700', color: '#64748b' }}>CADASTRE SEU CONVÊNIO</span>
+             <div className="vini-saldo-bar-active fidelidade" style={{ background: '#FFFBEB', borderColor: '#FDE68A' }}>
+                <div className="vini-pts-icon">
+                  <Star size={20} color="#D97706" fill="#F59E0B" />
+                </div>
+                <div className="vini-saldo-labels">
+                  <span className="vini-saldo-label-main" style={{ color: '#92400E' }}>FIDELIDADE VINI</span>
+                  <span className="vini-saldo-label-sub" style={{ color: '#B45309' }}>
+                    Você acumulou: <span className="vini-saldo-val-highlight" style={{ color: '#D97706' }}>{clienteLogado?.fidelidade_pontos || 0} pts</span>
+                  </span>
+                </div>
              </div>
            )}
         </div>

@@ -97,6 +97,21 @@ function ConveniosAdmin() {
     </div>
   );
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newEmpresa, setNewEmpresa] = useState({ nome: '', cnpj: '', limite_sugerido: 500 });
+
+  const handleCreateEmpresa = async (e) => {
+    e.preventDefault();
+    const result = await adicionarEmpresa(newEmpresa);
+    if (result.success) {
+      setIsModalOpen(false);
+      setNewEmpresa({ nome: '', cnpj: '', limite_sugerido: 500 });
+      alert('Empresa cadastrada com sucesso!');
+    } else {
+      alert('Erro ao cadastrar empresa.');
+    }
+  };
+
   const renderEmpresas = () => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem', padding: '1rem' }}>
         {empresas.map((emp, i) => {
@@ -121,13 +136,8 @@ function ConveniosAdmin() {
                    </div>
                    <div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Limite Sugerido</div>
-                      <div style={{ fontWeight: '700', color: 'var(--c-green)' }}>R$ {emp.limite_sugerido?.toFixed(2)}</div>
+                      <div style={{ fontWeight: '700', color: 'var(--c-green)' }}>R$ {Number(emp.limite_sugerido || 0).toFixed(2)}</div>
                    </div>
-                </div>
-                
-                <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
-                   <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem' }}>Editar</button>
-                   <button className="btn btn-secondary" style={{ flex: 1, fontSize: '0.8rem' }}>Relatório</button>
                 </div>
             </div>
           );
@@ -135,11 +145,37 @@ function ConveniosAdmin() {
         <button 
            className="vini-glass-panel" 
            style={{ border: '2px dashed var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '2rem', cursor: 'pointer', background: 'transparent' }}
-           onClick={() => alert('Abrir modal de cadastro de empresa...')}
+           onClick={() => setIsModalOpen(true)}
         >
            <Plus size={32} color="var(--text-muted)" />
            <span style={{ fontWeight: '600', color: 'var(--text-muted)' }}>Nova Empresa Parceira</span>
         </button>
+
+        {isModalOpen && (
+          <div className="vini-modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div className="vini-glass-panel" style={{ width: '100%', maxWidth: '450px', padding: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h3 style={{ margin: 0 }}>Cadastrar Empresa</h3>
+                <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><X /></button>
+              </div>
+              <form onSubmit={handleCreateEmpresa} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                <div className="form-group">
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Nome da Empresa</label>
+                  <input type="text" value={newEmpresa.nome} onChange={e => setNewEmpresa({...newEmpresa, nome: e.target.value})} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: '#fff' }} />
+                </div>
+                <div className="form-group">
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>CNPJ</label>
+                  <input type="text" value={newEmpresa.cnpj} onChange={e => setNewEmpresa({...newEmpresa, cnpj: e.target.value})} placeholder="00.000.000/0001-00" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: '#fff' }} />
+                </div>
+                <div className="form-group">
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Limite de Crédito Sugerido</label>
+                  <input type="number" value={newEmpresa.limite_sugerido} onChange={e => setNewEmpresa({...newEmpresa, limite_sugerido: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: '#fff' }} />
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem', padding: '12px' }}>Salvar Empresa</button>
+              </form>
+            </div>
+          </div>
+        )}
     </div>
   );
 

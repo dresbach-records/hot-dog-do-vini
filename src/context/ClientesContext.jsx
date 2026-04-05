@@ -14,6 +14,9 @@ export const ClientesProvider = ({ children }) => {
   const [pagamentosConfirmados, setPagamentosConfirmados] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [empresas, setEmpresas] = useState([]);
+  const [solicitacoes, setSolicitacoes] = useState([]);
+
   // Carregar dados iniciais do Supabase
   const fetchData = async () => {
     setLoading(true);
@@ -23,10 +26,17 @@ export const ClientesProvider = ({ children }) => {
       .from('clientes')
       .select('*, pedidos(*)');
 
+    // 2. Buscar Empresas
+    const { data: empresasData } = await supabase
+      .from('empresas')
+      .select('*')
+      .order('nome');
+
     if (clientesError) {
       console.error('Erro ao buscar clientes:', clientesError);
     } else {
       setClientes(clientesData || []);
+      setEmpresas(empresasData || []);
       
       // Calcular Resumo e Pagamentos
       let totalVendas = 0;
@@ -58,9 +68,20 @@ export const ClientesProvider = ({ children }) => {
     setLoading(false);
   };
 
-  useEffect(() => {
+  const adicionarEmpresa = async (dados) => {
+    const { data, error } = await supabase
+      .from('empresas')
+      .insert([dados])
+      .select();
+
+    if (error) {
+      console.error('Erro ao adicionar empresa:', error);
+      return { success: false, error };
+    }
+    
     fetchData();
-  }, []);
+    return { success: true, data };
+  };
 
   // Adicionar Cliente no Banco Real (com verificação de duplicidade)
   const adicionarCliente = async (dados) => {
@@ -68,7 +89,7 @@ export const ClientesProvider = ({ children }) => {
     const { data: existing, error: checkError } = await supabase
       .from('clientes')
       .select('id')
-      .or(`id_auth.eq.${dados.id_auth},email.eq.${dados.email}`)
+      .or(`codigo_vini.eq.${dados.codigo_vini},email.eq.${dados.email}`)
       .maybeSingle();
 
     if (checkError) {
@@ -86,7 +107,7 @@ export const ClientesProvider = ({ children }) => {
       .insert([{
         nome: dados.nome,
         email: dados.email,
-        id_auth: dados.id_auth,
+        codigo_vini: dados.codigo_vini,
         total_cliente: dados.total_cliente || 0,
         total_pago: dados.total_pago || 0,
         saldo_devedor: dados.saldo_devedor || 0,
@@ -143,16 +164,41 @@ export const ClientesProvider = ({ children }) => {
     return { success: true };
   };
 
+  const gerenciarSolicitacao = async (solId, clienteId, status, info) => {
+    const updateData = { convenio_status: status };
+    if (status === 'ativo') {
+      updateData.convenio_limite = info.limite;
+      updateData.convenio_saldo = info.limite;
+    }
+
+    const { error } = await supabase
+      .from('clientes')
+      .update(updateData)
+      .eq('id', clienteId);
+
+    if (error) return { success: false, error };
+    fetchData();
+    return { success: true };
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
     <ClientesContext.Provider value={{
       clientes,
+      empresas,
+      solicitacoes,
       resumo,
       pagamentosConfirmados,
       loading,
       fetchData,
       atualizarCliente,
       adicionarCliente,
-      marcarComoPago
+      marcarComoPago,
+      adicionarEmpresa,
+      gerenciarSolicitacao
     }}>
       {children}
     </ClientesContext.Provider>
