@@ -92,5 +92,48 @@ nav {
 }
 
 @media(max-width:768px) {
-  .nlinks { display: none; }
+  .ni {
+    flex-direction: column;
+    padding: 12px 10px;
+    gap: 12px;
+  }
+
+  .nl {
+    width: 100%;
+    justify-content: center;
+    height: auto;
+  }
+
+  .nav-logo-img {
+    height: 45px;
+    width: auto;
+  }
+
+  .nav-right-links {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+
+  .nav-item-clean {
+    flex-direction: column;
+    font-size: 11px !important;
+    gap: 4px !important;
+    padding: 8px 4px !important;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .vini-status-badge {
+    grid-column: span 3;
+    width: 100%;
+    justify-content: center;
+    order: -1;
+    margin-bottom: 4px;
+    font-size: 10px !important;
+    padding: 4px 10px !important;
+  }
 }
