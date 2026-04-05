@@ -4,7 +4,7 @@ import { useClientes } from '../context/ClientesContext';
 import '../styles/admin/dashboard.css';
 
 function Clientes() {
-  const { clientes } = useClientes();
+  const { clientes, marcarComoPago } = useClientes();
 
   return (
     <div className="dashboard">
@@ -64,13 +64,13 @@ function Clientes() {
                         </div>
                       </td>
                       <td style={{ padding: '1rem' }}>
-                        {cliente.status === 'PENDENTE' || cliente.saldo_devedor > 0 ? (
+                        {Number(cliente.saldo_devedor) > 0 ? (
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span className="vini-badge-warning" style={{ width: 'fit-content' }}>Devedor</span>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--c-yellow)', marginTop: '0.2rem' }}>R$ {saldoFormatado}</span>
+                            <span className="vini-badge-warning" style={{ width: 'fit-content', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--c-red)' }}>Devedor</span>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--c-red)', marginTop: '0.2rem', fontWeight: '600' }}>R$ {saldoFormatado}</span>
                           </div>
                         ) : (
-                          <span className="vini-badge-success">Em Dia</span>
+                          <span className="vini-badge-success" style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--c-green)' }}>Pago / Em Dia</span>
                         )}
                       </td>
                       <td style={{ padding: '1rem', fontWeight: '500' }}>
@@ -81,11 +81,33 @@ function Clientes() {
                       </td>
                       <td style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button className="vini-btn-action secondary" title="Detalhes do Cliente">
-                            <Activity size={16} />
-                          </button>
-                          <button className="vini-btn-action secondary" title="Configurações Conta">
+                          {Number(cliente.saldo_devedor) > 0 && (
+                            <button 
+                              className="vini-btn-primary" 
+                              title="Marcar como Pago"
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                              onClick={() => {
+                                if (window.confirm(`Deseja marcar o pagamento de R$ ${Number(cliente.saldo_devedor).toFixed(2)} para ${cliente.nome}?`)) {
+                                  marcarComoPago(cliente.id);
+                                }
+                              }}
+                            >
+                              <DollarSign size={14} /> Receber
+                            </button>
+                          )}
+                          <button 
+                            className="vini-btn-action secondary" 
+                            title="Editar Cliente"
+                            onClick={() => alert('Edição de cliente em breve!')}
+                          >
                             <Settings size={16} />
+                          </button>
+                          <button 
+                            className="vini-btn-action secondary" 
+                            title="Ver Histórico"
+                            onClick={() => alert(`Histórico de ${cliente.nome} em breve!`)}
+                          >
+                            <Activity size={16} />
                           </button>
                         </div>
                       </td>

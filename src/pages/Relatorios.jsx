@@ -1,26 +1,27 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from 'recharts';
-import { TrendingUp, DollarSign, ShoppingBag, Users, ChevronDown } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, DollarSign, ShoppingBag, Users, ChevronDown, AlertCircle } from 'lucide-react';
+import { useClientes } from '../context/ClientesContext';
 import '../styles/admin/dashboard.css';
 
 function Relatorios() {
-  const faturamentoMensal = [
-    { dia: '01/04', valor: 1200 },
-    { dia: '02/04', valor: 1800 },
-    { dia: '03/04', valor: 1550 },
-    { dia: '04/04', valor: 2100 },
-    { dia: '05/04', valor: 3200 }, // FDS
-    { dia: '06/04', valor: 3800 }, // FDS
-    { dia: '07/04', valor: 1100 },
+  const { clientes, resumo, loading } = useClientes();
+
+  // Dados para o gráfico de Pizza (Pago vs Aberto)
+  const dataPizza = [
+    { name: 'Recebido', value: resumo.total_recebido_confirmado || 0, color: 'var(--c-green)' },
+    { name: 'Em Aberto', value: resumo.total_em_aberto_estimado || 0, color: 'var(--c-red)' }
   ];
 
-  const vendasPorCategoria = [
-    { name: 'Hot Dogs', vendas: 450 },
-    { name: 'Combos', vendas: 210 },
-    { name: 'Bebidas', vendas: 380 },
-    { name: 'Porções', vendas: 90 },
-    { name: 'Doces', vendas: 45 },
-  ];
+  // Dados para o gráfico de Barras (Top Devedores)
+  const topDevedores = clientes
+    .filter(c => Number(c.saldo_devedor) > 0)
+    .sort((a, b) => b.saldo_devedor - a.saldo_devedor)
+    .slice(0, 5)
+    .map(c => ({
+      name: c.nome.split(' ')[0],
+      valor: Number(c.saldo_devedor)
+    }));
 
   const customTooltipStyle = {
     backgroundColor: 'var(--bg-surface-elevated)',
@@ -30,104 +31,111 @@ function Relatorios() {
     fontSize: '0.9rem'
   };
 
+  if (loading) return <div className="p-8 text-center">Carregando dados financeiros...</div>;
+
   return (
     <div className="dashboard-page animate-fade-in" style={{ padding: '1.5rem', background: 'var(--bg-base)' }}>
       <header className="page-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
         <div>
           <h2>Business Intelligence</h2>
-          <p className="text-secondary">Visão panorâmica do faturamento, performance de produtos e crescimento.</p>
+          <p className="text-secondary">Visão real baseada no faturamento e débitos sincronizados.</p>
         </div>
         <div className="header-actions">
           <button className="vini-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            Últimos 7 Dias <ChevronDown size={16} />
-          </button>
-          <button className="vini-btn-primary">
-            Exportar XLS
+            Dados em Tempo Real <ChevronDown size={16} />
           </button>
         </div>
       </header>
 
-      {/* MÉTRICAS KPI */}
+      {/* MÉTRICAS KPI REAIS */}
       <div className="stats-grid" style={{ marginBottom: '2rem' }}>
         <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="stat-icon-wrapper bg-green-light">
-            <DollarSign size={24} color="var(--c-green)" />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Receita Líquida (7d)</span>
-            <h3 className="stat-value text-positive">R$ 14.750,00</h3>
-            <span className="stat-trend positive"><TrendingUp size={14}/> +12.5% vs semana anterior</span>
-          </div>
-        </div>
-
-        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="stat-icon-wrapper bg-blue-light">
-            <ShoppingBag size={24} color="var(--c-blue)" />
+            <DollarSign size={24} color="var(--c-blue)" />
           </div>
           <div className="stat-info">
-            <span className="stat-label">Ticket Médio</span>
-            <h3 className="stat-value">R$ 38,50</h3>
-            <span className="stat-trend neutral">Estável</span>
+            <span className="stat-label">Total Vendido</span>
+            <h3 className="stat-value">R$ {(resumo.total_vendas_estimado || 0).toFixed(2).replace('.', ',')}</h3>
+            <span className="stat-trend neutral">Resumo Geral</span>
           </div>
         </div>
 
         <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="stat-icon-wrapper bg-yellow-light">
-            <Users size={24} color="var(--c-yellow)" />
+          <div className="stat-icon-wrapper bg-green-light">
+            <TrendingUp size={24} color="var(--c-green)" />
           </div>
           <div className="stat-info">
-            <span className="stat-label">Pedidos Concluídos</span>
-            <h3 className="stat-value">383</h3>
-            <span className="stat-trend positive">+5% vs semana anterior</span>
+            <span className="stat-label">Total Recebido</span>
+            <h3 className="stat-value text-positive">R$ {(resumo.total_recebido_confirmado || 0).toFixed(2).replace('.', ',')}</h3>
+            <span className="stat-trend positive">Dinheiro no Caixa</span>
+          </div>
+        </div>
+
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+          <div className="stat-icon-wrapper bg-red-light">
+            <AlertCircle size={24} color="var(--c-red)" />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Total em Aberto</span>
+            <h3 className="stat-value text-negative">R$ {(resumo.total_em_aberto_estimado || 0).toFixed(2).replace('.', ',')}</h3>
+            <span className="stat-trend negative">Valores Pendentes</span>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(400px, 2fr) minmax(300px, 1fr)', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
         
-        {/* Gráfico de Faturamento */}
-        <div className="vini-glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-          <div className="section-header" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', margin: 0 }}>Faturamento Diário</h3>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Evolução da receita ao longo da semana</span>
-          </div>
-          <div style={{ width: '100%', minHeight: 300, flex: 1 }}>
+        {/* Gráfico Pago vs Aberto */}
+        <div className="vini-glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '1.5rem', width: '100%' }}>Saúde Financeira</h3>
+          <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
-              <AreaChart data={faturamentoMensal} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--c-red)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--c-red)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                <XAxis dataKey="dia" stroke="var(--text-secondary)" fontSize={11} tickMargin={10} />
-                <YAxis stroke="var(--text-secondary)" fontSize={11} tickFormatter={(v) => `R$${v}`} />
-                <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value}`} />
-                <Area type="monotone" dataKey="valor" stroke="var(--c-red)" strokeWidth={3} fillOpacity={1} fill="url(#colorValor)" />
-              </AreaChart>
+              <PieChart>
+                <Pie
+                  data={dataPizza}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {dataPizza.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value.toFixed(2)}`} />
+              </PieChart>
             </ResponsiveContainer>
+          </div>
+          <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'var(--c-green)' }}></div>
+              <span style={{ fontSize: '0.85rem' }}>Recebido</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'var(--c-red)' }}></div>
+              <span style={{ fontSize: '0.85rem' }}>Em Aberto</span>
+            </div>
           </div>
         </div>
 
-        {/* Gráfico de Categorias */}
-        <div className="vini-glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-          <div className="section-header" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', margin: 0 }}>Vendas por Categoria</h3>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Mix de produtos</span>
-          </div>
-          <div style={{ width: '100%', minHeight: 300, flex: 1 }}>
+        {/* Gráfico Ranking Devedores */}
+        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Maiores Valores Pendentes</h3>
+          <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
-              <BarChart data={vendasPorCategoria} layout="vertical" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <BarChart data={topDevedores} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-color)" />
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" stroke="var(--text-secondary)" fontSize={11} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={customTooltipStyle} />
-                <Bar dataKey="vendas" fill="var(--c-blue)" radius={[0, 4, 4, 0]} barSize={25} />
+                <YAxis dataKey="name" type="category" stroke="var(--text-secondary)" fontSize={12} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value.toFixed(2)}`} />
+                <Bar dataKey="valor" fill="var(--c-red)" radius={[0, 4, 4, 0]} barSize={30} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
+
       </div>
     </div>
   );

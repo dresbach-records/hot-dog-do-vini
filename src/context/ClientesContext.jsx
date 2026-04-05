@@ -103,6 +103,30 @@ export const ClientesProvider = ({ children }) => {
     return { success: true, data };
   };
 
+  // Marcar como Pago: Zera saldo devedor e soma ao total pago
+  const marcarComoPago = async (id) => {
+    const cliente = clientes.find(c => c.id === id);
+    if (!cliente) return { success: false, error: 'Cliente não encontrado' };
+
+    const novoTotalPago = Number(cliente.total_pago || 0) + Number(cliente.saldo_devedor || 0);
+
+    const { error } = await supabase
+      .from('clientes')
+      .update({
+        total_pago: novoTotalPago,
+        saldo_devedor: 0
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao marcar como pago:', error);
+      return { success: false, error };
+    }
+
+    fetchData(); // Recarrega para atualizar gráficos e lista
+    return { success: true };
+  };
+
   // Atualizar Cliente no Banco Real
   const atualizarCliente = async (id, dadosAtualizados) => {
     const { error } = await supabase
@@ -127,7 +151,8 @@ export const ClientesProvider = ({ children }) => {
       loading,
       fetchData,
       atualizarCliente,
-      adicionarCliente
+      adicionarCliente,
+      marcarComoPago
     }}>
       {children}
     </ClientesContext.Provider>
