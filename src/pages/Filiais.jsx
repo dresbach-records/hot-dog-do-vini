@@ -1,55 +1,96 @@
-import { Store } from 'lucide-react';
+import { Store, Building2, TrendingUp, AlertTriangle } from 'lucide-react';
 
 function Filiais() {
   return (
-    <div className="dashboard-page animate-fade-in">
-      <header className="page-header">
+    <div className="dashboard-page animate-fade-in" style={{ padding: '1.5rem' }}>
+      <header className="page-header" style={{ marginBottom: '1.5rem' }}>
         <div>
           <h2>Gestão de Filiais</h2>
           <p className="text-secondary">Visão geral logística, faturamento e metas das unidades.</p>
         </div>
       </header>
 
+      {/* METRICAS */}
+      <div className="stats-grid" style={{ marginBottom: '2rem' }}>
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
+          <div className="stat-icon-wrapper bg-blue-light">
+            <Building2 size={24} color="var(--c-blue)" />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Unidades Físicas</span>
+            <h3 className="stat-value">2</h3>
+            <span className="stat-trend positive">Expansão de 0% em 2024</span>
+          </div>
+        </div>
+
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
+          <div className="stat-icon-wrapper bg-green-light">
+            <TrendingUp size={24} color="var(--c-green)" />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Faturamento Global</span>
+            <h3 className="stat-value text-positive">R$ 68.500,00</h3>
+            <span className="stat-trend positive">+4% acima da meta combinada</span>
+          </div>
+        </div>
+
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
+          <div className="stat-icon-wrapper bg-yellow-light">
+            <AlertTriangle size={24} color="var(--c-yellow)" />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Problemas na Operação</span>
+            <h3 className="stat-value text-negative">1</h3>
+            <span className="stat-trend negative">Falta de insumo (Filial Sul)</span>
+          </div>
+        </div>
+      </div>
+
       <div className="caixa-content">
-        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="section-header-row">
-            <h3>Unidades Vini's</h3>
+        <div className="vini-glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+          <div className="section-header" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0 }}>Unidades Vini's</h3>
+            <button className="vini-btn-outline" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>+ Nova Unidade</button>
           </div>
           <div className="table-responsive">
-            <table className="data-table">
-              <thead>
+            <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: 'var(--bg-active)' }}>
                 <tr>
-                  <th>Nome da Filial</th>
-                  <th>Responsável</th>
-                  <th>Meta Atual</th>
-                  <th>Performance</th>
-                  <th>Status</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Nome da Filial</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Responsável</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Meta Atual</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Performance</th>
+                  <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>
-                    <div className="client-cell">
-                      <div className="avatar bg-red-light"><Store size={14} color="var(--c-red)" /></div>
-                      <span>Filial Centro (Matriz)</span>
+                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={{ padding: '1rem' }}>
+                    <div className="client-cell" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                      <div className="avatar bg-red-light" style={{ width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239, 68, 68, 0.15)' }}>
+                        <Store size={18} color="var(--c-red)" />
+                      </div>
+                      <span style={{ fontWeight: '600' }}>Filial Centro (Matriz)</span>
                     </div>
                   </td>
-                  <td>Vini / Ana</td>
-                  <td>R$ 40.000,00</td>
-                  <td><span className="text-positive">+8% acima</span></td>
-                  <td><span className="vini-badge-success">Operando</span></td>
+                  <td style={{ padding: '1rem' }}>Vini / Ana</td>
+                  <td style={{ padding: '1rem', fontWeight: '500' }}>R$ 40.000,00</td>
+                  <td style={{ padding: '1rem' }}><span className="text-positive" style={{ fontWeight: '600', color: 'var(--c-green)' }}>+8% acima</span></td>
+                  <td style={{ padding: '1rem' }}><span className="vini-badge-success">Operando</span></td>
                 </tr>
                 <tr>
-                  <td>
-                    <div className="client-cell">
-                      <div className="avatar bg-yellow-light"><Store size={14} color="var(--c-yellow)" /></div>
-                      <span>Filial Sul (Shopping)</span>
+                  <td style={{ padding: '1rem' }}>
+                    <div className="client-cell" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                      <div className="avatar bg-yellow-light" style={{ width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(245, 158, 11, 0.15)' }}>
+                        <Store size={18} color="var(--c-yellow)" />
+                      </div>
+                      <span style={{ fontWeight: '600' }}>Filial Sul (Shopping)</span>
                     </div>
                   </td>
-                  <td>Carlos</td>
-                  <td>R$ 25.000,00</td>
-                  <td><span className="text-negative">-2% abaixo</span></td>
-                  <td><span className="vini-badge-success">Operando</span></td>
+                  <td style={{ padding: '1rem' }}>Carlos</td>
+                  <td style={{ padding: '1rem', fontWeight: '500' }}>R$ 25.000,00</td>
+                  <td style={{ padding: '1rem' }}><span className="text-negative" style={{ fontWeight: '600', color: 'var(--c-red)' }}>-2% abaixo</span></td>
+                  <td style={{ padding: '1rem' }}><span className="vini-badge-warning" style={{ color: 'var(--c-yellow)', background: 'rgba(245, 158, 11, 0.15)', padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem' }}>Atenção</span></td>
                 </tr>
               </tbody>
             </table>
