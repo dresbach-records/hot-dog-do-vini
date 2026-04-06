@@ -92,11 +92,18 @@ function Dashboard() {
     const topDevedores = clientesDevedores.slice(0, 5);
 
     const pizzaRecebimentos = [
-      { name: 'Recebido (Caixa)', value: totalPago },
-      { name: 'Em Aberto (Fiado)', value: totalFiado },
+      { name: 'Recebido (Caixa)', value: resumo.total_recebido_confirmado || 0 },
+      { name: 'Em Aberto (Fiado)', value: resumo.total_em_aberto_estimado || 0 },
     ];
 
-    return { totalSales, totalPago, totalFiado, totalItems: resumo.total_pedidos || 17, topDevedores, pizzaRecebimentos };
+    return { 
+      totalSales: resumo.total_vendas_estimado || 0, 
+      totalPago: resumo.total_recebido_confirmado || 0, 
+      totalFiado: resumo.total_em_aberto_estimado || 0, 
+      totalItems: resumo.total_pedidos || 0, 
+      topDevedores, 
+      pizzaRecebimentos 
+    };
   }, [clientes, resumo, pagamentosConfirmados]);
 
   // Cores personalizadas e Tooltip padronizado
@@ -113,10 +120,10 @@ function Dashboard() {
       </header>
 
       {/* 8. KPI (CARDS NO TOPO) */}
-      <section className="stats-grid" style={{ marginBottom: '2rem' }}>
-        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="stat-icon-wrapper" style={{ background: 'var(--bg-active)' }}>
-            <DollarSign size={24} color="var(--c-blue)" />
+      <section className="stats-grid" style={{ marginBottom: '2.5rem' }}>
+        <div className="vini-card-stat vini-glass-panel">
+          <div className="stat-icon-wrapper blue">
+            <DollarSign size={24} />
           </div>
           <div className="stat-info">
             <span className="stat-label">Total Vendido</span>
@@ -125,40 +132,40 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="stat-icon-wrapper bg-green-light">
-            <Activity size={24} color="var(--c-green)" />
+        <div className="vini-card-stat vini-glass-panel">
+          <div className="stat-icon-wrapper green">
+            <Activity size={24} />
           </div>
           <div className="stat-info">
             <span className="stat-label">Total Recebido (Caixa)</span>
-            <h3 className="stat-value text-positive">R$ {metrics.totalPago.toFixed(2).replace('.', ',')}</h3>
+            <h3 className="stat-value text-positive" style={{ color: '#22c55e' }}>R$ {metrics.totalPago.toFixed(2).replace('.', ',')}</h3>
             <span className="stat-trend positive">
-               {metrics.totalSales > 0 ? ((metrics.totalPago / metrics.totalSales)*100).toFixed(0) : 0}% das vendas convertidas
+               {metrics.totalSales > 0 ? ((metrics.totalPago / metrics.totalSales)*100).toFixed(0) : 0}% convertido
             </span>
           </div>
         </div>
 
-        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-          <div className="stat-icon-wrapper bg-red-light">
-            <AlertCircle size={24} color="var(--c-red)" />
+        <div className="vini-card-stat vini-glass-panel" style={{ borderLeft: '4px solid #ef4444' }}>
+          <div className="stat-icon-wrapper red">
+            <AlertCircle size={24} />
           </div>
           <div className="stat-info">
             <span className="stat-label">Total Em Aberto (Fiado)</span>
-            <h3 className="stat-value text-negative">R$ {metrics.totalFiado.toFixed(2).replace('.', ',')}</h3>
+            <h3 className="stat-value text-negative" style={{ color: '#ef4444' }}>R$ {metrics.totalFiado.toFixed(2).replace('.', ',')}</h3>
             <span className="stat-trend negative">
-              {metrics.totalSales > 0 ? ((metrics.totalFiado / metrics.totalSales)*100).toFixed(0) : 0}% do volume em risco
+              {metrics.totalSales > 0 ? ((metrics.totalFiado / metrics.totalSales)*100).toFixed(0) : 0}% em risco
             </span>
           </div>
         </div>
 
-        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
+        <div className="vini-card-stat vini-glass-panel">
           <div className="stat-icon-wrapper yellow">
             <ShoppingCart size={24} />
           </div>
           <div className="stat-info">
             <span className="stat-label">Nº de Pedidos</span>
             <h3 className="stat-value">{metrics.totalItems} un.</h3>
-            <span className="stat-trend neutral">Volume logístico despachado</span>
+            <span className="stat-trend neutral">Logística despachada</span>
           </div>
         </div>
       </section>

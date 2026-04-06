@@ -242,7 +242,7 @@ function Pedidos() {
         </div>
       </header>
 
-      <div className="kanban-board">
+      <div className="kanban-board" style={{ padding: '1rem', background: 'var(--bg-active)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
         {renderColumn('Novos', 'novos', 'column-novos')}
         {renderColumn('Em Preparo', 'preparo', 'column-preparo')}
         {renderColumn('Saiu p/ Entrega', 'entrega', 'column-entrega')}

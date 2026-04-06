@@ -34,9 +34,58 @@
   justify-content: center;
 }
 
-.stat-icon-wrapper.red { background: rgba(230, 57, 70, 0.15); color: var(--c-red); }
-.stat-icon-wrapper.yellow { background: rgba(244, 162, 97, 0.15); color: var(--c-yellow); }
-.stat-icon-wrapper.gray { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
+.stat-icon-wrapper.red { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.stat-icon-wrapper.yellow { background: rgba(234, 179, 8, 0.1); color: #eab308; }
+.stat-icon-wrapper.green { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+.stat-icon-wrapper.blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+
+.vini-card-stat {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vini-card-stat:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sh2);
+}
+
+.vini-glass-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--sh);
+  backdrop-filter: blur(8px);
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+
+.stat-trend {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.stat-trend.positive { color: #22c55e; }
+.stat-trend.negative { color: #ef4444; }
+.stat-trend.neutral { color: var(--text-secondary); }
 
 .dashboard-content {
   display: grid;

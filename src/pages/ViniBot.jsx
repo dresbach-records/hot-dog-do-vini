@@ -11,7 +11,8 @@ import {
   Volume2,
   Clock,
   ShieldCheck,
-  Send
+  Send,
+  ShoppingBag
 } from 'lucide-react';
 
 function ViniBot() {
@@ -28,6 +29,8 @@ function ViniBot() {
   };
 
   const renderPreview = (text) => {
+    if (!text) return <div className="whatsapp-chat-bubble">Digitando...</div>;
+    
     let formattedText = text
       .replace('{cliente}', 'Marcos')
       .replace('{pedido_id}', '#1024')

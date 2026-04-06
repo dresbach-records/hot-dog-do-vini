@@ -4,10 +4,18 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️ ATENÇÃO: As chaves do Supabase (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY) não foram configuradas no ambiente do projeto (Vercel/Local).');
+  console.error('❌ ERRO SUPABASE: Chaves não encontradas no meta.env!');
+  console.debug('Debug - URL:', supabaseUrl ? 'Presente' : 'Ausente');
+  console.debug('Debug - Key:', supabaseAnonKey ? 'Presente' : 'Ausente');
 }
 
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder-key'
+  supabaseUrl || 'https://fallback-url.supabase.co',
+  supabaseAnonKey || 'fallback-key',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true
+    }
+  }
 );

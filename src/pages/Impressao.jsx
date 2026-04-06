@@ -158,16 +158,35 @@ function Impressao() {
                  )}
               </div>
 
-              <div className="receipt-footer" style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.75rem' }}>
-                 <p>Feito com ❤️ no Hot Dog do Vini</p>
-                 <p>vini-delivery.vercel.app</p>
-              </div>
+               <div className="receipt-footer" style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.75rem' }}>
+                  <p>Feito com ❤️ no Hot Dog do Vini</p>
+                  <p>nossohotdogdovini.com.br</p>
+               </div>
            </div>
         </div>
 
       </div>
 
       <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .thermal-receipt-preview, .thermal-receipt-preview * { visibility: visible; }
+          .thermal-receipt-preview {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: ${printerConfig.paperSize === '80mm' ? '80mm' : '58mm'};
+            padding: 5mm;
+            box-shadow: none;
+            margin: 0;
+          }
+          @page {
+            margin: 0;
+            size: auto;
+          }
+          header, footer, .dashboard-header, .sidebar { display: none !important; }
+        }
+
         .thermal-receipt-preview {
           background: #fff;
           color: #000;

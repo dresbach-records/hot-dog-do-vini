@@ -19,17 +19,17 @@ function Clientes() {
       </header>
       
       <div className="dashboard-content" style={{ display: 'block' }}>
-        <div className="vini-glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+        <div className="vini-glass-panel" style={{ overflow: 'hidden' }}>
           <div className="table-responsive">
             <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: 'var(--bg-active)', borderBottom: '1px solid var(--border-color)' }}>
-                  <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Cliente</th>
-                  <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Contato</th>
-                  <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Endereço</th>
-                  <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Status Conta</th>
-                  <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Total Gasto</th>
-                  <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Ações</th>
+                  <th style={{ padding: '1.25rem 1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Cliente</th>
+                  <th style={{ padding: '1.25rem 1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Contato</th>
+                  <th style={{ padding: '1.25rem 1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Endereço</th>
+                  <th style={{ padding: '1.25rem 1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Status Conta</th>
+                  <th style={{ padding: '1.25rem 1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Total Gasto</th>
+                  <th style={{ padding: '1.25rem 1rem', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Ações</th>
                 </tr>
               </thead>
               <tbody>

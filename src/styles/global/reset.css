@@ -43,3 +43,78 @@ a {
 ::-webkit-scrollbar-thumb:hover { 
   background: var(--text-muted); 
 }
+
+/* Botões Globais do ERP */
+button, .btn {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius-md);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  user-select: none;
+}
+
+button:active, .btn:active {
+  transform: scale(0.97);
+}
+
+.vini-btn-primary {
+  background: var(--c-red);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg);
+}
+
+.vini-btn-primary:hover {
+  background: var(--c-red-dark);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
+}
+
+.vini-btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-lg);
+}
+
+.vini-btn-outline:hover {
+  background: var(--bg-active);
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+.vini-btn-action {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 0;
+}
+
+.vini-btn-action:hover {
+  background: var(--c-red);
+  color: #fff;
+  border-color: var(--c-red);
+}
+
+.vini-btn-action.secondary:hover {
+  background: var(--c-yellow);
+  color: #fff;
+  border-color: var(--c-yellow);
+}
+
+/* Inputs Padronizados */
+input, textarea {
+  border-radius: var(--radius-md);
+  font-family: inherit;
+}

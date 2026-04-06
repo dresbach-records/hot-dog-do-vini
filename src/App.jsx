@@ -170,7 +170,7 @@ function App() {
                     <Route path="" element={<Navigate to="/admin/dashboard" />} />
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="pedidos" element={<Pedidos />} />
-                    <Route path="agendamentos" element={<Agendamentos />} />
+                    <Route path="cardapio" element={<Cardapio />} />
                     <Route path="cardapio" element={<Cardapio />} />
                     <Route path="entregas" element={<Entregas />} />
                     <Route path="area-entrega" element={<AreaEntrega />} />
@@ -185,7 +185,7 @@ function App() {
                     <Route path="filiais" element={<Filiais />} />
                     <Route path="relatorios" element={<Relatorios />} />
                     <Route path="marketing" element={<Marketing />} />
-                    <Route path="pagamentos" element={<Pagamentos />} />
+                    <Route path="convenios" element={<ConveniosAdmin />} />
                     <Route path="convenios" element={<ConveniosAdmin />} />
                     <Route path="integracoes" element={<Integracoes />} />
                     <Route path="configuracoes" element={<Configuracoes />} />
