@@ -4,12 +4,52 @@ import {
   DollarSign, Briefcase, FileText, AlertCircle, TrendingUp
 } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
+import api from '../services/api';
 import '../styles/admin/convenios.css';
 
 function ConveniosAdmin() {
-  const { clientes, empresas, solicitacoes, gerenciarSolicitacao, loading } = useClientes();
-  const [activeTab, setActiveTab] = useState('solicitacoes'); // 'solicitacoes' | 'empresas'
+  const { clientes, empresas, solicitacoes, gerenciarSolicitacao, atualizarCliente, loading } = useClientes();
+  const [activeTab, setActiveTab] = useState('solicitacoes'); // 'solicitacoes' | 'empresas' | 'financeiro'
   const [searchTerm, setSearchTerm] = useState('');
+  const [asaasBalance, setAsaasBalance] = useState({ balance: 0 });
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Helper para ocultar nomes específicos conforme pedido do usuário
+  const sanitizeName = (name) => {
+    if (!name) return 'N/A';
+    const lower = name.toLowerCase();
+    if (lower.includes('jose')) return 'Gestor Operacional';
+    if (lower.includes('davi')) return 'Gestor Financeiro';
+    return name;
+  };
+
+  React.useEffect(() => {
+     const fetchBalance = async () => {
+        try {
+           const res = await api.get('/payments/balance');
+           if (res.success) setAsaasBalance(res.balance);
+        } catch (err) { console.error('Erro balance:', err); }
+     };
+
+     if (activeTab === 'financeiro') {
+        fetchBalance();
+        const interval = setInterval(fetchBalance, 30000); // 30s refresh
+        return () => clearInterval(interval);
+     }
+  }, [activeTab]);
+
+  const handleSyncCustomers = async () => {
+     setIsSyncing(true);
+     try {
+        const res = await api.post('/payments/sync-customers');
+        alert(`Sincronização concluída! Atualizados: ${res.results.updated}, Erros: ${res.results.errors}`);
+        window.location.reload();
+     } catch (err) {
+        alert('Erro na sincronização: ' + err.message);
+     } finally {
+        setIsSyncing(false);
+     }
+  };
 
   const pendentes = solicitacoes.filter(s => s.status === 'pendente_gestor');
 
@@ -53,7 +93,7 @@ function ConveniosAdmin() {
                         <User size={18} color="var(--c-blue)" />
                       </div>
                       <div>
-                        <span style={{ fontWeight: '600', display: 'block' }}>{sol.dados_funcionario?.nome || cliente?.nome}</span>
+                        <span style={{ fontWeight: '600', display: 'block' }}>{sanitizeName(sol.dados_funcionario?.nome || cliente?.nome)}</span>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>CPF: {sol.dados_funcionario?.cpf}</span>
                       </div>
                     </div>
@@ -112,70 +152,119 @@ function ConveniosAdmin() {
     }
   };
 
-  const renderEmpresas = () => (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem', padding: '1rem' }}>
-        {empresas.map((emp, i) => {
-          const numFuncionarios = clientes.filter(c => c.convenio_empresa_id === emp.id && c.convenio_status === 'ativo').length;
-          return (
-            <div key={i} className="vini-glass-panel" style={{ padding: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                   <div style={{ background: emp.cor_primaria || 'var(--c-blue)', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                      <Building2 size={24} />
-                   </div>
-                   <div style={{ textAlign: 'right' }}>
-                      <span className={`vini-badge ${emp.ativo ? 'success' : 'secondary'}`}>{emp.ativo ? 'ATIVA' : 'INATIVA'}</span>
-                   </div>
-                </div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '0.2rem' }}>{emp.nome}</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>CNPJ: {emp.cnpj}</p>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
-                   <div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Colaboradores</div>
-                      <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{numFuncionarios} ativos</div>
-                   </div>
-                   <div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Limite Sugerido</div>
-                      <div style={{ fontWeight: '700', color: 'var(--c-green)' }}>R$ {Number(emp.limite_sugerido || 0).toFixed(2)}</div>
-                   </div>
-                </div>
-            </div>
-          );
-        })}
-        <button 
-           className="vini-glass-panel" 
-           style={{ border: '2px dashed var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '2rem', cursor: 'pointer', background: 'transparent' }}
-           onClick={() => setIsModalOpen(true)}
-        >
-           <Plus size={32} color="var(--text-muted)" />
-           <span style={{ fontWeight: '600', color: 'var(--text-muted)' }}>Nova Empresa Parceira</span>
-        </button>
-
-        {isModalOpen && (
-          <div className="vini-modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-            <div className="vini-glass-panel" style={{ width: '100%', maxWidth: '450px', padding: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h3 style={{ margin: 0 }}>Cadastrar Empresa</h3>
-                <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><X /></button>
-              </div>
-              <form onSubmit={handleCreateEmpresa} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                <div className="form-group">
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Nome da Empresa</label>
-                  <input type="text" value={newEmpresa.nome} onChange={e => setNewEmpresa({...newEmpresa, nome: e.target.value})} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: '#fff' }} />
-                </div>
-                <div className="form-group">
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>CNPJ</label>
-                  <input type="text" value={newEmpresa.cnpj} onChange={e => setNewEmpresa({...newEmpresa, cnpj: e.target.value})} placeholder="00.000.000/0001-00" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: '#fff' }} />
-                </div>
-                <div className="form-group">
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Limite de Crédito Sugerido</label>
-                  <input type="number" value={newEmpresa.limite_sugerido} onChange={e => setNewEmpresa({...newEmpresa, limite_sugerido: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: '#fff' }} />
-                </div>
-                <button type="submit" className="btn btn-primary" style={{ marginTop: '1rem', padding: '12px' }}>Salvar Empresa</button>
-              </form>
-            </div>
-          </div>
-        )}
+  const renderFinanceiro = () => (
+    <div className="table-responsive">
+      <div style={{ padding: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+         <button 
+           className="vini-btn success" 
+           onClick={handleSyncCustomers} 
+           disabled={isSyncing}
+           style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+         >
+            <TrendingUp size={16} />
+            {isSyncing ? 'Sincronizando...' : 'Sincronizar com Asaas'}
+         </button>
+      </div>
+      <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ background: 'var(--bg-active)', borderBottom: '1px solid var(--border-color)' }}>
+            <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Cliente</th>
+            <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Status Asaas</th>
+            <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Limite Indiv.</th>
+            <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Conta Responsável</th>
+            <th style={{ padding: '1rem', textAlign: 'left', color: 'var(--text-secondary)' }}>Ações Asaas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {clientes
+            .filter(c => c.convenio_status === 'ativo' || true)
+            .map((c, i) => {
+              const responsavel = clientes.find(r => r.id === c.linked_account_id);
+              
+              return (
+                <tr key={i} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={{ padding: '1rem' }}>
+                    <div style={{ fontWeight: '600' }}>{sanitizeName(c.nome)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Saldo atual: R$ {Number(c.saldo_devedor || 0).toFixed(2)}</div>
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    <span className={`vini-badge ${c.asaas_customer_id ? 'success' : 'warning'}`}>
+                       {c.asaas_customer_id ? 'Sincronizado' : 'Não Sincronizado'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    <input 
+                      type="number" 
+                      defaultValue={c.individual_limit} 
+                      onBlur={async (e) => {
+                        const val = e.target.value ? parseFloat(e.target.value) : null;
+                        await atualizarCliente(c.id, { individual_limit: val });
+                      }}
+                      style={{ width: '80px', padding: '5px', borderRadius: '4px', border: '1px solid #ddd', background: 'transparent', color: '#fff' }}
+                      placeholder="Sem limite"
+                    />
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    <select 
+                      defaultValue={c.linked_account_id || ''}
+                      onChange={async (e) => {
+                        const val = e.target.value || null;
+                        await atualizarCliente(c.id, { linked_account_id: val });
+                      }}
+                      style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ddd', background: 'rgba(255,255,255,0.05)', color: '#fff' }}
+                    >
+                      <option value="">Ninguém (Solo)</option>
+                      {clientes.filter(r => r.id !== c.id).map(r => (
+                        <option key={r.id} value={r.id}>{sanitizeName(r.nome)}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td style={{ padding: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '0.8rem' }}>
+                       <button 
+                         className="vini-btn-action success" 
+                         title="Emitir Boleto"
+                         onClick={async () => {
+                            if (!window.confirm(`Deseja emitir um boleto via Asaas para ${c.nome}?`)) return;
+                            try {
+                               const res = await api.post('/payments/issue-asaas', {
+                                  userId: c.id,
+                                  total: c.saldo_devedor,
+                                  metodo: 'BOLETO',
+                                  descricao: 'Fatura Mensal Vini Delivery'
+                               });
+                               alert('Boleto gerado com sucesso! Link: ' + res.payment.invoiceUrl);
+                               window.open(res.payment.invoiceUrl, '_blank');
+                            } catch (err) {
+                               alert('Erro: ' + err.message);
+                            }
+                         }}
+                       >
+                          <FileText size={16} />
+                       </button>
+                       <button 
+                         className="vini-btn-action danger" 
+                         title="Negativar (Serasa)"
+                         onClick={async () => {
+                            const pid = window.prompt("Digite o ID da Cobrança Asaas para negativar:");
+                            if (!pid) return;
+                            try {
+                               await api.post('/payments/negativar', { paymentId: pid });
+                               alert('Solicitação de negativação enviada ao Asaas.');
+                            } catch (err) {
+                               alert('Erro: ' + err.message);
+                            }
+                         }}
+                       >
+                          <AlertCircle size={16} />
+                       </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+        </tbody>
+      </table>
     </div>
   );
 
@@ -183,20 +272,24 @@ function ConveniosAdmin() {
     <div className="dashboard">
       <header className="dashboard-header">
         <div>
-          <h2>Convênios Corporativos</h2>
-          <p>Módulo de benefícios e gestão de empresas parceiras.</p>
+          <h2>Gestão de Saldo Compartilhado</h2>
+          <p>Módulo de controle de delegados e gestão de benefícios.</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
-           <div className="stats-mini-list" style={{ display: 'flex', gap: '1.5rem', marginRight: '2rem' }}>
-              <div style={{ textAlign: 'right' }}>
-                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Faturamento Convênio</div>
-                 <div style={{ fontWeight: '800', color: 'var(--c-green)', fontSize: '1.1rem' }}>R$ 12.450,00</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Saldo em Aberto</div>
-                 <div style={{ fontWeight: '800', color: 'var(--c-red)', fontSize: '1.1rem' }}>R$ 4.210,00</div>
-              </div>
-           </div>
+            <div className="stats-mini-list" style={{ display: 'flex', gap: '1.5rem', marginRight: '2rem' }}>
+               <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Faturamento Interno</div>
+                  <div style={{ fontWeight: '800', color: 'var(--c-green)', fontSize: '1.1rem' }}>R$ {clientes.reduce((acc, c) => acc + Number(c.total_cliente || 0), 0).toFixed(2)}</div>
+               </div>
+               <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Saldo Carteira Asaas</div>
+                  <div style={{ fontWeight: '800', color: 'var(--c-blue)', fontSize: '1.1rem' }}>R$ {Number(asaasBalance.balance || 0).toFixed(2)}</div>
+               </div>
+               <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Dívida em Aberto</div>
+                  <div style={{ fontWeight: '800', color: 'var(--c-red)', fontSize: '1.1rem' }}>R$ {clientes.reduce((acc, c) => acc + Number(c.saldo_devedor || 0), 0).toFixed(2)}</div>
+               </div>
+            </div>
         </div>
       </header>
 
@@ -214,11 +307,20 @@ function ConveniosAdmin() {
            <button 
              onClick={() => setActiveTab('empresas')}
              style={{ 
-               background: 'none', border: 'none', borderBottom: activeTab === 'empresas' ? '3px solid var(--c-blue)' : '3px solid transparent',
-               padding: '0.5rem 1rem', fontWeight: '700', fontSize: '1rem', color: activeTab === 'empresas' ? 'var(--c-blue)' : 'var(--text-muted)', cursor: 'pointer'
+                background: 'none', border: 'none', borderBottom: activeTab === 'empresas' ? '3px solid var(--c-blue)' : '3px solid transparent',
+                padding: '0.5rem 1rem', fontWeight: '700', fontSize: '1rem', color: activeTab === 'empresas' ? 'var(--c-blue)' : 'var(--text-muted)', cursor: 'pointer'
              }}
            >
              Empresas Parceiras
+           </button>
+           <button 
+             onClick={() => setActiveTab('financeiro')}
+             style={{ 
+                background: 'none', border: 'none', borderBottom: activeTab === 'financeiro' ? '3px solid var(--c-blue)' : '3px solid transparent',
+                padding: '0.5rem 1rem', fontWeight: '700', fontSize: '1rem', color: activeTab === 'financeiro' ? 'var(--c-blue)' : 'var(--text-muted)', cursor: 'pointer'
+             }}
+           >
+             Financeiro (Asaas)
            </button>
         </div>
 
@@ -226,8 +328,12 @@ function ConveniosAdmin() {
            <div className="vini-glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
               {renderSolicitacoes()}
            </div>
-        ) : (
+        ) : activeTab === 'empresas' ? (
            renderEmpresas()
+        ) : (
+           <div className="vini-glass-panel" style={{ padding: '0', overflow: 'hidden' }}>
+              {renderFinanceiro()}
+           </div>
         )}
       </div>
     </div>

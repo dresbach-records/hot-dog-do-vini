@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, ShoppingBag, Receipt, Users, Store, Settings, LogOut, Flame,
-  ClipboardList, UtensilsCrossed, Bike, MapPin, BarChart3, UsersRound, Ticket, Link, CreditCard,
-  ChevronDown, ChevronRight, Gift
+  ChevronDown, ChevronRight, Gift, Megaphone, FileText, Wallet, ArrowRightLeft, CalendarClock, History, ShieldCheck, Key, Lock, Bell,
+  ClipboardList, UtensilsCrossed, Bike, UsersRound, BarChart3, CreditCard, Ticket, Link
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -121,12 +121,6 @@ function Sidebar({ onLogout }) {
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/admin/despesas" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-                    <Receipt size={20} />
-                    <span>Finanças & Insumos</span>
-                  </NavLink>
-                </li>
-                <li>
                   <NavLink to="/admin/rh" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <Users size={20} />
                     <span>RH & Escala</span>
@@ -138,10 +132,54 @@ function Sidebar({ onLogout }) {
                     <span>Múltiplas Filiais</span>
                   </NavLink>
                 </li>
+              </ul>
+            )}
+          </div>
+
+          <div className="nav-section">
+            <h3 
+              className="nav-section-title collapsible" 
+              onClick={() => toggleSection('financeiro')}
+            >
+              <span>Financeiro 360°</span>
+              {openSection === 'financeiro' ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </h3>
+            {openSection === 'financeiro' && (
+              <ul className="submenu">
                 <li>
-                  <NavLink to="/admin/relatorios" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-                    <BarChart3 size={20} />
-                    <span>Dados & BI</span>
+                  <NavLink to="/admin/financas-hub" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <BarChart3 size={20} color="var(--c-green)" />
+                    <span>Dashboard Financeiro</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/cobrancas" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <CreditCard size={20} />
+                    <span>Gestão de Cobranças</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/convenios" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <Users size={20} />
+                    <span>Saldo Compartilhado & Gestão</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/transferencias" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <ArrowRightLeft size={20} />
+                    <span>Transferências</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/assinaturas" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <CalendarClock size={20} />
+                    <span>Assinaturas Resgate</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/antecipacoes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <History size={20} />
+                    <span>Antecipações</span>
                   </NavLink>
                 </li>
               </ul>
@@ -182,10 +220,42 @@ function Sidebar({ onLogout }) {
                     <span>Pagamentos</span>
                   </NavLink>
                 </li>
+              </ul>
+            )}
+          </div>
+
+          <div className="nav-section">
+            <h3 
+              className="nav-section-title collapsible" 
+              onClick={() => toggleSection('utilitarios')}
+            >
+              <span>Utilitários & Fiscal</span>
+              {openSection === 'utilitarios' ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </h3>
+            {openSection === 'utilitarios' && (
+              <ul className="submenu">
                 <li>
                   <NavLink to="/admin/fiscal" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <FileText size={20} />
-                    <span>Módulo Fiscal</span>
+                    <span>Módulo Fiscal (NF-e)</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/kyc" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <ShieldCheck size={20} />
+                    <span>Situação da Conta</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/api-keys" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <Key size={20} />
+                    <span>Chaves de API</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/notificacoes" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <Bell size={20} />
+                    <span>Notificações</span>
                   </NavLink>
                 </li>
                 <li>

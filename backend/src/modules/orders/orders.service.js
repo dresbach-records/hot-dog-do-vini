@@ -1,4 +1,5 @@
 import { supabase } from '../../config/supabase.js';
+import { asaasService } from '../integrations/asaas/asaas.service.js';
 
 /**
  * Orders Service — Lógica de Negócio (Nível 10/10)
@@ -82,10 +83,36 @@ export const ordersService = {
       throw new Error('Falha ao salvar pedido no banco de dados');
     }
 
+    // 4. INTEGRAÇÃO FINANCEIRA (ASAAS)
+    let paymentData = null;
+    if (pagamento.metodo?.startsWith('asaas_')) {
+       try {
+          const type = pagamento.metodo.replace('asaas_', '').toUpperCase(); // PIX ou BOLETO
+          
+          paymentData = await asaasService.createPayment({
+            asaasCustomerId: cliente.asaas_customer_id, // Note: Expecting this to be synced or handled
+            valor: totalGeral,
+            metodo: type,
+            pedidoId: newOrder.id,
+            descricao: `Pedido #${newOrder.id.substring(0,8)}`
+          });
+
+          // Guardar o ID da cobrança no pedido
+          await supabase
+            .from('pedidos')
+            .update({ asaas_payment_id: paymentData.id })
+            .eq('id', newOrder.id);
+
+       } catch (err) {
+          console.error('[Asaas Service Error]', err.message);
+          // Opcional: Cancelar pedido se o pagamento falhar na origem
+       }
+    }
+
     return { 
       success: true, 
-      data: newOrder, 
-      message: 'Pedido criado com sucesso e validado pelo servidor!' 
+      data: { ...newOrder, asaas: paymentData }, 
+      message: 'Pedido criado com sucesso!' 
     };
   },
 

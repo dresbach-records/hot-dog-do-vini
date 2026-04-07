@@ -20,91 +20,98 @@ export const ClientesProvider = ({ children }) => {
   const [empresas, setEmpresas] = useState([]);
   const [solicitacoes, setSolicitacoes] = useState([]);
 
+  const [isFetching, setIsFetching] = useState(false);
+
   // Carregar dados iniciais do Supabase
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (silent = false) => {
+    if (isFetching) return;
+    if (!silent) setLoading(true);
+    setIsFetching(true);
     
-    // 1. Buscar Clientes
-    const { data: clientesData, error: clientesError } = await supabase
-      .from('clientes')
-      .select('*, pedidos(*)');
+    try {
+      // 1. Buscar Clientes
+      const { data: clientesData, error: clientesError } = await supabase
+        .from('clientes')
+        .select('*, pedidos(*)');
 
-    // 2. Buscar Empresas
-    const { data: empresasData } = await supabase
-      .from('empresas')
-      .select('*')
-      .order('nome');
+      // 2. Buscar Empresas
+      const { data: empresasData } = await supabase
+        .from('empresas')
+        .select('*')
+        .order('nome');
 
-    if (clientesError) {
-      console.error('Erro ao buscar clientes:', clientesError);
-    } else {
-      setClientes(clientesData || []);
-      setEmpresas(empresasData || []);
-      
-      // Calcular Resumo e Pagamentos
-      let totalVendas = 0;
-      let totalPago = 0;
-      let totalPendentes = 0;
-      let countPedidos = 0;
-      const pagosIds = [];
-      const produtoMap = {};
-      const bairroMap = {};
-
-      clientesData?.forEach(c => {
-        totalVendas += Number(c.total_cliente || 0);
-        totalPago += Number(c.total_pago || 0);
-        totalPendentes += Number(c.saldo_devedor || 0);
-        const customerPedidos = c.pedidos || [];
-        // Corrigindo contagem de pedidos
-        let subTotalPedidos = customerPedidos.length;
+      if (clientesError) {
+        console.error('Erro ao buscar clientes:', clientesError);
+      } else {
+        setClientes(clientesData || []);
+        setEmpresas(empresasData || []);
         
-        customerPedidos.forEach(p => {
-          countPedidos++; // Incremento global de pedidos
-          
-          // Processar Bairros
-          const bairro = p.endereco_entrega?.bairro || 'Balcão/Outros';
-          bairroMap[bairro] = (bairroMap[bairro] || 0) + Number(p.total || 0);
+        // Calcular Resumo e Pagamentos
+        let totalVendas = 0;
+        let totalPago = 0;
+        let totalPendentes = 0;
+        let countPedidos = 0;
+        const pagosIds = [];
+        const produtoMap = {};
+        const bairroMap = {};
 
-          // Processar Produtos (Snapshot real do JSON do pedido)
-          if (p.itens) {
-            const itensArr = Array.isArray(p.itens) ? p.itens : [];
-            itensArr.forEach(item => {
-              const name = item.titulo || item.name || 'Produto Desconhecido';
-              const qtd = Number(item.qtd || 1);
-              produtoMap[name] = (produtoMap[name] || 0) + qtd;
-            });
+        clientesData?.forEach(c => {
+          totalVendas += Number(c.total_cliente || 0);
+          totalPago += Number(c.total_pago || 0);
+          totalPendentes += Number(c.saldo_devedor || 0);
+          const customerPedidos = c.pedidos || [];
+          
+          customerPedidos.forEach(p => {
+            countPedidos++;
+            
+            // Processar Bairros
+            const bairro = p.endereco_entrega?.bairro || 'Balcão/Outros';
+            bairroMap[bairro] = (bairroMap[bairro] || 0) + Number(p.total || 0);
+
+            // Processar Produtos (Snapshot real do JSON do pedido)
+            if (p.itens) {
+              const itensArr = Array.isArray(p.itens) ? p.itens : [];
+              itensArr.forEach(item => {
+                const name = item.titulo || item.name || 'Produto Desconhecido';
+                const qtd = Number(item.qtd || 1);
+                produtoMap[name] = (produtoMap[name] || 0) + qtd;
+              });
+            }
+          });
+
+          if (Number(c.saldo_devedor) === 0 && Number(c.total_cliente) > 0) {
+            pagosIds.push(c.id);
           }
         });
 
-        if (Number(c.saldo_devedor) === 0 && Number(c.total_cliente) > 0) {
-          pagosIds.push(c.id);
-        }
-      });
+        // Formatar Top Produtos
+        const topProdList = Object.entries(produtoMap)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([name, qty]) => ({ name, qty }));
 
-      // Formatar Top Produtos
-      const topProdList = Object.entries(produtoMap)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([name, qty]) => ({ name, qty }));
+        // Formatar Vendas por Bairro
+        const bairroList = Object.entries(bairroMap)
+          .map(([name, valor]) => ({ name, valor }))
+          .sort((a, b) => b.valor - a.valor);
 
-      // Formatar Vendas por Bairro
-      const bairroList = Object.entries(bairroMap)
-        .map(([name, valor]) => ({ name, valor }))
-        .sort((a, b) => b.valor - a.valor);
-
-      setResumo({
-        total_pedidos: countPedidos,
-        total_vendas_estimado: totalVendas,
-        total_recebido_confirmado: totalPago,
-        total_em_aberto_estimado: totalPendentes,
-        ticket_medio: countPedidos > 0 ? (totalVendas / countPedidos) : 0,
-        top_produtos: topProdList,
-        vendas_por_bairro: bairroList
-      });
-      setPagamentosConfirmados(pagosIds);
+        setResumo({
+          total_pedidos: countPedidos,
+          total_vendas_estimado: totalVendas,
+          total_recebido_confirmado: totalPago,
+          total_em_aberto_estimado: totalPendentes,
+          ticket_medio: countPedidos > 0 ? (totalVendas / countPedidos) : 0,
+          top_produtos: topProdList,
+          vendas_por_bairro: bairroList
+        });
+        setPagamentosConfirmados(pagosIds);
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setIsFetching(false);
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const adicionarEmpresa = async (dados) => {
@@ -222,6 +229,13 @@ export const ClientesProvider = ({ children }) => {
 
   useEffect(() => {
     fetchData();
+
+    // Auto-refresh: 15s para manter o painel admin atualizado "sozinho"
+    const interval = setInterval(() => {
+       fetchData(true); // silent fetch
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (

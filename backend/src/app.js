@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(cors({ 
   origin: '*', // Em produção, mude para a URL real do frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'asaas-access-token']
 }));
 
 /**

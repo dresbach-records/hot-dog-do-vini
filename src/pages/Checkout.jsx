@@ -14,7 +14,8 @@ import {
   Clock,
   Ticket,
   ShoppingBag,
-  Info
+  Info,
+  AlertTriangle
 } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
 import api from '../services/api';
@@ -46,15 +47,32 @@ const Checkout = ({ session }) => {
   const subtotal = cartItems.reduce((acc, item) => acc + (item.totalPrice || 0), 0);
   const total = subtotal; // Taxa grátis para o Vini
 
+  // 1. Lógica de Limite Individual (Spillover)
+  const individualLimit = Number(cliente?.individual_limit || 0);
+  const currentDebt = Number(cliente?.saldo_devedor || 0);
+  const remainingLimit = Math.max(0, individualLimit - currentDebt);
+  const exceedsLimit = individualLimit > 0 && total > remainingLimit;
+  const chargeSelf = exceedsLimit ? remainingLimit : total;
+  const chargeLinked = exceedsLimit ? (total - remainingLimit) : 0;
+
+  // 2. Lógica de Responsabilidade Solidária (Vive / Davi / Jose)
+  const responsavel = useMemo(() => {
+     if (!cliente?.linked_account_id) return null;
+     return clientes.find(r => r.id === cliente.linked_account_id);
+  }, [cliente, clientes]);
+
+  const responsavelPendente = responsavel && Number(responsavel.saldo_devedor) > Number(responsavel.limite_credito);
+
   const paymentOptions = [
-    { id: 'cartao', name: 'Cartão de Crédito/Débito', icon: <CreditCard size={22} />, desc: 'Visa, Master e mais' },
-    { id: 'pix', name: 'Pix Instantâneo', icon: <QrCode size={22} />, desc: 'Aprovação na hora' },
+    { id: 'asaas_pix', name: 'Pix via Asaas', icon: <QrCode size={22} />, desc: 'Aprovação instantânea' },
+    { id: 'asaas_boleto', name: 'Boleto Bancário', icon: <FileText size={22} />, desc: 'Vencimento em 3 dias' },
+    { id: 'cartao', name: 'Cartão de Crédito', icon: <CreditCard size={22} />, desc: 'Visa, Master e mais' },
     { 
       id: 'convenio', 
       name: 'Convênio Corporativo', 
       icon: <Building2 size={22} />, 
       disabled: !isConvenioAtivo,
-      desc: isConvenioAtivo ? `Saldo: R$ ${convenioSaldo.toFixed(2).replace('.', ',')}` : 'Solicite ativação'
+      desc: isConvenioAtivo ? `Saldo Disp: R$ ${convenioSaldo.toFixed(2).replace('.', ',')}` : 'Solicite ativação'
     }
   ];
 
@@ -87,7 +105,13 @@ const Checkout = ({ session }) => {
 
       if (result.success) {
         localStorage.removeItem('vini-cart');
-        window.location.href = '/cliente/pedidos?success=true';
+        
+        // Se for Asaas e tiver link de pagamento, abre ou redireciona
+        if (result.data.asaas?.invoiceUrl) {
+           window.location.href = result.data.asaas.invoiceUrl;
+        } else {
+           window.location.href = '/cliente/pedidos?success=true';
+        }
       } else {
         throw new Error(result.error || "Erro ao processar pedido");
       }
@@ -174,7 +198,34 @@ const Checkout = ({ session }) => {
                     ))}
                  </div>
               </section>
-           </div>
+
+              {exceedsLimit && paymentMethod === 'convenio' && (
+                 <section className="vini-checkout-card warning-card">
+                    <div className="vini-card-header">
+                       <AlertTriangle size={20} color="#f59e0b" />
+                       <h3 style={{ color: '#f59e0b' }}>Aviso de Limite Individual</h3>
+                    </div>
+                    <div className="vini-warning-box">
+                       <p>Seu limite individual é de <strong>R$ {individualLimit.toFixed(2)}</strong>.</p>
+                       <p>R$ {chargeSelf.toFixed(2)} serão debitados de você.</p>
+                       <p style={{ color: '#EA1D2C', fontWeight: '800' }}>O excedente de R$ {chargeLinked.toFixed(2)} será cobrado de: {responsavel?.nome || 'Responsável'}.</p>
+                    </div>
+                 </section>
+               )}
+
+               {responsavelPendente && (
+                 <section className="vini-checkout-card warning-card error-card">
+                    <div className="vini-card-header">
+                       <Info size={20} color="#EA1D2C" />
+                       <h3 style={{ color: '#EA1D2C' }}>Responsabilidade Solidária</h3>
+                    </div>
+                    <div className="vini-warning-box">
+                       <p>A conta responsável (<strong>{responsavel.nome}</strong>) possui pendências financeiras.</p>
+                       <p>De acordo com o termo de convênio, <strong>você é solidário a esta dívida</strong> e novas compras via convênio podem ser bloqueadas em breve.</p>
+                    </div>
+                 </section>
+               )}
+            </div>
 
            {/* Lado Direito: Resumo (Sticky em Desktop) */}
            <aside className="vini-checkout-summary">

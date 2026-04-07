@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { DollarSign, ShoppingCart, Activity, AlertCircle } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
+import api from '../services/api';
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
@@ -55,6 +56,20 @@ const MOCK_VENCIMENTOS = [
 
 function Dashboard() {
   const { clientes, resumo, pagamentosConfirmados } = useClientes();
+  const [asaasBalance, setAsaasBalance] = React.useState(0);
+
+  React.useEffect(() => {
+     const fetchAsaas = async () => {
+        try {
+           const res = await api.get('/payments/balance');
+           if (res.success) setAsaasBalance(res.balance.balance);
+        } catch (err) { console.error('Error fetching asaas balance', err); }
+     };
+     fetchAsaas();
+
+     const interval = setInterval(fetchAsaas, 30000); // 30s auto-refresh
+     return () => clearInterval(interval);
+  }, []);
 
   const metrics = useMemo(() => {
     let totalSales = 0;
@@ -158,16 +173,27 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="vini-card-stat vini-glass-panel">
-          <div className="stat-icon-wrapper yellow">
-            <ShoppingCart size={24} />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Nº de Pedidos</span>
-            <h3 className="stat-value">{metrics.totalItems} un.</h3>
-            <span className="stat-trend neutral">Logística despachada</span>
-          </div>
-        </div>
+         <div className="vini-card-stat vini-glass-panel" style={{ borderLeft: '4px solid var(--c-blue)' }}>
+           <div className="stat-icon-wrapper blue">
+             <Activity size={24} color="var(--c-blue)" />
+           </div>
+           <div className="stat-info">
+             <span className="stat-label">Saldo Disponível (Asaas)</span>
+             <h3 className="stat-value" style={{ color: 'var(--c-blue)' }}>R$ {Number(asaasBalance).toFixed(2).replace('.', ',')}</h3>
+             <span className="stat-trend neutral">Cash on hand (Real-time)</span>
+           </div>
+         </div>
+
+         <div className="vini-card-stat vini-glass-panel">
+           <div className="stat-icon-wrapper yellow">
+             <ShoppingCart size={24} />
+           </div>
+           <div className="stat-info">
+             <span className="stat-label">Nº de Pedidos</span>
+             <h3 className="stat-value">{metrics.totalItems} un.</h3>
+             <span className="stat-trend neutral">Logística despachada</span>
+           </div>
+         </div>
       </section>
 
       {/* MEIO: FATURAMENTO (LINHA) & RECEBIDO VS ABERTO (PIZZA) */}

@@ -1,6 +1,7 @@
 import express from 'express';
 import ordersRoutes from '../modules/orders/orders.routes.js';
 import productsRoutes from '../modules/products/products.routes.js';
+import paymentsRoutes from './payments.routes.js';
 import { ifoodService } from '../modules/integrations/ifood/ifood.service.js';
 
 const router = express.Router();
@@ -10,10 +11,12 @@ const router = express.Router();
  */
 router.use('/products', productsRoutes);
 
-/**
- * 📦 MÓDULO: PEDIDOS (/api/orders)
- */
 router.use('/orders', ordersRoutes);
+
+/**
+ * 💳 MÓDULO: PAGAMENTOS (Asaas / /api/payments)
+ */
+router.use('/payments', paymentsRoutes);
 
 /**
  * 📡 MÓDULO: INTEGRAÇÕES iFOOD (/api/ifood)
@@ -62,6 +65,34 @@ router.get('/ifood/orders', async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Erro ao buscar pedidos no iFood' });
+  }
+});
+
+// WEBHOOK IFOOD: Recebe eventos de novos pedidos e mudanças de status
+router.post('/ifood/webhook', async (req, res) => {
+  try {
+    const events = req.body;
+    console.log('[iFood Webhook] Eventos recebidos:', events);
+    // TODO: Processar eventos (Confirmar, Cancelar, etc) e atualizar no banco
+    res.status(200).send();
+  } catch (err) {
+    console.error('[iFood Webhook Error]', err);
+    res.status(500).send();
+  }
+});
+
+// IMPRESSÃO LOCAL: Dispara o agente de impressão
+router.post('/print', async (req, res) => {
+  try {
+    const { content, type } = req.body;
+    console.log('[Print Service] Solicitando impressão:', { type });
+
+    // TODO: Chamar o executável da GP iFood ou enviar comando via Raw Print
+    // C:\Program Files (x86)\Impressora GP iFood
+    
+    res.json({ success: true, message: 'Impressão enviada com sucesso!' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Falha ao disparar impressão local' });
   }
 });
 

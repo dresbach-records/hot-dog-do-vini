@@ -33,6 +33,16 @@ import Fiscal from './pages/Fiscal';
 import PDVBalcao from './pages/PDVBalcao';
 import Estoque from './pages/Estoque';
 
+// Novos Módulos Financeiros ERP
+import FinancasHub from './pages/FinancasHub';
+import Cobrancas from './pages/Cobrancas';
+import Assinaturas from './pages/Assinaturas';
+import Antecipacoes from './pages/Antecipacoes';
+import Transferencias from './pages/Transferencias';
+import KYCStatus from './pages/KYCStatus';
+import APIKeys from './pages/APIKeys';
+import Notificacoes from './pages/Notificacoes';
+
 // Portal do Consumidor Final (Rota Externa Pública)
 import PortalCliente from './pages/PortalCliente';
 import ConveniosFlow from './pages/ConveniosFlow';
@@ -193,6 +203,19 @@ function App() {
                     <Route path="fiscal" element={<Fiscal />} />
                     <Route path="pdv-balcao" element={<PDVBalcao />} />
                     <Route path="estoque" element={<Estoque />} />
+                    <Route path="cupons" element={<Cupons />} />
+                    <Route path="pagamentos" element={<Cobrancas />} />
+                    
+                    {/* Financeiro 360° Routes */}
+                    <Route path="financas-hub" element={<FinancasHub />} />
+                    <Route path="cobrancas" element={<Cobrancas />} />
+                    <Route path="transferencias" element={<Transferencias />} />
+                    <Route path="assinaturas" element={<Assinaturas />} />
+                    <Route path="antecipacoes" element={<Antecipacoes />} />
+                    <Route path="kyc" element={<KYCStatus />} />
+                    <Route path="api-keys" element={<APIKeys />} />
+                    <Route path="notificacoes" element={<Notificacoes />} />
+
                     <Route path="*" element={<Navigate to="/admin/dashboard" />} />
                   </Routes>
                 </main>

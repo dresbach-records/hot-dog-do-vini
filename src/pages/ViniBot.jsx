@@ -1,284 +1,314 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   MessageSquare, 
-  Settings, 
+  Search, 
+  MoreVertical, 
+  Send, 
+  User, 
+  ShoppingBag, 
+  CreditCard, 
+  FileText, 
   Zap, 
-  Smartphone, 
-  Check, 
-  Info, 
-  ArrowRight,
-  Flame,
-  Volume2,
+  Loader2,
+  RefreshCw,
   Clock,
-  ShieldCheck,
-  Send,
-  ShoppingBag
+  ChevronRight,
+  Filter,
+  CheckCheck,
+  Video,
+  Phone,
+  X,
+  Scale,
+  UtensilsCrossed,
+  AlertTriangle,
+  Wifi,
+  MoreHorizontal,
+  Gavel
 } from 'lucide-react';
+import { io } from 'socket.io-client';
+import { supabase } from '../lib/supabaseClient';
+
+const SOCKET_URL = 'http://localhost:3001';
 
 function ViniBot() {
-  const [activeTab, setActiveTab] = useState('atendimento'); // atendimento, pedidos, gatilhos
-  const [mensagens, setMensagens] = useState({
-    saudacao: "Olá {cliente}! Sou o Vini Bot 🌭. Que bom ter você aqui! Clique no link abaixo para ver nosso cardápio e fazer seu pedido:\n\n{link_cardapio}",
-    confirmacao: "Pedido {pedido_id} recebido com sucesso! Já estamos aquecendo a chapa! 🔥",
-    entrega: "Ótima notícia! Seu pedido {pedido_id} saiu para entrega com o motoboy {motoboy}. 🛵💨",
-    fechado: "Olá! No momento estamos com as chamas apagadas 🌙. Mas amanhã voltamos com tudo! Você pode conferir nosso cardápio no link:\n{link_cardapio}"
-  });
+  const [conversations, setConversations] = useState([
+     { id: 1, name: 'Cliente Jurídico', phone: '+55 11 99999-9999', type: 'legal', lastMsg: '15:20', status: 'A', avatarBg: 'bg-emerald-100 text-emerald-700' },
+     { id: 2, name: 'Cliente Alimentício', phone: '+55 11 88888-8888', type: 'food', lastMsg: '17:32', status: '!', avatarBg: 'bg-orange-100 text-orange-700' },
+     { id: 3, name: 'Cobrança Pend.', phone: '+55 11 77777-7777', type: 'billing', lastMsg: '16:30', avatarBg: 'bg-blue-100 text-blue-700' },
+     { id: 4, name: 'Cobrança', phone: '+55 11 66666-6666', type: 'billing', lastMsg: '16:49', avatarBg: 'bg-emerald-100 text-emerald-700' },
+  ]);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [botStatus, setBotStatus] = useState('CONNECTED');
+  const [qrCodeData, setQrCodeData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [inputMsg, setInputMsg] = useState('');
+  
+  const scrollRef = useRef();
+  const socketRef = useRef();
 
-  const handleMsgChange = (key, val) => {
-    setMensagens(prev => ({ ...prev, [key]: val }));
-  };
-
-  const renderPreview = (text) => {
-    if (!text) return <div className="whatsapp-chat-bubble">Digitando...</div>;
-    
-    let formattedText = text
-      .replace('{cliente}', 'Marcos')
-      .replace('{pedido_id}', '#1024')
-      .replace('{link_cardapio}', 'vinis.delivery/cardapio')
-      .replace('{motoboy}', 'Ricardo');
-      
-    return (
-      <div className="whatsapp-chat-bubble">
-        <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{formattedText}</p>
-        <span className="chat-time">17:45 <Check size={12} /></span>
-      </div>
-    );
-  };
+  useEffect(() => {
+    // Socket logic
+    socketRef.current = io(SOCKET_URL);
+    socketRef.current.on('bot-status', (data) => {
+      setBotStatus(data.status);
+      if (data.data) setQrCodeData(data.data);
+    });
+    return () => socketRef.current.disconnect();
+  }, []);
 
   return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ background: 'var(--c-red)', padding: '10px', borderRadius: '12px' }}>
-            <Zap size={24} color="#fff" />
-          </div>
-          <div>
-            <h2>Vini Bot (WhatsApp Automático) 🤖</h2>
-            <p>Configuração de mensagens e automação de status de pedido.</p>
-          </div>
-        </div>
-        <div className="vini-glass-panel" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '10px', border: '1px solid var(--c-green)' }}>
-          <ShieldCheck size={18} color="var(--c-green)" />
-          <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--c-green)' }}>ROBÔ CONECTADO</span>
-        </div>
-      </header>
-
-      <div className="dashboard-content" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem' }}>
+    <div className="flex h-screen bg-[#1a1c1e] text-[#e3e2e6] overflow-hidden p-2">
+      
+      {/* APP CONTAINER - DARK INDUSTRIAL THEME */}
+      <div className="flex w-full h-full bg-[#202123] rounded-2xl border border-[#303134] shadow-2xl overflow-hidden">
         
-        {/* LADO ESQUERDO: CONFIGURAÇÕES */}
-        <div className="vini-glass-panel" style={{ padding: '2rem' }}>
-          
-          {/* TABS ESTILO ANOTA AI */}
-          <div style={{ display: 'flex', gap: '2rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem' }}>
-             {['atendimento', 'pedidos', 'gatilhos'].map(tab => (
-               <button 
-                 key={tab} 
-                 onClick={() => setActiveTab(tab)}
-                 style={{ 
-                   background: 'none', border: 'none', padding: '10px 5px', fontSize: '1rem', fontWeight: '800', cursor: 'pointer',
-                   color: activeTab === tab ? 'var(--c-red)' : 'var(--text-muted)',
-                   borderBottom: activeTab === tab ? '3px solid var(--c-red)' : '3px solid transparent',
-                   textTransform: 'uppercase', letterSpacing: '1px'
-                 }}
-               >
-                 {tab === 'atendimento' && <><MessageSquare size={16} /> Atendimento</>}
-                 {tab === 'pedidos' && <><ShoppingBag size={16} /> Pedidos</>}
-                 {tab === 'gatilhos' && <><Zap size={16} /> Gatilhos</>}
-               </button>
+        {/* COLUMN 1: SIDEBAR (CONTACTS) */}
+        <div className="w-[300px] border-r border-[#303134] flex flex-col bg-[#111214]">
+          <header className="p-4 flex items-center gap-3 border-b border-[#303134]">
+             <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center overflow-hidden">
+                <User size={24} color="#fff" />
+             </div>
+             <div>
+                <h1 className="text-sm font-bold leading-tight">ViniBot <span className="text-emerald-400">PRO</span></h1>
+                <p className="text-[10px] text-gray-400">Atendimento Inteligente</p>
+             </div>
+             <div className="ml-auto flex gap-3 text-gray-400">
+                <Video size={16} />
+                <Phone size={16} />
+                <MoreHorizontal size={16} />
+                <X size={16} />
+             </div>
+          </header>
+
+          <div className="p-3">
+             <div className="bg-[#202123] rounded-full flex items-center px-3 py-1.5 gap-2 border border-[#3c4043]">
+                <Search size={16} className="text-gray-500" />
+                <input type="text" placeholder="Buscar..." className="bg-transparent text-xs outline-none w-full" />
+             </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+             {conversations.map(c => (
+               <div key={c.id} className="flex items-center p-3 hover:bg-[#202123] cursor-pointer transition-colors border-b border-[#202123]">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${c.avatarBg}`}>
+                     {c.type === 'legal' && <Scale size={18} />}
+                     {c.type === 'food' && <UtensilsCrossed size={18} />}
+                     {c.type === 'billing' && <CreditCard size={18} />}
+                  </div>
+                  <div className="ml-3 flex-1 overflow-hidden">
+                     <div className="flex justify-between items-center mb-0.5">
+                        <span className="text-xs font-bold truncate">{c.name}</span>
+                        <span className="text-[10px] text-gray-500">{c.lastMsg}</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <div className="h-1 flex-1 bg-[#3c4043] rounded-full">
+                           <div className="h-full bg-emerald-500 rounded-full w-[60%]"></div>
+                        </div>
+                        {c.status && (
+                           <span className={`text-[9px] font-bold px-1 rounded ${c.status === '!' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-black'}`}>
+                              {c.status}
+                           </span>
+                        )}
+                     </div>
+                  </div>
+               </div>
              ))}
           </div>
 
-          {/* CONTEÚDO DAS TABS */}
-          {activeTab === 'atendimento' && (
-            <div className="vini-bot-section animate-fade-in">
-                <div style={{ marginBottom: '2rem' }}>
-                   <label style={{ display: 'block', fontWeight: '700', marginBottom: '10px' }}>Mensagem de Saudação (Novo Cliente)</label>
-                   <textarea 
-                     className="vini-input-dark" 
-                     style={{ width: '100%', height: '120px', padding: '15px', resize: 'none' }}
-                     value={mensagens.saudacao}
-                     onChange={(e) => handleMsgChange('saudacao', e.target.value)}
-                   />
-                   <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                      <span className="vini-tag" onClick={() => handleMsgChange('saudacao', mensagens.saudacao + ' {cliente}')}>+ {cliente}</span>
-                      <span className="vini-tag" onClick={() => handleMsgChange('saudacao', mensagens.saudacao + ' {link_cardapio}')}>+ {link}</span>
-                   </div>
+          <div className="p-4 mt-auto border-t border-[#303134]">
+             <button className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all mb-4">
+                Iniciar Novo Atendimento
+             </button>
+             <div className="flex items-center justify-between text-[10px] text-emerald-400 font-bold px-1">
+                <div className="flex items-center gap-2">
+                   <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]"></div>
+                   Online | Multi-sessão SaaS
                 </div>
-
-                <div style={{ padding: '15px', background: 'rgba(234, 29, 44, 0.05)', borderRadius: '12px', border: '1px dashed var(--c-red)' }}>
-                   <h4 style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: 'var(--c-red)' }}>Dica do Vini:</h4>
-                   <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                     Use uma linguagem calorosa e direta. O objetivo é levar o cliente para o seu **cardápio digital** o mais rápido possível!
-                   </p>
-                </div>
-            </div>
-          )}
-
-          {activeTab === 'pedidos' && (
-            <div className="vini-bot-section animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                <div>
-                   <label style={{ display: 'block', fontWeight: '700', marginBottom: '10px' }}>Confirmação de Pedido Recebido</label>
-                   <textarea 
-                     className="vini-input-dark" 
-                     style={{ width: '100%', height: '80px', padding: '15px' }}
-                     value={mensagens.confirmacao}
-                     onChange={(e) => handleMsgChange('confirmacao', e.target.value)}
-                   />
-                </div>
-                <div>
-                   <label style={{ display: 'block', fontWeight: '700', marginBottom: '10px' }}>Notificação de "Saiu para Entrega" 🛵</label>
-                   <textarea 
-                     className="vini-input-dark" 
-                     style={{ width: '100%', height: '80px', padding: '15px' }}
-                     value={mensagens.entrega}
-                     onChange={(e) => handleMsgChange('entrega', e.target.value)}
-                   />
-                </div>
-            </div>
-          )}
-
-          <div style={{ marginTop: '3rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-             <button className="vini-btn-outline">Restaurar Padrão</button>
-             <button className="btn vini-btn-primary" style={{ padding: '12px 30px' }}>Salvar Automação</button>
+                <Wifi size={14} />
+             </div>
           </div>
         </div>
 
-        {/* LADO DIREITO: PREVIEW SMARTPHONE */}
-        <div style={{ position: 'sticky', top: '2rem', height: 'fit-content' }}>
-          <div className="iphone-mockup">
-             <div className="iphone-screen">
-                <div className="whatsapp-header">
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <img src="/Logo-VINI.png" alt="Vini" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff' }} />
-                      <div>
-                         <div style={{ fontWeight: '700', fontSize: '13px', color: '#fff' }}>Vini's Delivery 🌭</div>
-                         <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>online</div>
-                      </div>
-                   </div>
-                </div>
-                
-                <div className="whatsapp-body">
-                   <div className="chat-day">HOJE</div>
-                   {renderPreview(activeTab === 'atendimento' ? mensagens.saudacao : (activeTab === 'pedidos' ? mensagens.entrega : mensagens.saudacao))}
-                </div>
+        {/* COLUMN 2: CHAT AREA */}
+        <div className="flex-1 flex flex-col bg-[#131416] relative transition-all">
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat"></div>
 
-                <div className="whatsapp-footer">
-                   <div className="chat-input-mock">Digite uma mensagem...</div>
-                   <div className="chat-mic"><Send size={16} color="#fff" /></div>
+          <header className="h-[60px] bg-[#1a1c1e] bg-opacity-80 backdrop-blur-md flex items-center px-4 border-b border-[#303134] z-10">
+             <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
+                   <User size={18} color="#fff" />
+                </div>
+                <div>
+                   <h3 className="text-xs font-bold">Cliente Jurídico</h3>
+                   <p className="text-[9px] text-emerald-400">em atendimento via IA</p>
                 </div>
              </div>
+             <div className="ml-auto flex gap-4 text-gray-400">
+                <Search size={18} />
+                <MoreVertical size={18} />
+             </div>
+          </header>
+
+          <div className="flex-1 overflow-y-auto p-6 z-10 flex flex-col gap-4">
+             
+             {/* QR Connection Prompt */}
+             <div className="self-center w-full max-w-sm bg-[#1a1c1e] rounded-xl border border-[#303134] p-4 shadow-xl mb-6">
+                <div className="flex gap-4">
+                   <div className="bg-white p-2 rounded-lg">
+                      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=vinibot-pro" alt="QR" className="w-[100px] h-[100px]" />
+                   </div>
+                   <div className="flex-1">
+                      <h4 className="text-xs font-bold text-white mb-2 flex items-center gap-2">
+                        <Wifi size={14} className="text-emerald-400" /> Conecte-se ao WhatsApp
+                      </h4>
+                      <p className="text-[10px] text-gray-400 leading-relaxed">Escaneie o QR Code para ativar o motor e sincronizar as conversas.</p>
+                   </div>
+                </div>
+             </div>
+
+             <div className="self-start bg-[#1a1c1e] text-[#e3e2e6] px-4 py-2 rounded-2xl rounded-tl-none border border-[#303134] max-w-[80%]">
+                <div className="flex items-center gap-2 mb-1">
+                   <Zap size={12} className="text-emerald-400" />
+                   <span className="text-[10px] font-bold text-emerald-400">ViniBot AI</span>
+                   <span className="text-[9px] text-gray-500 ml-auto">10:48</span>
+                </div>
+                <p className="text-[11px]">Olá! Como posso ajudar você hoje?</p>
+             </div>
+
+             <div className="self-end bg-emerald-900 border border-emerald-800 text-white px-4 py-2 rounded-2xl rounded-tr-none max-w-[80%]">
+                <div className="flex items-center justify-between mb-1">
+                   <span className="text-[10px] font-bold opacity-70">Cliente Jurídico</span>
+                   <span className="text-[9px] opacity-50 ml-6">10:48</span>
+                </div>
+                <p className="text-[11px]">Quero um Hot Dog</p>
+             </div>
+
+             {/* RICH ORDER BUBBLE */}
+             <div className="self-start bg-[#1a1c1e] border border-[#303134] rounded-2xl rounded-tl-none overflow-hidden max-w-[80%] shadow-lg">
+                <div className="p-3">
+                   <p className="text-[11px] mb-3">Pedido gerado! Clique para revisar:</p>
+                   <div className="bg-[#202123] rounded-lg p-2 border border-[#3c4043] flex items-center gap-3">
+                      <div className="w-12 h-12 bg-white rounded-md overflow-hidden p-1">
+                         <img src="https://images.unsplash.com/photo-1541232390620-8a8400a9c24d?auto=format&fit=crop&q=80&w=100&h=100" alt="Hot dog" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1">
+                         <h5 className="text-[10px] font-bold">Hot Dog Especial</h5>
+                         <p className="text-[10px] text-emerald-400 font-bold">Total: R$ 15,00</p>
+                      </div>
+                      <button className="bg-emerald-600 text-white text-[9px] px-3 py-1.5 rounded-md font-bold">Ver Pedido</button>
+                   </div>
+                </div>
+                <div className="bg-[#111214] border-t border-[#303134] px-3 py-1 flex justify-between">
+                   <span className="text-[8px] text-gray-500 uppercase font-bold tracking-widest">Sincronizado</span>
+                   <span className="text-[9px] text-gray-500">10:48 <CheckCheck size={12} className="inline ml-1" /></span>
+                </div>
+             </div>
+
+             {/* PAYMENT NOTIFICATION */}
+             <div className="self-center bg-[#1a1c1e]/50 backdrop-blur-sm border border-emerald-900 text-emerald-400 px-4 py-2 rounded-xl text-center text-[10px] max-w-[90%]">
+                <span className="font-bold">Pagamento aprovado! 🥳 Link do PIX enviado! ✅</span>
+                <span className="block underline opacity-70 mt-1 cursor-pointer">https://asaas.com.br/p/sR4X8K7</span>
+             </div>
+
           </div>
-          <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '1.5rem' }}>
-             <Smartphone size={14} /> Preview Real-time do Robô
-          </p>
+
+          <footer className="bg-[#1a1c1e] p-3 flex items-center gap-3 border-t border-[#303134] z-10">
+             <div className="w-8 h-8 rounded-full bg-[#202123] flex items-center justify-center text-gray-400 cursor-pointer">
+                <RefreshCw size={16} />
+             </div>
+             <div className="flex-1 bg-[#202123] rounded-full px-4 py-2 border border-[#3c4043] flex items-center">
+                <input type="text" placeholder="Digite uma mensagem..." className="bg-transparent text-xs outline-none w-full" />
+                <RefreshingIcon size={16} className="text-gray-500" />
+             </div>
+             <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                <Send size={20} />
+             </div>
+          </footer>
+        </div>
+
+        {/* COLUMN 3: ACTIONS & METRICS PANEL */}
+        <div className="w-[300px] border-l border-[#303134] bg-[#111214] flex flex-col p-4">
+           
+           <div className="mb-6">
+              <div className="flex justify-between items-center mb-4">
+                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <UtensilsCrossed size={12} className="text-emerald-400" /> Pedidos Alimentícios
+                 </h4>
+                 <MoreHorizontal size={14} className="text-gray-600" />
+              </div>
+              <div className="bg-[#1a1c1e] rounded-xl border border-[#303134] p-3 flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center border border-[#3c4043]">
+                    <img src="https://images.unsplash.com/photo-1541232390620-8a8400a9c24d?auto=format&fit=crop&q=80&w=64&h=64" alt="Food" className="w-full h-full object-cover" />
+                 </div>
+                 <button className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all">
+                    Criar Pedido
+                 </button>
+              </div>
+           </div>
+
+           <div className="mb-6">
+              <div className="flex justify-between items-center mb-4">
+                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <FileText size={12} className="text-[#f59e0b]" /> Documentos Jurídicos
+                 </h4>
+                 <MoreHorizontal size={14} className="text-gray-600" />
+              </div>
+              <div className="bg-[#1a1c1e] rounded-xl border border-[#303134] p-3 flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-lg bg-[#202123] flex items-center justify-center border border-[#3c4043]">
+                    <Gavel size={20} className="text-gray-400" />
+                 </div>
+                 <button className="flex-1 py-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-lg text-xs font-bold transition-all">
+                    Gerar Contrato
+                 </button>
+              </div>
+           </div>
+
+           <div className="mb-8">
+              <div className="flex justify-between items-center mb-4">
+                 <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <CreditCard size={12} className="text-emerald-400" /> Cobrança Financeira
+                 </h4>
+                 <MoreHorizontal size={14} className="text-gray-600" />
+              </div>
+              <div className="bg-[#1a1c1e] rounded-xl border border-[#303134] p-3 flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-[#3c4043]">
+                    <CreditCard size={20} className="text-[#00c9ff]" />
+                 </div>
+                 <button className="flex-1 py-2 bg-[#ea1d2c] hover:bg-[#c41523] text-white rounded-lg text-xs font-bold transition-all">
+                    Cobrar via PIX
+                 </button>
+              </div>
+           </div>
+
+           <div className="mt-auto bg-[#1a1c1e] rounded-xl border border-[#303134] p-4">
+              <div className="space-y-3">
+                 <div className="flex justify-between items-center border-b border-[#303134] pb-2">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase">IA Ativa: <span className="text-emerald-400 italic font-medium ml-1">GPT-4o</span></span>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase">Sessão: <span className="text-red-400 font-bold ml-1 flex items-center gap-1">Redis <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div></span></span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase">Tickets Abertos: <span className="text-white ml-1">5</span></span>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase">Tempo SLA: <span className="text-white ml-1">00:12:30</span></span>
+                 </div>
+              </div>
+           </div>
+
         </div>
 
       </div>
 
-      <style>{`
-        .vini-tag {
-          background: rgba(255,255,255,0.05);
-          padding: 4px 10px;
-          border-radius: 6px;
-          font-family: monospace;
-          font-size: 0.8rem;
-          cursor: pointer;
-          border: 1px solid var(--border-color);
-        }
-        .vini-tag:hover { background: var(--c-red); border-color: var(--c-red); }
-
-        .iphone-mockup {
-          width: 320px;
-          height: 640px;
-          background: #000;
-          border-radius: 45px;
-          padding: 12px;
-          border: 6px solid #333;
-          box-shadow: 0 50px 100px -20px rgba(0,0,0,0.5);
-          margin: 0 auto;
-        }
-        .iphone-screen {
-          width: 100%;
-          height: 100%;
-          background: #0b141a;
-          border-radius: 35px;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          position: relative;
-        }
-        .whatsapp-header { 
-          padding: 40px 20px 15px; 
-          background: #202c33; 
-          display: flex; 
-          align-items: center; 
-        }
-        .whatsapp-body {
-          flex: 1;
-          padding: 15px;
-          background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-          background-size: cover;
-          display: flex;
-          flex-direction: column;
-        }
-        .chat-day {
-          align-self: center;
-          background: #182229;
-          color: rgba(255,255,255,0.6);
-          padding: 5px 12px;
-          border-radius: 8px;
-          font-size: 10px;
-          margin-bottom: 15px;
-        }
-        .whatsapp-chat-bubble {
-          align-self: flex-start;
-          max-width: 85%;
-          background: #202c33;
-          color: #e9edef;
-          padding: 8px 10px 15px;
-          border-radius: 0 8px 8px 8px;
-          font-size: 13px;
-          line-height: 1.4;
-          position: relative;
-          box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
-        }
-        .chat-time {
-          position: absolute;
-          bottom: 4px;
-          right: 7px;
-          font-size: 9px;
-          color: rgba(255,255,255,0.4);
-          display: flex;
-          align-items: center;
-          gap: 2px;
-        }
-        .whatsapp-footer {
-          padding: 10px;
-          background: #202c33;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .chat-input-mock {
-          flex: 1;
-          background: #2a3942;
-          color: rgba(255,255,255,0.4);
-          padding: 10px 15px;
-          border-radius: 20px;
-          font-size: 12px;
-        }
-        .chat-mic {
-          width: 38px;
-          height: 38px;
-          background: #00a884;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-      `}</style>
     </div>
   );
 }
 
+// Utility to handle icons/styles for the send area
+function RefreshingIcon({ size, className }) {
+   return (
+      <div className={`${className} animate-pulse`}>
+         <MessageSquare size={size} />
+      </div>
+   );
+}
+
 export default ViniBot;
+
