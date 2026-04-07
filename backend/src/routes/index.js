@@ -2,6 +2,7 @@ import express from 'express';
 import ordersRoutes from '../modules/orders/orders.routes.js';
 import productsRoutes from '../modules/products/products.routes.js';
 import paymentsRoutes from './payments.routes.js';
+import botRoutes from '../modules/bot/bot.routes.js';
 import { ifoodService } from '../modules/integrations/ifood/ifood.service.js';
 
 const router = express.Router();
@@ -13,10 +14,12 @@ router.use('/products', productsRoutes);
 
 router.use('/orders', ordersRoutes);
 
-/**
- * 💳 MÓDULO: PAGAMENTOS (Asaas / /api/payments)
- */
 router.use('/payments', paymentsRoutes);
+
+/**
+ * 🤖 MÓDULO: WHATSAPP BOT (/api/whatsapp)
+ */
+router.use('/whatsapp', botRoutes);
 
 /**
  * 📡 MÓDULO: INTEGRAÇÕES iFOOD (/api/ifood)
