@@ -131,11 +131,13 @@ export const ClientesProvider = ({ children }) => {
 
   // Adicionar Cliente no Banco Real (com verificação de duplicidade)
   const adicionarCliente = async (dados) => {
-    // 1. Verificar se o cliente já existe por ID de Auth ou Email
+    // 1. Verificar se o cliente já existe por ID de Auth (codigo_vini) ou Email
+    const lookupId = dados.id_auth || dados.codigo_vini;
+    
     const { data: existing, error: checkError } = await supabase
       .from('clientes')
       .select('id')
-      .or(`codigo_vini.eq.${dados.codigo_vini},email.eq.${dados.email}`)
+      .or(`codigo_vini.eq.${lookupId},email.eq.${dados.email}`)
       .maybeSingle();
 
     if (checkError) {
@@ -153,7 +155,7 @@ export const ClientesProvider = ({ children }) => {
       .insert([{
         nome: dados.nome,
         email: dados.email,
-        codigo_vini: dados.codigo_vini,
+        codigo_vini: lookupId, // O ID do Auth é gravado como o código base
         total_cliente: dados.total_cliente || 0,
         total_pago: dados.total_pago || 0,
         saldo_devedor: dados.saldo_devedor || 0,

@@ -121,7 +121,7 @@ function App() {
     </div>
   );
 
-  const isAdmin = session?.user?.user_metadata?.role !== 'cliente';
+  const isAdmin = session && session.user?.user_metadata?.role !== 'cliente';
 
   return (
     <SettingsProvider>

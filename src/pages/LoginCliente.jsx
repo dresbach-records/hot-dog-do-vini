@@ -36,7 +36,13 @@ function LoginCliente() {
     });
 
     if (authError) {
-      setError('Acesso negado. Verifique seu e-mail e senha.');
+      if (authError.message.includes('Email not confirmed')) {
+        setError('Por favor, confirme seu e-mail antes de acessar. Verifique sua caixa de entrada.');
+      } else if (authError.status === 400) {
+        setError('E-mail ou senha incorretos. Tente novamente.');
+      } else {
+        setError(`Acesso negado: ${authError.message}`);
+      }
       setLoading(false);
     } else {
       const searchParams = new URLSearchParams(location.search);
