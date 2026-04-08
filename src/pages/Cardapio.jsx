@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import api from '../services/api';
 import '../styles/admin/dashboard.css';
 import { Plus, CloudDownload, Search, Filter, RefreshCw } from 'lucide-react';
 
@@ -28,14 +28,14 @@ function Cardapio() {
   const fetchDados = async () => {
     setLoading(true);
     try {
-      const { data: cats } = await supabase.from('categorias').select('*').order('ordem');
-      const { data: prods } = await supabase.from('produtos').select('*').order('titulo');
+      const catsRes = await api.get('/products/categories');
+      const prodsRes = await api.get('/products');
       
-      setCategorias(cats || []);
-      setProdutos(prods || []);
+      if (catsRes.success) setCategorias(catsRes.data || []);
+      if (prodsRes.success) setProdutos(prodsRes.data || []);
       
-      if (cats?.length > 0 && !activeCategoriaId) {
-        setActiveCategoriaId(cats[0].id);
+      if (catsRes.data?.length > 0 && !activeCategoriaId) {
+        setActiveCategoriaId(catsRes.data[0].id);
       }
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
@@ -57,14 +57,14 @@ function Cardapio() {
         disponivel: produtoData.disponivel
       };
 
-      let error;
+      let response;
       if (isNew) {
-        ({ error } = await supabase.from('produtos').insert([payload]));
+        response = await api.post('/products', payload);
       } else {
-        ({ error } = await supabase.from('produtos').update(payload).eq('id', produtoData.id));
+        response = await api.put(`/products/${produtoData.id}`, payload);
       }
 
-      if (error) throw error;
+      if (!response.success) throw new Error(response.error);
       
       setIsProdutoModalOpen(false);
       setEditingProduto(null);
@@ -76,29 +76,32 @@ function Cardapio() {
 
   const handleSyncIfood = async () => {
     setIsSyncing(true);
-    // Simulação de sincronização rápida
     await new Promise(r => setTimeout(r, 2000));
-    alert('Sincronização com iFood concluída! Preços e disponibilidades atualizados.');
+    alert('Sincronização com iFood concluída!');
     setIsSyncing(false);
     fetchDados();
   };
 
   const handleToggleDisponibilidade = async (produto) => {
-    const { error } = await supabase
-      .from('produtos')
-      .update({ disponivel: !produto.disponivel })
-      .eq('id', produto.id);
-
-    if (!error) {
-      setProdutos(prev => prev.map(p => p.id === produto.id ? { ...p, disponivel: !p.disponivel } : p));
+    try {
+      const response = await api.put(`/products/${produto.id}`, { disponivel: !produto.disponivel });
+      if (response.success) {
+        setProdutos(prev => prev.map(p => p.id === produto.id ? { ...p, disponivel: !p.disponivel } : p));
+      }
+    } catch (err) {
+      console.error('Erro ao alterar disponibilidade:', err);
     }
   };
 
   const handleDeleteCategoria = async (id) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta categoria? Todos os produtos vinculados serão afetados.')) return;
+    if (!window.confirm('Tem certeza que deseja excluir esta categoria?')) return;
     
-    const { error } = await supabase.from('categorias').delete().eq('id', id);
-    if (!error) fetchDados();
+    try {
+      const response = await api.delete(`/products/categories/${id}`);
+      if (response.success) fetchDados();
+    } catch (err) {
+      console.error('Erro ao excluir categoria:', err);
+    }
   };
 
   const filteredProdutos = produtos.filter(p => {

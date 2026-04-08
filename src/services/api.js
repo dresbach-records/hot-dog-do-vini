@@ -18,22 +18,10 @@ const api = axios.create({
  */
 api.interceptors.request.use(
   (config) => {
-    // Tenta pegar o token do formato persistido pelo Supabase
-    // Opcional: Se estiver usando supabase.auth diretamente, pode ser necessário 
-    // buscar em localStorage.getItem('sb-psvnyttmczqymhdzofid-auth-token')
-    const sessionStr = localStorage.getItem('supabase.auth.token') || localStorage.getItem('sb-hgfpuadujzousfpqvjbu-auth-token');
+    const token = localStorage.getItem('vinis_auth_token');
     
-    if (sessionStr) {
-      try {
-        const session = JSON.parse(sessionStr);
-        const token = session.access_token || session.currentSession?.access_token;
-        
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      } catch (e) {
-        console.error('[API Interceptor] Erro ao parsear sessão', e);
-      }
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     
     return config;

@@ -29,5 +29,18 @@ export const ordersController = {
     const { user } = req;
     const result = await ordersService.listByUser(user.id);
     res.json(result);
+  },
+
+  /**
+   * Atualizar Pedido (PUT /api/orders/:id)
+   */
+  async update(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await ordersService.update(id, req.body);
+      res.json({ success: true, data: result });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
   }
 };

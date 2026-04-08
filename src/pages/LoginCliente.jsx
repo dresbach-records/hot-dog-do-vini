@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import api from '../services/api';
 import { Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useClientes } from '../context/ClientesContext';
 
 function LoginCliente() {
   const [mode, setMode] = useState('login'); // login | signup | recover | update-password
@@ -14,40 +13,43 @@ function LoginCliente() {
   const [success, setSuccess] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { adicionarCliente } = useClientes();
 
   useEffect(() => {
-    // Verificar se viemos de um link de recuperação de senha
-    const searchParams = new URLSearchParams(location.search);
-    if (searchParams.get('mode') === 'reset' || window.location.hash.includes('type=recovery')) {
-      setMode('update-password');
-      setSuccess('Conexão segura estabelecida. Digite sua nova senha abaixo.');
+    // Verifica se já está logado
+    const token = localStorage.getItem('vinis_auth_token');
+    if (token) {
+      const user = JSON.parse(localStorage.getItem('vinis_user') || '{}');
+      if (user.role === 'cliente') {
+        navigate('/cliente.vinis');
+      }
     }
-  }, [location]);
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (authError) {
-      if (authError.message.includes('Email not confirmed')) {
-        setError('Por favor, confirme seu e-mail antes de acessar. Verifique sua caixa de entrada.');
-      } else if (authError.status === 400) {
-        setError('E-mail ou senha incorretos. Tente novamente.');
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      
+      if (response.success) {
+        localStorage.setItem('vinis_auth_token', response.token);
+        localStorage.setItem('vinis_user', JSON.stringify(response.user));
+        
+        // Dispara evento para o App.jsx
+        window.dispatchEvent(new Event('auth_change'));
+        
+        const searchParams = new URLSearchParams(location.search);
+        const redirect = searchParams.get('redirectTo');
+        navigate(redirect || '/cliente.vinis');
       } else {
-        setError(`Acesso negado: ${authError.message}`);
+        setError(response.error || 'E-mail ou senha incorretos.');
       }
+    } catch (err) {
+      setError(typeof err === 'string' ? err : 'Erro ao conectar com o servidor');
+    } finally {
       setLoading(false);
-    } else {
-      const searchParams = new URLSearchParams(location.search);
-      const redirect = searchParams.get('redirectTo');
-      navigate(redirect || '/cliente.vinis');
     }
   };
 
@@ -56,82 +58,37 @@ function LoginCliente() {
     setLoading(true);
     setError(null);
 
-    const { data, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: nome,
-          role: 'cliente'
-        }
-      }
-    });
+    try {
+      const response = await api.post('/auth/register', {
+        name: nome,
+        email,
+        password,
+        role: 'cliente'
+      });
 
-    if (authError) {
-      console.error('Erro no Supabase Auth (Sign Up):', authError);
-      
-      // Personalizar mensagem para e-mail já cadastrado
-      if (authError.message.includes('User already registered') || authError.status === 422) {
-        setError('Ops, este e-mail já está cadastrado. Faça login ou recupere o acesso.');
+      if (response.success) {
+        setSuccess('Cadastro realizado com sucesso! Você já pode entrar.');
+        setMode('login');
       } else {
-        setError(`Erro no cadastro: ${authError.message}`);
+        setError(response.error || 'Erro ao realizar cadastro.');
       }
-      
-      setLoading(false);
-    } else {
-      console.log('Auth realizado com sucesso:', data.user?.id);
-      // Registrar no banco de dados public.clientes
-      if (data.user) {
-        try {
-          const res = await adicionarCliente({
-            nome: nome,
-            id_auth: data.user.id,
-            email: email
-          });
-          console.log('Registro na tabela clientes:', res);
-        } catch (dbError) {
-          console.error('Erro ao sincronizar com a tabela clientes:', dbError);
-          // Nota: O usuário ainda foi criado no Auth, mas o perfil no DB falhou
-        }
-      }
-      setSuccess('Cadastro realizado! Se o e-mail de confirmação estiver ativado no Supabase, verifique sua caixa de entrada.');
+    } catch (err) {
+      setError(typeof err === 'string' ? err : 'Erro ao conectar com o servidor');
+    } finally {
       setLoading(false);
     }
   };
 
   const handleRecovery = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const { error: recoveryError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/login.vinis?mode=reset',
-    });
-
-    if (recoveryError) {
-      setError(recoveryError.message);
-    } else {
-      setSuccess('Link de recuperação enviado para o seu e-mail.');
-    }
     setLoading(false);
+    setError('Recuperação de senha desativada temporariamente. Entre em contato com o suporte.');
   };
 
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: password
-    });
-
-    if (updateError) {
-      setError(updateError.message);
-    } else {
-      setSuccess('Senha atualizada com sucesso! Você já pode entrar.');
-      setTimeout(() => setMode('login'), 2000);
-    }
     setLoading(false);
+    setError('Funcionalidade indisponível.');
   };
 
   return (

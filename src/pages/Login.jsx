@@ -1,27 +1,53 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { supabase } from '../lib/supabaseClient';
-import { ArrowLeft } from 'lucide-react';
+import api from '../services/api';
+import { ArrowLeft, Loader2, Mail, Lock } from 'lucide-react';
 import '../styles/global/login.css';
 
 function Login() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
+  // Verifica se já está logado
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        navigate('/admin/dashboard');
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    const token = localStorage.getItem('vinis_auth_token');
+    if (token) {
+      navigate('/admin/dashboard');
+    }
   }, [navigate]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      
+      if (response.success) {
+        localStorage.setItem('vinis_auth_token', response.token);
+        localStorage.setItem('vinis_user', JSON.stringify(response.user));
+        
+        // Dispara evento para o App.jsx
+        window.dispatchEvent(new Event('auth_change'));
+        
+        navigate('/admin/dashboard');
+      } else {
+        setError(response.error || 'Falha na autenticação');
+      }
+    } catch (err) {
+      setError(typeof err === 'string' ? err : 'Erro ao conectar com o servidor');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="login-container animate-fade-in">
-      <div className="login-card vini-glass-panel" style={{ position: 'relative', width: '100%', maxWidth: '450px' }}>
+      <div className="login-card vini-glass-panel" style={{ position: 'relative', width: '100%', maxWidth: '450px', padding: '2.5rem' }}>
         <button 
           onClick={() => navigate('/')} 
           style={{ 
@@ -43,87 +69,97 @@ function Login() {
           <ArrowLeft size={14} /> Voltar ao site
         </button>
 
-        <div className="login-header" style={{ marginTop: '2.5rem', textAlign: 'center' }}>
+        <div className="login-header" style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <img 
             src="/Logo Vini's estilo M.png" 
             alt="Vini's Logo" 
-            style={{ width: '120px', height: 'auto', marginBottom: '1rem', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }} 
+            style={{ width: '100px', height: 'auto', marginBottom: '1rem', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }} 
           />
           <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)' }}>Portal Admin Vini's</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Acesso restrito para gestão do ERP</p>
         </div>
 
-        <div style={{ marginTop: '1.5rem' }}>
-          <Auth
-            supabaseClient={supabase}
-            appearance={{ 
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: '#ea1d2c',
-                    brandAccent: '#b91c1c',
-                    inputBackground: 'rgba(255,255,255,0.05)',
-                    inputText: 'white',
-                    inputPlaceholder: 'rgba(255,255,255,0.3)',
-                    inputBorder: 'rgba(255,255,255,0.1)',
-                  },
-                },
-              },
-              className: {
-                container: 'vini-auth-container',
-                button: 'vini-auth-button',
-                input: 'vini-auth-input',
-              }
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+          {error && (
+            <div style={{ backgroundColor: 'rgba(234, 29, 44, 0.1)', border: '1px solid #ea1d2c', color: '#ea1d2c', padding: '10px', borderRadius: '8px', fontSize: '0.85rem', textAlign: 'center' }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={{ color: '#94a3b8', fontSize: '0.85rem' }}>E-mail Profissional</label>
+            <div style={{ position: 'relative' }}>
+              <Mail size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+              <input 
+                type="email" 
+                placeholder="exemplo@vinis.com.br"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px 15px 12px 40px',
+                  backgroundColor: 'rgba(0,0,0,0.2)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Sua Senha</label>
+            <div style={{ position: 'relative' }}>
+              <Lock size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+              <input 
+                type="password" 
+                placeholder="Sua senha segura"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px 15px 12px 40px',
+                  backgroundColor: 'rgba(0,0,0,0.2)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            style={{
+              backgroundColor: '#ea1d2c',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px',
+              fontWeight: '700',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              marginTop: '0.5rem',
+              transition: 'all 0.3s ease'
             }}
-            localization={{
-              variables: {
-                sign_in: {
-                  email_label: 'E-mail Profissional',
-                  password_label: 'Sua Senha',
-                  button_label: 'Acessar ERP do Vini',
-                  loading_button_label: 'Autenticando...',
-                  email_input_placeholder: 'exemplo@vinis.com.br',
-                  password_input_placeholder: 'Sua senha segura',
-                },
-              },
-            }}
-            providers={[]} // Pode-se adicionar ['google', 'github'] no futuro
-          />
+            className="vini-auth-button"
+          >
+            {loading ? <Loader2 className="animate-spin" size={20} /> : 'Acessar ERP do Vini'}
+          </button>
+        </form>
+
+        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+          <a href="#" style={{ color: '#ea1d2c', textDecoration: 'none', fontSize: '0.8rem' }}>Esqueceu sua senha?</a>
         </div>
       </div>
-
-      <style>{`
-        .vini-auth-container .supabase-auth-ui_ui-button {
-          background-color: #ea1d2c !important;
-          border-radius: 8px !important;
-          font-weight: 700 !important;
-          height: 48px !important;
-          transition: all 0.3s ease !important;
-        }
-        .vini-auth-container .supabase-auth-ui_ui-button:hover {
-          background-color: #b91c1c !important;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(234, 29, 44, 0.3);
-        }
-        .vini-auth-container .supabase-auth-ui_ui-input {
-          background-color: rgba(0,0,0,0.2) !important;
-          border: 1px solid rgba(255,255,255,0.1) !important;
-          border-radius: 8px !important;
-          color: white !important;
-          padding: 12px 15px !important;
-        }
-        .vini-auth-container .supabase-auth-ui_ui-label {
-          color: #94a3b8 !important;
-          font-size: 0.85rem !important;
-          margin-bottom: 8px !important;
-        }
-        .vini-auth-container a {
-          color: #ea1d2c !important;
-          text-decoration: none !important;
-          font-size: 0.8rem !important;
-        }
-      `}</style>
     </div>
   );
 }

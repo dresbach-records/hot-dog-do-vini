@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from './lib/supabaseClient';
+import api from './services/api';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Financeiro from './pages/Financeiro';
@@ -65,28 +65,51 @@ function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Pegar sessão inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+  const checkAuth = async () => {
+    const token = localStorage.getItem('vinis_auth_token');
+    
+    if (!token) {
+      setSession(null);
       setLoading(false);
-    });
+      return;
+    }
 
-    // Escutar mudanças de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+    try {
+      const response = await api.get('/auth/me');
+      if (response.success) {
+        setSession({
+          user: response.user,
+          access_token: token
+        });
+      } else {
+        localStorage.removeItem('vinis_auth_token');
+        setSession(null);
+      }
+    } catch (err) {
+      console.error('[App Auth] Erro ao validar sessão', err);
+      localStorage.removeItem('vinis_auth_token');
+      setSession(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Bloqueio de PrintScreen (Aviso no console e redução de opacidade)
+  useEffect(() => {
+    checkAuth();
+
+    const handleAuthChange = () => {
+      checkAuth();
+    };
+
+    window.addEventListener('auth_change', handleAuthChange);
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         console.log("Proteção de Conteúdo Ativada!");
       }
     };
 
-    // Bloqueio de Atalhos e Teclas de Cópia
     const handleKeyDown = (e) => {
-      // Bloqueia F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+S, Ctrl+C, Ctrl+P
       if (
         e.keyCode === 123 || 
         (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) ||
@@ -97,7 +120,6 @@ function App() {
       }
     };
 
-    // Bloqueio de Clique Direito
     const handleContextMenu = (e) => {
       e.preventDefault();
       return false;
@@ -108,7 +130,7 @@ function App() {
     document.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
-      subscription.unsubscribe();
+      window.removeEventListener('auth_change', handleAuthChange);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('contextmenu', handleContextMenu);
@@ -174,7 +196,10 @@ function App() {
           <Route path="/admin/*" element={
             session && isAdmin ? (
               <div className="app-container admin-container">
-                <Sidebar onLogout={() => supabase.auth.signOut()} />
+                <Sidebar onLogout={() => {
+                  localStorage.removeItem('vinis_auth_token');
+                  setSession(null);
+                }} />
                 <main className="main-content">
                   <Routes>
                     <Route path="" element={<Navigate to="/admin/dashboard" />} />

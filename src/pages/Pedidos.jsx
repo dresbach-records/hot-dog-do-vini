@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import api from '../services/api';
 import { 
   Clock, ArrowRight, ArrowLeft, MoreHorizontal, 
   AlertCircle, CheckCircle2, Truck, ChefHat, 
@@ -29,20 +29,26 @@ function Pedidos() {
   const lastOrderCount = useRef(0);
   const audioContext = useRef(null);
 
-  // Busca Inteligente de Cliente (Estilo Anota AI)
+  // Busca Inteligente de Cliente
   const searchCustomer = async (term) => {
     if (term.length < 2) {
       setSearchResults([]);
       return;
     }
     
-    const { data } = await supabase
-      .from('clientes')
-      .select('id, nome, telefone, endereco_padrao')
-      .or(`nome.ilike.%${term}%,telefone.ilike.%${term}%`)
-      .limit(5);
-    
-    setSearchResults(data || []);
+    try {
+      // Nota: Backend precisa suportar busca por termo. Por enquanto listamos tudo e filtramos ou usamos endpoint específico.
+      const response = await api.get('/clientes');
+      if (response.success) {
+        const data = response.data.filter(c => 
+          c.nome.toLowerCase().includes(term.toLowerCase()) || 
+          (c.telefone && c.telefone.includes(term))
+        );
+        setSearchResults(data.slice(0, 5));
+      }
+    } catch (err) {
+      console.error('Erro ao buscar clientes:', err);
+    }
   };
 
   const selectCustomer = (customer) => {
@@ -60,49 +66,52 @@ function Pedidos() {
   const statusFlow = ['novos', 'preparo', 'entrega', 'finalizado'];
 
   const fetchOrders = async () => {
-    const { data, error } = await supabase
-      .from('pedidos')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (!error) {
-      if (data.length > lastOrderCount.current && lastOrderCount.current !== 0) {
-        handleNewOrderAlert(data[0]);
+    try {
+      const response = await api.get('/orders/me'); // Ou /orders dependendo do admin role
+      if (response.success) {
+        const data = response.data;
+        if (data.length > lastOrderCount.current && lastOrderCount.current !== 0) {
+          handleNewOrderAlert(data[0]);
+        }
+        setOrders(data || []);
+        lastOrderCount.current = data.length;
       }
-      setOrders(data || []);
-      lastOrderCount.current = data.length;
+    } catch (err) {
+      console.error('Erro ao buscar pedidos:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchProducts = async () => {
-    const { data } = await supabase.from('produtos').select('*').eq('disponivel', true);
-    setAvailableProducts(data || []);
+    try {
+      const response = await api.get('/products');
+      if (response.success) {
+        setAvailableProducts(response.data || []);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar produtos:', err);
+    }
   };
 
   useEffect(() => {
     fetchOrders();
     fetchProducts();
 
-    // REAL-TIME SUBSCRIPTION (ESTILO ANOTA AI)
-    const subscription = supabase
-      .channel('pedidos-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => {
-        fetchOrders();
-      })
-      .subscribe();
+    // Polling alternativo para Real-time (já que removemos Supabase Channel)
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 30000); // 30s polling
 
     return () => {
-      supabase.removeChannel(subscription);
+      clearInterval(interval);
     };
   }, []);
 
   const handleNewOrderAlert = (order) => {
-    // 1. Som de Alerta (Ding Dong)
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    audio.play().catch(e => console.log("Audio play blocked by browser. Click anywhere to enable."));
+    audio.play().catch(e => console.log("Audio play blocked by browser."));
 
-    // 2. Síntese de Voz (Estilo Anota AI)
     const msg = new SpeechSynthesisUtterance();
     msg.text = `Novo pedido de ${order.cliente_nome || 'Cliente'}`;
     msg.lang = 'pt-BR';
@@ -119,28 +128,31 @@ function Pedidos() {
 
     if (newIndex >= 0 && newIndex < statusFlow.length) {
       const newStatus = statusFlow[newIndex];
-      const { error } = await supabase
-        .from('pedidos')
-        .update({ status: newStatus })
-        .eq('id', orderId);
-
-      if (!error) fetchOrders();
+      try {
+        const response = await api.put(`/orders/${orderId}`, { status: newStatus });
+        if (response.success) fetchOrders();
+      } catch (err) {
+        console.error('Erro ao mover pedido:', err);
+      }
     }
   };
 
   const handleAddManualOrder = async () => {
     const payload = {
       ...newOrder,
-      status: 'novos',
-      created_at: new Date().toISOString()
+      status: 'novos'
     };
 
-    const { error } = await supabase.from('pedidos').insert([payload]);
-    if (!error) {
-      setIsPDVOpen(false);
-      fetchOrders();
-    } else {
-      alert('Erro ao lançar pedido manual');
+    try {
+      const response = await api.post('/orders', payload);
+      if (response.success) {
+        setIsPDVOpen(false);
+        fetchOrders();
+      } else {
+        alert('Erro ao lançar pedido manual');
+      }
+    } catch (err) {
+      alert('Erro ao lançar pedido manual: ' + err);
     }
   };
 

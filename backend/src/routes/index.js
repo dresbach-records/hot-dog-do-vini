@@ -3,9 +3,17 @@ import ordersRoutes from '../modules/orders/orders.routes.js';
 import productsRoutes from '../modules/products/products.routes.js';
 import paymentsRoutes from './payments.routes.js';
 import botRoutes from '../modules/bot/bot.routes.js';
+import authRoutes from '../modules/auth/auth.routes.js';
+import clientesRoutes from '../modules/clientes/clientes.routes.js';
 import { ifoodService } from '../modules/integrations/ifood/ifood.service.js';
 
 const router = express.Router();
+
+/**
+ * 🛒 MÓDULO: PRODUTOS (/api/products)
+ */
+router.use('/auth', authRoutes);
+router.use('/clientes', clientesRoutes);
 
 /**
  * 🛒 MÓDULO: PRODUTOS (/api/products)

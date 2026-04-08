@@ -1,7 +1,7 @@
-import { supabase } from '../config/supabase.js';
+import jwt from 'jsonwebtoken';
 
 /**
- * Autenticação JWT Supabase (Padrão 10/10)
+ * Autenticação JWT Customizada
  * Extrai o token do header 'Authorization: Bearer <token>'
  */
 export async function authMiddleware(req, res, next) {
@@ -24,11 +24,10 @@ export async function authMiddleware(req, res, next) {
   }
 
   try {
-    // Valida o token com o Supabase Auth
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    // Valida o token com o JWT_SECRET
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'vini_super_secret_key_2026');
 
-    if (error || !user) {
-      console.warn(`[Auth] Sessão inválida ou expirada para o token enviado.`);
+    if (!decoded) {
       return res.status(401).json({ 
         success: false, 
         error: 'Sessão inválida ou expirada' 
@@ -36,10 +35,10 @@ export async function authMiddleware(req, res, next) {
     }
 
     // Injeção de Contexto para os Controllers
-    req.user = user;
+    req.user = decoded;
     next();
   } catch (err) {
     console.error('[Auth Middleware Error]', err.message);
-    res.status(500).json({ success: false, error: 'Erro ao validar autenticação' });
+    res.status(401).json({ success: false, error: 'Sessão inválida ou expirada' });
   }
 }

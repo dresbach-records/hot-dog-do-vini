@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import api from '../services/api';
 
 const ClientesContext = createContext();
 
@@ -22,29 +22,19 @@ export const ClientesProvider = ({ children }) => {
 
   const [isFetching, setIsFetching] = useState(false);
 
-  // Carregar dados iniciais do Supabase
+  // Carregar dados iniciais do Backend
   const fetchData = async (silent = false) => {
     if (isFetching) return;
     if (!silent) setLoading(true);
     setIsFetching(true);
     
     try {
-      // 1. Buscar Clientes
-      const { data: clientesData, error: clientesError } = await supabase
-        .from('clientes')
-        .select('*, pedidos(*)');
-
-      // 2. Buscar Empresas
-      const { data: empresasData } = await supabase
-        .from('empresas')
-        .select('*')
-        .order('nome');
-
-      if (clientesError) {
-        console.error('Erro ao buscar clientes:', clientesError);
-      } else {
+      // 1. Buscar Clientes (Backend já retorna com pedidos incluídos)
+      const response = await api.get('/clientes');
+      
+      if (response.success) {
+        const clientesData = response.data;
         setClientes(clientesData || []);
-        setEmpresas(empresasData || []);
         
         // Calcular Resumo e Pagamentos
         let totalVendas = 0;
@@ -68,7 +58,7 @@ export const ClientesProvider = ({ children }) => {
             const bairro = p.endereco_entrega?.bairro || 'Balcão/Outros';
             bairroMap[bairro] = (bairroMap[bairro] || 0) + Number(p.total || 0);
 
-            // Processar Produtos (Snapshot real do JSON do pedido)
+            // Processar Produtos
             if (p.itens) {
               const itensArr = Array.isArray(p.itens) ? p.itens : [];
               itensArr.forEach(item => {
@@ -115,61 +105,39 @@ export const ClientesProvider = ({ children }) => {
   };
 
   const adicionarEmpresa = async (dados) => {
-    const { data, error } = await supabase
-      .from('empresas')
-      .insert([dados])
-      .select();
-
-    if (error) {
-      console.error('Erro ao adicionar empresa:', error);
-      return { success: false, error };
+    try {
+      const response = await api.post('/empresas', dados);
+      if (response.success) {
+        fetchData();
+        return { success: true, data: response.data };
+      }
+      return { success: false, error: response.error };
+    } catch (err) {
+      return { success: false, error: err };
     }
-    
-    fetchData();
-    return { success: true, data };
   };
 
   // Adicionar Cliente no Banco Real (com verificação de duplicidade)
   const adicionarCliente = async (dados) => {
-    // 1. Verificar se o cliente já existe por ID de Auth (codigo_vini) ou Email
-    const lookupId = dados.id_auth || dados.codigo_vini;
-    
-    const { data: existing, error: checkError } = await supabase
-      .from('clientes')
-      .select('id')
-      .or(`codigo_vini.eq.${lookupId},email.eq.${dados.email}`)
-      .maybeSingle();
-
-    if (checkError) {
-      console.error('Erro ao verificar existência do cliente:', checkError);
-    }
-
-    if (existing) {
-      console.log('Cliente já cadastrado no banco de dados.');
-      return { success: true, data: existing, alreadyExists: true };
-    }
-
-    // 2. Se não existir, insere
-    const { data, error } = await supabase
-      .from('clientes')
-      .insert([{
+    try {
+      const response = await api.post('/clientes', {
         nome: dados.nome,
         email: dados.email,
-        codigo_vini: lookupId, // O ID do Auth é gravado como o código base
+        codigo_vini: dados.id_auth || dados.codigo_vini,
         total_cliente: dados.total_cliente || 0,
         total_pago: dados.total_pago || 0,
         saldo_devedor: dados.saldo_devedor || 0,
         convenio_status: 'inativo'
-      }])
-      .select();
+      });
 
-    if (error) {
-      console.error('Erro ao adicionar cliente:', error);
-      return { success: false, error };
+      if (response.success) {
+        fetchData();
+        return { success: true, data: response.data };
+      }
+      return { success: false, error: response.error };
+    } catch (err) {
+      return { success: false, error: err };
     }
-    
-    fetchData(); // Recarrega para manter sincronia
-    return { success: true, data };
   };
 
   // Marcar como Pago: Zera saldo devedor e soma ao total pago
@@ -179,37 +147,34 @@ export const ClientesProvider = ({ children }) => {
 
     const novoTotalPago = Number(cliente.total_pago || 0) + Number(cliente.saldo_devedor || 0);
 
-    const { error } = await supabase
-      .from('clientes')
-      .update({
+    try {
+      const response = await api.put(`/clientes/${id}`, {
         total_pago: novoTotalPago,
         saldo_devedor: 0
-      })
-      .eq('id', id);
+      });
 
-    if (error) {
-      console.error('Erro ao marcar como pago:', error);
-      return { success: false, error };
+      if (response.success) {
+        fetchData();
+        return { success: true };
+      }
+      return { success: false, error: response.error };
+    } catch (err) {
+      return { success: false, error: err };
     }
-
-    fetchData(); // Recarrega para atualizar gráficos e lista
-    return { success: true };
   };
 
   // Atualizar Cliente no Banco Real
   const atualizarCliente = async (id, dadosAtualizados) => {
-    const { error } = await supabase
-      .from('clientes')
-      .update(dadosAtualizados)
-      .eq('id', id);
-
-    if (error) {
-      console.error('Erro ao atualizar cliente:', error);
-      return { success: false, error };
+    try {
+      const response = await api.put(`/clientes/${id}`, dadosAtualizados);
+      if (response.success) {
+        fetchData();
+        return { success: true };
+      }
+      return { success: false, error: response.error };
+    } catch (err) {
+      return { success: false, error: err };
     }
-    
-    fetchData(); // Recarrega
-    return { success: true };
   };
 
   const gerenciarSolicitacao = async (solId, clienteId, status, info) => {

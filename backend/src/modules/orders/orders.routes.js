@@ -13,4 +13,7 @@ router.post('/', authMiddleware, ordersController.create);
 // Listar Meus Pedidos (Autenticado)
 router.get('/me', authMiddleware, ordersController.listMe);
 
+// Atualizar Pedido (Autenticado)
+router.put('/:id', authMiddleware, ordersController.update);
+
 export default router;

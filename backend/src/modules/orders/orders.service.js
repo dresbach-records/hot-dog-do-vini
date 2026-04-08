@@ -1,5 +1,6 @@
-import { supabase } from '../../config/supabase.js';
+import { query } from '../../infrastructure/database.js';
 import { asaasService } from '../integrations/asaas/asaas.service.js';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Orders Service — Lógica de Negócio (Nível 10/10)
@@ -14,34 +15,29 @@ export const ordersService = {
     const { itens, cliente, endereco, pagamento, agendamento } = data;
 
     // 1. BARREIRA DE IDEMPOTÊNCIA (30 SEGUNDOS)
-    // Evita pedidos duplicados por erro de clique do usuário
-    const { data: recentOrders } = await supabase
-      .from('pedidos')
-      .select('id, created_at, itens')
-      .eq('usuario_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1);
+    const recentOrders = await query(
+      'SELECT id, created_at, itens FROM pedidos WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+      [user.id]
+    );
 
     if (recentOrders && recentOrders.length > 0) {
       const lastOrder = recentOrders[0];
       const diffSeconds = (new Date() - new Date(lastOrder.created_at)) / 1000;
       
-      // Compara se os itens são idênticos no intervalo de 30s
       if (diffSeconds < 30 && JSON.stringify(lastOrder.itens) === JSON.stringify(itens)) {
         console.warn(`[Idempotency] Pedido duplicado detectado para usuário ${user.id}. Ignorando.`);
         return { success: true, data: lastOrder, message: 'Pedido já processado recentemente.' };
       }
     }
 
-    // 2. RECÁLCULO AUTORITÁRIO (SEGURANÇA DE PREÇO)
-    // Buscamos os preços REAIS no banco de dados
+    // 2. RECÁLCULO AUTORITÁRIO
     const itemIds = itens.map(i => i.id);
-    const { data: dbProducts, error: dbError } = await supabase
-      .from('produtos')
-      .select('id, preco, titulo')
-      .in('id', itemIds);
+    const dbProducts = await query(
+      'SELECT id, preco, titulo FROM produtos WHERE id IN (?)',
+      [itemIds]
+    );
 
-    if (dbError || !dbProducts) throw new Error('Falha ao validar produtos');
+    if (!dbProducts || dbProducts.length === 0) throw new Error('Falha ao validar produtos');
 
     let totalGeral = 0;
     const itensProcessados = itens.map(item => {
@@ -59,53 +55,49 @@ export const ordersService = {
       };
     });
 
-    // 3. PERSISTÊNCIA (SERVICE ROLE ACESSO TOTAL)
-    const orderToSave = {
-      usuario_id: user.id,
-      cliente,
-      itens: itensProcessados,
-      total: totalGeral,
-      endereco,
-      pagamento,
-      agendamento,
-      status: 'pendente',
-      created_at: new Date().toISOString()
-    };
+    // 3. PERSISTÊNCIA
+    const orderId = uuidv4();
+    const orderToSave = [
+      orderId,
+      user.id,
+      data.cliente_id || null, // Link to clients table if provided
+      JSON.stringify(itensProcessados),
+      totalGeral,
+      JSON.stringify(endereco),
+      pagamento.metodo,
+      'pendente',
+      new Date()
+    ];
 
-    const { data: newOrder, error: saveError } = await supabase
-      .from('pedidos')
-      .insert(orderToSave)
-      .select()
-      .single();
+    await query(
+      'INSERT INTO pedidos (id, user_id, cliente_id, itens, total, endereco_entrega, forma_pagamento, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      orderToSave
+    );
 
-    if (saveError) {
-      console.error('[Database Error]', saveError);
-      throw new Error('Falha ao salvar pedido no banco de dados');
-    }
+    // Fetch the new order
+    const [newOrder] = await query('SELECT * FROM pedidos WHERE id = ?', [orderId]);
 
     // 4. INTEGRAÇÃO FINANCEIRA (ASAAS)
     let paymentData = null;
     if (pagamento.metodo?.startsWith('asaas_')) {
        try {
-          const type = pagamento.metodo.replace('asaas_', '').toUpperCase(); // PIX ou BOLETO
+          const type = pagamento.metodo.replace('asaas_', '').toUpperCase(); 
           
           paymentData = await asaasService.createPayment({
-            asaasCustomerId: cliente.asaas_customer_id, // Note: Expecting this to be synced or handled
+            asaasCustomerId: cliente?.asaas_customer_id, 
             valor: totalGeral,
             metodo: type,
-            pedidoId: newOrder.id,
-            descricao: `Pedido #${newOrder.id.substring(0,8)}`
+            pedidoId: orderId,
+            descricao: `Pedido #${orderId.substring(0,8)}`
           });
 
-          // Guardar o ID da cobrança no pedido
-          await supabase
-            .from('pedidos')
-            .update({ asaas_payment_id: paymentData.id })
-            .eq('id', newOrder.id);
+          await query(
+            'UPDATE pedidos SET asaas_payment_id = ? WHERE id = ?',
+            [paymentData.id, orderId]
+          );
 
        } catch (err) {
           console.error('[Asaas Service Error]', err.message);
-          // Opcional: Cancelar pedido se o pagamento falhar na origem
        }
     }
 
@@ -117,16 +109,25 @@ export const ordersService = {
   },
 
   /**
+   * Atualizar Pedido
+   */
+  async update(id, data) {
+    const sets = Object.keys(data).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(data), id];
+    
+    await query(`UPDATE pedidos SET ${sets} WHERE id = ?`, values);
+    const [updated] = await query('SELECT * FROM pedidos WHERE id = ?', [id]);
+    return updated;
+  },
+
+  /**
    * Listagem do Histórico do Usuário
    */
   async listByUser(userId) {
-    const { data, error } = await supabase
-      .from('pedidos')
-      .select('*')
-      .eq('usuario_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
+    const data = await query(
+      'SELECT * FROM pedidos WHERE user_id = ? ORDER BY created_at DESC',
+      [userId]
+    );
     return { success: true, data };
   }
 };
