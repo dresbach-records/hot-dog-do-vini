@@ -184,14 +184,16 @@ export const ClientesProvider = ({ children }) => {
       updateData.convenio_saldo = info.limite;
     }
 
-    const { error } = await supabase
-      .from('clientes')
-      .update(updateData)
-      .eq('id', clienteId);
-
-    if (error) return { success: false, error };
-    fetchData();
-    return { success: true };
+    try {
+      const response = await api.put(`/clientes/${clienteId}`, updateData);
+      if (response.success) {
+        fetchData();
+        return { success: true };
+      }
+      return { success: false, error: response.error };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
   };
 
   useEffect(() => {

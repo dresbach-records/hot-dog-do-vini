@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import '../styles/admin/dashboard.css';
 import { useClientes } from '../context/ClientesContext';
+import api from '../services/api';
 
 // Horário limite para agendamento do dia seguinte
 const HORARIO_LIMITE = '18:00';
@@ -52,13 +53,17 @@ export default function Agendamentos() {
 
   const aprovarCliente = async (id) => {
     setLoadingAprovacao(true);
-    const { error } = await supabase.from('clientes').update({ status_empresa: 'aprovada' }).eq('id', id);
-    if (!error) {
-      alert('Cliente aprovado com sucesso!');
-      if(fetchData) fetchData();
-      else window.location.reload();
-    } else {
-      alert('Erro ao aprovar cliente: ' + error.message);
+    try {
+      const response = await api.put(`/clientes/${id}`, { status_empresa: 'aprovada' });
+      if (response.success) {
+        alert('Cliente aprovado com sucesso!');
+        if(fetchData) fetchData();
+        else window.location.reload();
+      } else {
+        alert('Erro ao aprovar cliente: ' + (response.error || 'Erro desconhecido'));
+      }
+    } catch (err) {
+      alert('Erro de conexão ao aprovar cliente.');
     }
     setLoadingAprovacao(false);
   };

@@ -50,4 +50,26 @@ router.get('/messages/:conversationId', async (req, res) => {
   }
 });
 
+// PUT /api/whatsapp/contacts/:id
+router.put('/contacts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+
+    // Se tags for array, converte para string JSON para MySQL
+    if (data.tags && Array.isArray(data.tags)) {
+      data.tags = JSON.stringify(data.tags);
+    }
+
+    const sets = Object.keys(data).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(data), id];
+
+    await query(`UPDATE whatsapp_contacts SET ${sets} WHERE id = ?`, values);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
+

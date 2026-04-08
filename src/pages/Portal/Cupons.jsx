@@ -7,7 +7,7 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import api from '../../services/api';
 
 const Cupons = ({ session }) => {
   const [cupons, setCupons] = useState([]);
@@ -16,13 +16,14 @@ const Cupons = ({ session }) => {
 
   useEffect(() => {
     const fetchCupons = async () => {
-      const { data, error } = await supabase
-        .from('cupons')
-        .select('*')
-        .eq('ativo', true)
-        .or(`validade.is.null,validade.gt.${new Date().toISOString()}`);
-
-      if (!error) setCupons(data);
+      try {
+        const response = await api.get('/cupons');
+        if (response.success) {
+          setCupons(response.data);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar cupons:", err);
+      }
       setLoading(false);
     };
 

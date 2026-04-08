@@ -43,7 +43,7 @@ import {
   Save
 } from 'lucide-react';
 import { io } from 'socket.io-client';
-import { supabase } from '../lib/supabaseClient';
+import api from '../services/api';
 
 const SOCKET_URL = 'http://localhost:3001';
 
@@ -145,12 +145,11 @@ function ViniBot() {
     if (!newTag.trim() || !selectedChat) return;
     const updatedTags = [...(selectedChat.whatsapp_contacts.tags || []), newTag.trim()];
     
-    const { error } = await supabase
-      .from('whatsapp_contacts')
-      .update({ tags: updatedTags })
-      .eq('id', selectedChat.whatsapp_contacts.id);
-
-    if (!error) {
+    const { success, error } = await api.put(`/whatsapp/contacts/${selectedChat.whatsapp_contacts.id}`, {
+      tags: updatedTags
+    });
+    
+    if (success) {
        setSelectedChat({
           ...selectedChat,
           whatsapp_contacts: { ...selectedChat.whatsapp_contacts, tags: updatedTags }
@@ -158,22 +157,23 @@ function ViniBot() {
        setNewTag('');
        setIsAddingTag(false);
     } else {
-       console.error('Error adding tag:', error.message);
+       console.error('Error adding tag:', error);
     }
   };
 
   const handleRemoveTag = async (tagName) => {
     const updatedTags = selectedChat.whatsapp_contacts.tags.filter(t => t !== tagName);
-    const { error } = await supabase
-      .from('whatsapp_contacts')
-      .update({ tags: updatedTags })
-      .eq('id', selectedChat.whatsapp_contacts.id);
+    const { success, error } = await api.put(`/whatsapp/contacts/${selectedChat.whatsapp_contacts.id}`, {
+      tags: updatedTags
+    });
 
-    if (!error) {
+    if (success) {
        setSelectedChat({
           ...selectedChat,
           whatsapp_contacts: { ...selectedChat.whatsapp_contacts, tags: updatedTags }
        });
+    } else {
+       console.error('Error removing tag:', error);
     }
   };
 
@@ -189,17 +189,18 @@ function ViniBot() {
   const handleUpdateContact = async () => {
      if (!selectedChat || !editingField) return;
      
-     const { error } = await supabase
-       .from('whatsapp_contacts')
-       .update({ [editingField]: editValue })
-       .eq('id', selectedChat.whatsapp_contacts.id);
+     const { success, error } = await api.put(`/whatsapp/contacts/${selectedChat.whatsapp_contacts.id}`, {
+       [editingField]: editValue
+     });
 
-     if (!error) {
+     if (success) {
         setSelectedChat({
            ...selectedChat,
            whatsapp_contacts: { ...selectedChat.whatsapp_contacts, [editingField]: editValue }
         });
         setEditingField(null);
+     } else {
+        console.error('Error updating contact:', error);
      }
   };
 

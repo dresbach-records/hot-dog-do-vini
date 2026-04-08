@@ -1,9 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
+import mysql from 'mysql2/promise';
+import { v4 as uuidv4 } from 'uuid';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-const supabaseUrl = "https://hgfpuadujzousfpqvjbu.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnZnB1YWR1anpvdXNmcHF2amJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjk5OTIsImV4cCI6MjA5MDgwNTk5Mn0.vKStJ7dBeCDGKpepzIgk31V8Tj8-Ip2aRujseHwGdpU";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '../backend/.env') });
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const dbConfig = {
+  host: process.env.DB_HOST || '187.127.17.241',
+  user: process.env.DB_USERNAME || 'hotdog_user',
+  password: process.env.DB_PASSWORD || 'SenhaForte123!',
+  database: process.env.DB_DATABASE || 'hotdog_db'
+};
 
 const data = {
   "pagaram": [
@@ -21,26 +31,28 @@ const data = {
 };
 
 async function seed() {
-  console.log('--- Iniciando Inserção (Insert Direto) ---');
+  console.log('--- Iniciando Inserção Financeira (MySQL) ---');
+  const conn = await mysql.createConnection(dbConfig);
 
-  for (const c of [...data.pagaram, ...data.nao_pagaram]) {
-    console.log(`Inserindo: ${c.nome}...`);
-    
-    const { error } = await supabase
-      .from('clientes')
-      .insert({
-        nome: c.nome,
-        total_cliente: c.total_cliente || 0,
-        total_pago: c.total_pago || 0,
-        saldo_devedor: c.saldo_devedor || 0
-      });
-
-    if (error) {
-      console.error(`Erro ao inserir ${c.nome}:`, error.message);
+  try {
+    for (const c of [...data.pagaram, ...data.nao_pagaram]) {
+      console.log(`Inserindo: ${c.nome}...`);
+      
+      await conn.query(
+        `INSERT INTO clientes (id, nome, total_cliente, total_pago, saldo_devedor) 
+         VALUES (?, ?, ?, ?, ?) 
+         ON DUPLICATE KEY UPDATE total_cliente = VALUES(total_cliente), total_pago = VALUES(total_pago), saldo_devedor = VALUES(saldo_devedor)`,
+        [uuidv4(), c.nome, c.total_cliente || 0, c.total_pago || 0, c.saldo_devedor || 0]
+      );
     }
-  }
 
-  console.log('--- Sincronização Concluída! ---');
+    console.log('--- Sincronização Concluída! ---');
+  } catch (err) {
+    console.error('❌ Erro:', err.message);
+  } finally {
+    await conn.end();
+  }
 }
 
 seed();
+

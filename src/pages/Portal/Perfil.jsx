@@ -8,7 +8,7 @@ import {
   ArrowLeft,
   CheckCircle2
 } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import api from '../../services/api';
 
 const Perfil = ({ session }) => {
   const [loading, setLoading] = useState(true);
@@ -31,20 +31,23 @@ const Perfil = ({ session }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!session?.user) return;
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('*')
-        .eq('codigo_vini', session.user.id)
-        .single();
-
-      if (!error && data) {
-        setFormData({
-          nome: data.nome || '',
-          email: data.email || '',
-          telefone: data.telefone || '',
-          cpf: data.cpf || '',
-          endereco: data.endereco_padrao || formData.endereco
-        });
+      try {
+        const response = await api.get('/clientes');
+        if (response.success) {
+          const data = response.data.find(c => c.codigo_vini === session.user.id);
+          if (data) {
+            setFormData({
+              id: data.id,
+              nome: data.nome || '',
+              email: data.email || '',
+              telefone: data.telefone || '',
+              cpf: data.cpf || '',
+              endereco: data.endereco_padrao || formData.endereco
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao buscar perfil:", err);
       }
       setLoading(false);
     };
@@ -71,19 +74,14 @@ const Perfil = ({ session }) => {
         }
       };
 
-      const { data, error } = await supabase
-        .from('clientes')
-        .update(payload)
-        .eq('codigo_vini', session.user.id)
-        .select();
+      const response = await api.put(`/clientes/${formData.id}`, payload);
 
-      if (error) throw error;
-
-      if (data) {
+      if (response.success) {
         setSuccess(true);
-        // Atualiza localmente para feedback imediato
         localStorage.setItem('vini_perfil_cache', JSON.stringify(payload));
         setTimeout(() => setSuccess(false), 3000);
+      } else {
+        throw new Error(response.error);
       }
     } catch (err) {
       console.error("Erro detalhado ao salvar perfil:", err);

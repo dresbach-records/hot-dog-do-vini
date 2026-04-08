@@ -6,7 +6,7 @@ import {
   ChevronRight, 
   ArrowLeft 
 } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import api from '../../services/api';
 
 const MeusPedidos = ({ session }) => {
   const [pedidos, setPedidos] = useState([]);
@@ -15,13 +15,18 @@ const MeusPedidos = ({ session }) => {
   useEffect(() => {
     const fetchPedidos = async () => {
       if (!session?.user) return;
-      const { data, error } = await supabase
-        .from('pedidos')
-        .select('*')
-        .eq('cliente_id', (await supabase.from('clientes').select('id').eq('codigo_vini', session.user.id).single()).data.id)
-        .order('created_at', { ascending: false });
-
-      if (!error) setPedidos(data);
+      try {
+        const response = await api.get('/clientes');
+        if (response.success) {
+          const cliente = response.data.find(c => c.codigo_vini === session.user.id);
+          if (cliente) {
+             const list = cliente.pedidos || [];
+             setPedidos(list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)));
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao buscar pedidos:", err);
+      }
       setLoading(false);
     };
 

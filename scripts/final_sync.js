@@ -1,9 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
+import mysql from 'mysql2/promise';
+import { v4 as uuidv4 } from 'uuid';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-const supabaseUrl = "https://hgfpuadujzousfpqvjbu.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnZnB1YWR1anpvdXNmcHF2amJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjk5OTIsImV4cCI6MjA5MDgwNTk5Mn0.vKStJ7dBeCDGKpepzIgk31V8Tj8-Ip2aRujseHwGdpU";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '../backend/.env') });
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const dbConfig = {
+  host: process.env.DB_HOST || '187.127.17.241',
+  user: process.env.DB_USERNAME || 'hotdog_user',
+  password: process.env.DB_PASSWORD || 'SenhaForte123!',
+  database: process.env.DB_DATABASE || 'hotdog_db'
+};
 
 const clientesData = [
   { "nome": "Eduardo", "total_cliente": 134.95, "total_pago": 134.95, "saldo_devedor": 0 },
@@ -20,9 +30,9 @@ const clientesData = [
 
 const cardapioData = {
   categorias: [
-    { titulo: "Hot Dogs Tradicionais", ordem: 1 },
-    { titulo: "Hot Dogs Especiais", ordem: 2 },
-    { titulo: "Bebidas", ordem: 3 }
+    { nome: "Hot Dogs Tradicionais", ordem: 1 },
+    { nome: "Hot Dogs Especiais", ordem: 2 },
+    { nome: "Bebidas", ordem: 3 }
   ],
   produtos: [
     { titulo: "Dog Simples", descricao: "Pão, salsicha, tomate e maionese.", preco: 18.50, categoria_nome: "Hot Dogs Tradicionais" },
@@ -32,33 +42,54 @@ const cardapioData = {
 }
 
 async function seed() {
-  console.log('--- Inserindo Dados Reais (Clientes e Cardápio) ---');
+  console.log('--- Inserindo Dados Reais (MySQL/VPS) ---');
+  const conn = await mysql.createConnection(dbConfig);
 
-  // Clientes
-  for (const c of clientesData) {
-    console.log(`Clientes: ${c.nome}...`);
-    await supabase.from('clientes').upsert(c, { onConflict: 'nome' });
-  }
+  try {
+    // Clientes
+    for (const c of clientesData) {
+      console.log(`Clientes: ${c.nome}...`);
+      await conn.query(
+        `INSERT INTO clientes (id, nome, total_cliente, total_pago, saldo_devedor, telefone) 
+         VALUES (?, ?, ?, ?, ?, ?) 
+         ON DUPLICATE KEY UPDATE total_cliente = VALUES(total_cliente), total_pago = VALUES(total_pago), saldo_devedor = VALUES(saldo_devedor), telefone = VALUES(telefone)`,
+        [uuidv4(), c.nome, c.total_cliente, c.total_pago, c.saldo_devedor, c.telefone || '']
+      );
+    }
 
-  // Categorias e Produtos
-  for (const cat of cardapioData.categorias) {
-    console.log(`Categoria: ${cat.titulo}...`);
-    const { data: catData } = await supabase.from('categorias').upsert(cat, { onConflict: 'titulo' }).select().single();
-    
-    if (catData) {
-      const prods = cardapioData.produtos.filter(p => p.categoria_nome === cat.titulo);
+    // Categorias e Produtos
+    for (const cat of cardapioData.categorias) {
+      console.log(`Categoria: ${cat.nome}...`);
+      
+      const newCatId = uuidv4();
+      await conn.query(
+        'INSERT INTO categorias (id, nome, ordem) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE ordem = VALUES(ordem)',
+        [newCatId, cat.nome, cat.ordem]
+      );
+      
+      // Pegar ID da categoria (seja o novo ou o existente)
+      const [rows] = await conn.query('SELECT id FROM categorias WHERE nome = ?', [cat.nome]);
+      const catId = rows[0].id;
+
+      const prods = cardapioData.produtos.filter(p => p.categoria_nome === cat.nome);
       for (const p of prods) {
         console.log(`Produto: ${p.titulo}...`);
-        const { categoria_nome, ...prodToInsert } = p;
-        await supabase.from('produtos').upsert({
-          ...prodToInsert,
-          categoria_id: catData.id
-        }, { onConflict: 'titulo' });
+        await conn.query(
+          `INSERT INTO produtos (id, categoria_id, titulo, descricao, preco) 
+           VALUES (?, ?, ?, ?, ?) 
+           ON DUPLICATE KEY UPDATE categoria_id = VALUES(categoria_id), descricao = VALUES(descricao), preco = VALUES(preco)`,
+          [uuidv4(), catId, p.titulo, p.descricao, p.preco]
+        );
       }
     }
-  }
 
-  console.log('--- Sincronização Final Concluída! ---');
+    console.log('--- Sincronização Final Concluída! ---');
+  } catch (err) {
+    console.error('❌ Erro no seed:', err.message);
+  } finally {
+    await conn.end();
+  }
 }
 
 seed();
+

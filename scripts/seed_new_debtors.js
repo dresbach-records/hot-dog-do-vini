@@ -1,9 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
+import mysql from 'mysql2/promise';
+import { v4 as uuidv4 } from 'uuid';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-const supabaseUrl = "https://hgfpuadujzousfpqvjbu.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnZnB1YWR1anpvdXNmcHF2amJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyMjk5OTIsImV4cCI6MjA5MDgwNTk5Mn0.vKStJ7dBeCDGKpepzIgk31V8Tj8-Ip2aRujseHwGdpU";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '../backend/.env') });
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const dbConfig = {
+  host: process.env.DB_HOST || '187.127.17.241',
+  user: process.env.DB_USERNAME || 'hotdog_user',
+  password: process.env.DB_PASSWORD || 'SenhaForte123!',
+  database: process.env.DB_DATABASE || 'hotdog_db'
+};
 
 const data = [
   { "nome": "Wslwy", "total_cliente": 15.00, "total_pago": 0, "saldo_devedor": 15.00, "telefone": "7 de Abril" },
@@ -11,28 +21,28 @@ const data = [
 ];
 
 async function seed() {
-  console.log('--- Inserindo Wslwy e Davi ---');
+  console.log('--- Inserindo Wslwy e Davi (MySQL) ---');
+  const conn = await mysql.createConnection(dbConfig);
 
-  for (const c of data) {
-    console.log(`Inserindo: ${c.nome}...`);
-    
-    // Usando insert simples para evitar erros de constraint dependendo do schema atual
-    const { error } = await supabase
-      .from('clientes')
-      .insert({
-        nome: c.nome,
-        total_cliente: c.total_cliente,
-        total_pago: c.total_pago,
-        saldo_devedor: c.saldo_devedor,
-        telefone: c.telefone // Usando o campo telefone para guardar a data como solicitado ("dia 7 de abril")
-      });
-
-    if (error) {
-      console.error(`Erro ao inserir ${c.nome}:`, error.message);
+  try {
+    for (const c of data) {
+      console.log(`Inserindo: ${c.nome}...`);
+      
+      await conn.query(
+        `INSERT INTO clientes (id, nome, total_cliente, total_pago, saldo_devedor, telefone) 
+         VALUES (?, ?, ?, ?, ?, ?) 
+         ON DUPLICATE KEY UPDATE total_cliente = VALUES(total_cliente), total_pago = VALUES(total_pago), saldo_devedor = VALUES(saldo_devedor), telefone = VALUES(telefone)`,
+        [uuidv4(), c.nome, c.total_cliente, c.total_pago, c.saldo_devedor, c.telefone]
+      );
     }
-  }
 
-  console.log('--- Concluído! ---');
+    console.log('--- Concluído! ---');
+  } catch (err) {
+    console.error('❌ Erro:', err.message);
+  } finally {
+    await conn.end();
+  }
 }
 
 seed();
+

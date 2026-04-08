@@ -5,6 +5,7 @@ import paymentsRoutes from './payments.routes.js';
 import botRoutes from '../modules/bot/bot.routes.js';
 import authRoutes from '../modules/auth/auth.routes.js';
 import clientesRoutes from '../modules/clientes/clientes.routes.js';
+import cuponsRoutes from '../modules/cupons/cupons.routes.js';
 import { ifoodService } from '../modules/integrations/ifood/ifood.service.js';
 
 const router = express.Router();
@@ -14,6 +15,7 @@ const router = express.Router();
  */
 router.use('/auth', authRoutes);
 router.use('/clientes', clientesRoutes);
+router.use('/cupons', cuponsRoutes);
 
 /**
  * 🛒 MÓDULO: PRODUTOS (/api/products)

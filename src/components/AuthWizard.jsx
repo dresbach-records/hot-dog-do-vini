@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import api from '../services/api';
 import { 
   User, Mail, Lock, Phone, MapPin, Calendar, 
   Building2, CheckCircle2, ArrowRight, ArrowLeft,
   Briefcase
 } from 'lucide-react';
-import { useClientes } from '../context/ClientesContext';
 
 const companies = [
   "Cris du", "Usaflex", "Beira Rio", "Piccadilly", "Bottero", 
@@ -111,7 +110,6 @@ export default function AuthWizard({ onFinished, onCancel }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { adicionarCliente } = useClientes();
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -133,41 +131,31 @@ export default function AuthWizard({ onFinished, onCancel }) {
     setLoading(true);
     setError(null);
 
-    const { data, error: authError } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: {
-          full_name: formData.nome,
-          role: 'cliente'
-        }
-      }
-    });
+    try {
+      // Registrar no backend VPS
+      // O backend já cuida da inserção na tabela 'clientes' se o papel for 'cliente'
+      const response = await api.post('/auth/register', {
+        email: formData.email,
+        password: formData.password,
+        name: formData.nome,
+        role: 'cliente'
+      });
 
-    if (authError) {
-      setError(authError.message);
+      if (response.success) {
+        // Agora fazemos o login automático ou apenas avançamos para o sucesso
+        localStorage.setItem('vinis_auth_token', response.token);
+        localStorage.setItem('vinis_user', JSON.stringify(response.user));
+        window.dispatchEvent(new Event('auth_change'));
+        
+        setStep(5); // Passo de sucesso
+      } else {
+        setError(response.error || 'Falha no cadastro');
+      }
+    } catch (err) {
+      setError(err.message || 'Erro de conexão ao servidor');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    if (data.user) {
-      try {
-        await supabase.from('clientes').insert([{
-          codigo_vini: data.user.id,
-          nome: formData.nome,
-          email: formData.email,
-          telefone: formData.telefone,
-          cpf: formData.cpf,
-          empresa: formData.empresa,
-          data_nascimento: formData.dataNascimento,
-          status_integracao: formData.ativarIntegracao ? 'pendente' : 'nenhuma'
-        }]);
-        setStep(5); // Success step
-      } catch (dbError) {
-        setError('Erro ao salvar perfil. Tente novamente.');
-      }
-    }
-    setLoading(false);
   };
 
   if (step === 5) {
@@ -373,3 +361,4 @@ export default function AuthWizard({ onFinished, onCancel }) {
     </div>
   );
 }
+

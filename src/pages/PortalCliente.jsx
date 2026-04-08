@@ -30,7 +30,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
-import { supabase } from '../lib/supabaseClient';
+import api from '../services/api';
 import { menuItems, categories as siteCategories } from '../lib/siteData';
 import ProductModal from '../components/Site/ProductModal';
 import CartDrawer from '../components/Site/CartDrawer';
@@ -74,7 +74,8 @@ const PortalCliente = ({ session }) => {
       if (idleTimer) clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
         console.log("Deslogando por inatividade...");
-        supabase.auth.signOut();
+        localStorage.removeItem('vinis_auth_token');
+        window.dispatchEvent(new Event('auth_change'));
         window.location.href = '/login.vinis';
       }, 30 * 60 * 1000); // 30 minutos em ms
     };
@@ -263,7 +264,10 @@ const PortalCliente = ({ session }) => {
                   <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/perfil'}>
                     <Settings size={20} color="#64748b" /> Meus Dados
                   </div>
-                  <div className="vini-dropdown-item" onClick={() => supabase.auth.signOut()} style={{ color: '#EA1D2C' }}>
+                  <div className="vini-dropdown-item" onClick={() => {
+                    localStorage.removeItem('vinis_auth_token');
+                    window.dispatchEvent(new Event('auth_change'));
+                  }} style={{ color: '#EA1D2C' }}>
                     <LogOut size={20} /> Encerrar Sessão
                   </div>
                 </div>

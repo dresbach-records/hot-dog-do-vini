@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import api from '../services/api';
 import { 
   ShoppingBag, 
   Trash2, 
@@ -31,12 +31,26 @@ function PDVBalcao() {
 
   const fetchDados = async () => {
     setLoading(true);
-    const { data: prods } = await supabase.from('produtos').select('*').eq('disponivel', true);
-    const { data: cats } = await supabase.from('categorias').select('*').order('ordem');
-    setProdutos(prods || []);
-    setCategorias(cats || []);
-    if (cats?.length > 0) setActiveCat(cats[0].id);
-    setLoading(false);
+    try {
+      const [resProds, resCats] = await Promise.all([
+        api.get('/products/active'),
+        api.get('/products/categories')
+      ]);
+
+      const prods = resProds.data || [];
+      const cats = resCats.data || [];
+
+      setProdutos(prods);
+      setCategorias(cats);
+      
+      if (cats.length > 0) {
+        setActiveCat(cats[0].id);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar PDV:', err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const adicCarrinho = (p) => {
@@ -57,14 +71,34 @@ function PDVBalcao() {
 
   const finalizarVenda = async (metodo) => {
     setFinalizando(true);
-    // Simulação de salvamento no Supabase
-    await new Promise(r => setTimeout(r, 800));
-    setPasso('sucesso');
-    setCarrinho([]);
-    setFinalizando(false);
-    
-    // Auto-reset para nova venda após 3 segundos
-    setTimeout(() => setPasso('venda'), 3000);
+    try {
+      // Criar pedido no backend VPS
+      const orderData = {
+        items: carrinho.map(item => ({
+          produto_id: item.id,
+          quantidade: item.qtd,
+          preco_unitario: item.preco
+        })),
+        total,
+        forma_pagamento: metodo,
+        tipo: 'balcao'
+      };
+
+      const response = await api.post('/orders', orderData);
+
+      if (response.success) {
+        setPasso('sucesso');
+        setCarrinho([]);
+        // Auto-reset para nova venda após 3 segundos
+        setTimeout(() => setPasso('venda'), 3000);
+      } else {
+        alert('Erro ao finalizar venda: ' + response.error);
+      }
+    } catch (err) {
+      alert('Erro de conexão ao finalizar venda');
+    } finally {
+      setFinalizando(false);
+    }
   };
 
   if (loading) return <div className="p-8 text-center text-red-500">Ligando os motores do PDV...</div>;
@@ -229,3 +263,4 @@ function PDVBalcao() {
 }
 
 export default PDVBalcao;
+

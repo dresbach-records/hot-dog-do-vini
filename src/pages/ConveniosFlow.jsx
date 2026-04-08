@@ -13,7 +13,7 @@ import {
   Clock,
   Check
 } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
+import api from '../services/api';
 import { useClientes } from '../context/ClientesContext';
 
 const ConveniosFlow = ({ session }) => {
