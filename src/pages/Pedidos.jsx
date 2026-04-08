@@ -98,7 +98,7 @@ function Pedidos() {
     fetchOrders();
     fetchProducts();
 
-    // Polling alternativo para Real-time (já que removemos Supabase Channel)
+    // Polling ativo para Cloud (Vini's Cloud sync)
     const interval = setInterval(() => {
       fetchOrders();
     }, 30000); // 30s polling

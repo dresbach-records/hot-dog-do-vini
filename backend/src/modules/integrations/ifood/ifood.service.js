@@ -2,6 +2,8 @@ import axios from 'axios';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { query } from '../../../config/database.js';
+import crypto from 'crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TOKEN_FILE = join(__dirname, '../../../../tokens.json');
@@ -180,5 +182,56 @@ export const ifoodService = {
       headers: { Authorization: `Bearer ${token}` }
     });
     return { success: true };
+  },
+
+  /**
+   * Orquestração de Importação de Cardápio (10/10)
+   * Agora salva diretamente no MariaDB
+   */
+  async importCatalog(viniData) {
+    console.log('[iFoodService] Iniciando gravação de cardápio no MariaDB...');
+    
+    try {
+      for (const cat of viniData) {
+        // 1. Verificar se categoria já existe via ifood_id
+        let [categoria] = await query('SELECT id FROM categorias WHERE ifood_id = ?', [cat.ifood_id]);
+        let categoriaId;
+
+        if (categoria) {
+          categoriaId = categoria.id;
+          await query(
+            'UPDATE categorias SET nome = ?, ativa = TRUE WHERE id = ?',
+            [cat.nome, categoriaId]
+          );
+        } else {
+          categoriaId = crypto.randomUUID();
+          await query(
+            'INSERT INTO categorias (id, nome, ifood_id, ativa) VALUES (?, ?, ?, TRUE)',
+            [categoriaId, cat.nome, cat.ifood_id]
+          );
+        }
+
+        // 2. Processar Produtos
+        for (const p of cat.produtos) {
+          const [produto] = await query('SELECT id FROM produtos WHERE ifood_id = ?', [p.ifood_id]);
+          
+          if (produto) {
+            await query(
+              'UPDATE produtos SET titulo = ?, descricao = ?, preco = ?, imagem_url = ?, disponivel = ? WHERE id = ?',
+              [p.titulo, p.descricao, p.preco, p.imagem_url, p.disponivel, produto.id]
+            );
+          } else {
+            await query(
+              'INSERT INTO produtos (id, categoria_id, titulo, descricao, preco, imagem_url, ifood_id, disponivel) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+              [crypto.randomUUID(), categoriaId, p.titulo, p.descricao, p.preco, p.imagem_url, p.ifood_id, p.disponivel]
+            );
+          }
+        }
+      }
+      return { success: true };
+    } catch (error) {
+      console.error('[iFoodService] Erro na persistência MariaDB:', error);
+      throw error;
+    }
   }
 };

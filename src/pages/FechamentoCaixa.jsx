@@ -36,7 +36,7 @@ function FechamentoCaixa() {
 
   const handleFinalizar = () => {
     setEtapa(2);
-    // Aqui integraria com supabase para salvar o log de fechamento
+    // TODO: Integrar com API para salvar log de fechamento no MariaDB
   };
 
   if (loading) return <div className="p-8 text-center">Calculando fechamento...</div>;

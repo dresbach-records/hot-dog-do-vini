@@ -6,7 +6,7 @@ import botRoutes from '../modules/bot/bot.routes.js';
 import authRoutes from '../modules/auth/auth.routes.js';
 import clientesRoutes from '../modules/clientes/clientes.routes.js';
 import cuponsRoutes from '../modules/cupons/cupons.routes.js';
-import { ifoodService } from '../modules/integrations/ifood/ifood.service.js';
+import { ifoodController } from '../modules/integrations/ifood/ifood.controller.js';
 
 const router = express.Router();
 
@@ -37,25 +37,10 @@ router.use('/whatsapp', botRoutes);
  */
 
 // Login iFood: Inicia Fluxo
-router.post('/ifood/auth/start', async (req, res) => {
-  try {
-    const data = await ifoodService.authStart();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+router.post('/ifood/auth/start', ifoodController.startAuth);
 
 // Login iFood: Confirma
-router.post('/ifood/auth/confirm', async (req, res) => {
-  try {
-    const { authorizationCode } = req.body;
-    const result = await ifoodService.authConfirm(authorizationCode);
-    res.json(result);
-  } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
-  }
-});
+router.post('/ifood/auth/confirm', ifoodController.confirmAuth);
 
 // Status iFood
 router.get('/ifood/status', async (req, res) => {
@@ -80,6 +65,9 @@ router.get('/ifood/orders', async (req, res) => {
     res.status(500).json({ success: false, error: 'Erro ao buscar pedidos no iFood' });
   }
 });
+
+// Importação de Cardápio para MariaDB
+router.post('/ifood/catalog/import', ifoodController.importCatalog);
 
 // WEBHOOK IFOOD: Recebe eventos de novos pedidos e mudanças de status
 router.post('/ifood/webhook', async (req, res) => {

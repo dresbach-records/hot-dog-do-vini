@@ -9,8 +9,9 @@ const __root = join(__dirname, '../../../');
 
 dotenv.config({ path: join(__root, 'backend/.env') });
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
+// Conexão profissional com Pool
+export const db = await mysql.createPool({
+  host: process.env.DB_HOST || '127.0.0.1',
   port: process.env.DB_PORT || 3306,
   user: process.env.DB_USERNAME || 'hotdog_user',
   password: process.env.DB_PASSWORD || 'SenhaForte123!',
@@ -18,18 +19,13 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  multipleStatements: true // Permite execução de scripts SQL complexos
+  multipleStatements: true
 });
 
-// Helper para queries simples
+// Helper para manter compatibilidade com refatorações anteriores
 export const query = async (sql, params) => {
-  const [results] = await pool.execute(sql, params);
+  const [results] = await db.execute(sql, params);
   return results;
 };
 
-// Helper para transações (opcional mas recomendado)
-export const getTransaction = async () => {
-  return await pool.getConnection();
-};
-
-export default pool;
+export default db;

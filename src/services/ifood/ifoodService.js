@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabaseClient';
+import api from '../api';
 
 /**
  * iFood Service - Lógica de Importação e Normalização
@@ -66,40 +66,24 @@ const ifoodService = {
   },
 
   /**
-   * Grava os dados normalizados do iFood no Supabase
+   * Grava os dados normalizados do iFood no MariaDB (via Backend API)
    */
   confirmarImportacao: async (viniData) => {
     try {
-      for (const cat of viniData) {
-        // 1. Inserir ou Atualizar Categoria
-        const { data: categoria, error: catError } = await supabase
-          .from('categorias')
-          .upsert({ 
-            nome: cat.nome, 
-            ifood_id: cat.ifood_id,
-            ativa: true 
-          }, { onConflict: 'ifood_id' })
-          .select()
-          .single();
+      console.log('[iFoodService] Solicitando importação ao Backend MariaDB...');
+      
+      const response = await api.post('/ifood/catalog/import', {
+        catalog: viniData
+      });
 
-        if (catError) throw catError;
-
-        // 2. Inserir Produtos da Categoria
-        const productsToInsert = cat.produtos.map(p => ({
-          ...p,
-          categoria_id: categoria.id
-        }));
-
-        const { error: prodError } = await supabase
-          .from('produtos')
-          .upsert(productsToInsert, { onConflict: 'ifood_id' });
-
-        if (prodError) throw prodError;
+      if (!response.success) {
+        throw new Error(response.error || 'Erro desconhecido na importação');
       }
+
       return { success: true };
     } catch (error) {
       console.error('[iFoodService] Erro ao salvar importação:', error);
-      return { success: false, error };
+      return { success: false, error: error.message };
     }
   }
 };

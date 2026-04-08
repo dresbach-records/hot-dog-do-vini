@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { query } from '../../infrastructure/database.js';
+import { query } from '../../config/database.js';
 import crypto from 'crypto';
 
 export const authService = {

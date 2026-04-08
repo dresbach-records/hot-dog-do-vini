@@ -21,8 +21,7 @@ function Motoboys() {
 
   const fetchMotoboys = async () => {
     setLoading(true);
-    // Simulação de dados enquanto a tabela real é criada no Supabase
-    // No futuro: const { data } = await supabase.from('motoboys').select('*');
+    // TODO: Consumir API /entregadores do MariaDB
     setMotoboys([
       { id: 1, nome: 'Ricardo (Freelancer)', telefone: '(51) 98877-6655', veiculo: 'Moto', status: 'disponivel', entregas: 12, ganho_dia: 60.00, tipo: 'freelancer' },
       { id: 2, nome: 'iFood Entrega (Demanda)', telefone: 'API iFood', veiculo: 'Moto/Carro', status: 'em_entrega', entregas: 8, ganho_dia: 0.00, tipo: 'ifood' },

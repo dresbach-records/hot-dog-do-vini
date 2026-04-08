@@ -138,12 +138,12 @@ function App() {
   }, []);
 
   if (loading) return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-red)' }}>
-      <h3>Carregando Vini's ERP...</h3>
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0a0a', color: 'var(--c-red)' }}>
+      <h3>Carregando Vini's Cloud...</h3>
     </div>
   );
 
-  const isAdmin = session && session.user?.user_metadata?.role !== 'cliente';
+  const isAdmin = session && session.user?.role !== 'cliente';
 
   return (
     <SettingsProvider>
@@ -192,11 +192,11 @@ function App() {
           {/* == LOGIN ADMIN ERP == */}
           <Route path="/login" element={session && isAdmin ? <Navigate to="/admin/dashboard" /> : <Login onLogin={() => {}} />} />
 
-          {/* == ÁREA ADMINISTRATIVA ERP (PROTEGIDA) == */}
+          {/* == ÁREA ADMINISTRATIVA CLOUD (PROTEGIDA) == */}
           <Route path="/admin/*" element={
             session && isAdmin ? (
               <div className="app-container admin-container">
-                <Sidebar onLogout={() => {
+                <Sidebar user={session.user} onLogout={() => {
                   localStorage.removeItem('vinis_auth_token');
                   setSession(null);
                 }} />
