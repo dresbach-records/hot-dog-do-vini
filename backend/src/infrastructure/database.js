@@ -17,7 +17,8 @@ const pool = mysql.createPool({
   database: process.env.DB_DATABASE || 'hotdog_db',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  multipleStatements: true // Permite execução de scripts SQL complexos
 });
 
 // Helper para queries simples

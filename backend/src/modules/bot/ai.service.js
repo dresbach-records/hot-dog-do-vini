@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { supabase } from '../../config/supabase.js';
+import { v4 as uuidv4 } from 'uuid';
+import { query } from '../../infrastructure/database.js';
 
 export const aiService = {
   
@@ -29,15 +30,12 @@ export const aiService = {
            responseText = "Excelente escolha! Nosso Hot Dog Especial está saindo muito hoje por apenas R$ 15,00. Deseja que eu gere o pedido para você?";
         }
 
-        // Log de interação no banco
-        await supabase.from('ai_logs').insert({
-           conversation_id: conversation.id,
-           input: message.body,
-           output: responseText,
-           model: 'gpt-4o',
-           tokens: 150,
-           context
-        });
+        // Log de interação no banco (MySQL)
+        const logId = uuidv4();
+        await query(
+           'INSERT INTO ai_logs (id, conversation_id, input, output, model, tokens, context) VALUES (?, ?, ?, ?, ?, ?, ?)',
+           [logId, conversation.id, message.body, responseText, 'gpt-4o', 150, JSON.stringify(context)]
+        );
 
         return responseText;
      } catch (err) {
@@ -51,3 +49,4 @@ export const aiService = {
      return tokens * (rates[model] || 0);
   }
 };
+

@@ -1,6 +1,7 @@
 import express from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { asaasService } from '../modules/integrations/asaas/asaas.service.js';
-import { supabase } from '../config/supabase.js';
+import { query } from '../infrastructure/database.js';
 
 const router = express.Router();
 
@@ -22,11 +23,10 @@ router.post('/webhook', async (req, res) => {
 
   try {
     // 🛡️ 2. IDEMPOTÊNCIA (Não processar o mesmo evento duas vezes)
-    const { data: existingEvent } = await supabase
-      .from('events_log')
-      .select('id')
-      .eq('event_id', eventId)
-      .single();
+    const [existingEvent] = await query(
+      'SELECT id FROM events_log WHERE event_id = ? LIMIT 1',
+      [eventId]
+    );
 
     if (existingEvent) {
        console.log(`[Asaas Webhook] Evento ${eventId} já processado. Ignorando.`);
@@ -34,12 +34,11 @@ router.post('/webhook', async (req, res) => {
     }
 
     // 📝 3. REGISTRAR EVENTO NA FILA (events_log)
-    const { data: loggedEvent, error: logErr } = await supabase
-      .from('events_log')
-      .insert({ event_id: eventId, event_type: event, payload })
-      .select().single();
-
-    if (logErr) throw logErr;
+    const [logResult] = await query(
+      'INSERT INTO events_log (event_id, event_type, payload) VALUES (?, ?, ?)',
+      [eventId, event, JSON.stringify(payload)]
+    );
+    const loggedEventId = logResult?.insertId;
 
     // ⚙️ 4. PROCESSAMENTO POR CATEGORIA (Lógica de Negócio)
     
@@ -48,7 +47,10 @@ router.post('/webhook', async (req, res) => {
       const p = payload.payment;
       
       // UPSERT PAYMENT (Core)
-      const { data: updatedPayment, error: pErr } = await supabase.from('payments').upsert({
+      let currentPaymentId;
+      const [existingPayment] = await query('SELECT id FROM payments WHERE asaas_id = ? LIMIT 1', [p.id]);
+      
+      const paymentData = {
          asaas_id: p.id,
          customer_id: p.customer,
          subscription_id: p.subscription,
@@ -60,44 +62,67 @@ router.post('/webhook', async (req, res) => {
          payment_date: p.confirmedDate || p.paymentDate,
          description: p.description,
          bank_slip_url: p.bankSlipUrl,
-         invoice_url: p.invoiceUrl,
-         updated_at: new Date().toISOString()
-      }, { onConflict: 'asaas_id' }).select().single();
+         invoice_url: p.invoiceUrl
+      };
 
-      if (pErr) throw pErr;
+      if (existingPayment) {
+         currentPaymentId = existingPayment.id;
+         await query(
+            `UPDATE payments SET 
+               status = ?, value = ?, net_value = ?, due_date = ?, 
+               payment_date = ?, description = ?, bank_slip_url = ?, invoice_url = ?, 
+               updated_at = NOW() 
+             WHERE id = ?`,
+            [
+               paymentData.status, paymentData.value, paymentData.net_value, paymentData.due_date,
+               paymentData.payment_date, paymentData.description, paymentData.bank_slip_url, paymentData.invoice_url,
+               currentPaymentId
+            ]
+         );
+      } else {
+         currentPaymentId = uuidv4();
+         await query(
+            `INSERT INTO payments (
+               id, asaas_id, customer_id, subscription_id, billing_type, status, 
+               value, net_value, due_date, payment_date, description, bank_slip_url, invoice_url
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+               currentPaymentId, paymentData.asaas_id, paymentData.customer_id, paymentData.subscription_id, 
+               paymentData.billing_type, paymentData.status, paymentData.value, paymentData.net_value, 
+               paymentData.due_date, paymentData.payment_date, paymentData.description, 
+               paymentData.bank_slip_url, paymentData.invoice_url
+            ]
+         );
+      }
 
       // REGISTRAR HISTÓRICO DE STATUS (Auditoria)
-      await supabase.from('payment_status_history').insert({
-         payment_id: updatedPayment.id,
-         status: p.status,
-         event_type: event
-      });
+      await query(
+         'INSERT INTO payment_status_history (payment_id, status, event_type) VALUES (?, ?, ?)',
+         [currentPaymentId, p.status, event]
+      );
 
       // 💸 LEDGER FINANCEIRO (Transações) - Se recebido, gera Crédito
       if (['PAYMENT_RECEIVED', 'PAYMENT_SETTLED', 'PAYMENT_CONFIRMED'].includes(event)) {
-         await supabase.from('financial_transactions').insert({
-            payment_id: updatedPayment.id,
-            type: 'CREDIT',
-            category: 'PAYMENT',
-            amount: p.netValue || p.value,
-            description: `Recebimento Ref: ${p.id}`
-         });
+         await query(
+            'INSERT INTO financial_transactions (payment_id, type, category, amount, description) VALUES (?, ?, ?, ?, ?)',
+            [currentPaymentId, 'CREDIT', 'PAYMENT', p.netValue || p.value, `Recebimento Ref: ${p.id}`]
+         );
 
          // Atualizar Pedido se houver referência externa
          if (p.externalReference) {
-            await supabase.from('pedidos').update({ status: 'pago', pago_em: new Date().toISOString() }).eq('id', p.externalReference);
+            await query(
+               'UPDATE pedidos SET status = ?, updated_at = NOW() WHERE id = ?',
+               ['pago', p.externalReference]
+            );
          }
       }
 
       // Se Estornado / Chargeback
       if (['PAYMENT_REFUNDED', 'PAYMENT_CHARGEBACK_REQUESTED'].includes(event)) {
-         await supabase.from('financial_transactions').insert({
-            payment_id: updatedPayment.id,
-            type: 'DEBIT',
-            category: event.includes('REFUND') ? 'REFUND' : 'CHARGEBACK',
-            amount: p.value,
-            description: `Reversão/Disputa Ref: ${p.id}`
-         });
+         await query(
+            'INSERT INTO financial_transactions (payment_id, type, category, amount, description) VALUES (?, ?, ?, ?, ?)',
+            [currentPaymentId, 'DEBIT', event.includes('REFUND') ? 'REFUND' : 'CHARGEBACK', p.value, `Reversão/Disputa Ref: ${p.id}`]
+         );
       }
     }
 
@@ -107,7 +132,9 @@ router.post('/webhook', async (req, res) => {
     }
 
     // Marca como processado com sucesso
-    await supabase.from('events_log').update({ processed: true }).eq('id', loggedEvent.id);
+    if (loggedEventId) {
+       await query('UPDATE events_log SET processed = true WHERE id = ?', [loggedEventId]);
+    }
 
     res.status(200).send('OK');
   } catch (err) {
@@ -118,7 +145,6 @@ router.post('/webhook', async (req, res) => {
 
 /**
  * 💰 BUSCAR SALDO REAL-TIME DO ASAAS
- * Endpoint: /api/payments/balance
  */
 router.get('/balance', async (req, res) => {
    try {
@@ -131,16 +157,11 @@ router.get('/balance', async (req, res) => {
 
 /**
  * 🔄 SINCRONIZAR TODOS OS CLIENTES COM ASAAS
- * Endpoint: /api/payments/sync-customers
  */
 router.post('/sync-customers', async (req, res) => {
    try {
-      // 1. Buscar todos os clientes do Supabase
-      const { data: dbClientes, error } = await supabase
-        .from('clientes')
-        .select('*');
-
-      if (error) throw error;
+      // 1. Buscar todos os clientes do MySQL
+      const dbClientes = await query('SELECT * FROM clientes');
 
       // 2. Buscar clientes existentes no Asaas (Pre-match)
       const asaasData = await asaasService.listCustomers();
@@ -159,7 +180,8 @@ router.post('/sync-customers', async (req, res) => {
 
             // Tentar Match se não tiver ID
             if (!asaasId) {
-               asaasId = asaasMap.get(c.cpf_cnpj) || asaasMap.get(c.email?.toLowerCase());
+               const cpf_cnpj_clean = c.cpf?.replace(/\D/g, ''); 
+               asaasId = asaasMap.get(cpf_cnpj_clean) || asaasMap.get(c.email?.toLowerCase());
             }
 
             if (!asaasId) {
@@ -167,7 +189,7 @@ router.post('/sync-customers', async (req, res) => {
                const customer = await asaasService.getOrCreateCustomer({
                   nome: c.nome,
                   email: c.email || `${c.nome.toLowerCase().replace(/ /g, '.')}@hotdogvini.com`,
-                  cpfCnpj: c.cpf_cnpj
+                  cpfCnpj: c.cpf?.replace(/\D/g, '')
                });
                asaasId = customer.id;
                results.created++;
@@ -176,10 +198,10 @@ router.post('/sync-customers', async (req, res) => {
             }
 
             if (asaasId !== c.asaas_customer_id) {
-               await supabase
-                 .from('clientes')
-                 .update({ asaas_customer_id: asaasId })
-                 .eq('id', c.id);
+               await query(
+                 'UPDATE clientes SET asaas_customer_id = ? WHERE id = ?',
+                 [asaasId, c.id]
+               );
                results.updated++;
             }
          } catch (err) {
@@ -201,18 +223,21 @@ router.post('/issue-asaas', async (req, res) => {
   try {
      const { userId, total, descricao, metodo } = req.body;
      
-     // Buscar dados do usuário para o Asaas
-     const { data: usuario } = await supabase
-       .from('usuarios')
-       .select('*')
-       .eq('id', userId)
-       .single();
+     // Buscar dados do usuário para o Asaas (MySQL table users/clientes depends on implementation)
+     const [usuario] = await query('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
 
      if (!usuario) throw new Error('Usuário não encontrado');
 
+     // Assumindo que asaas_customer_id está na tabela clientes vinculada por user_id
+     const [cliente] = await query('SELECT asaas_customer_id FROM clientes WHERE user_id = ? LIMIT 1', [userId]);
+     
+     const asaasCustomerId = cliente?.asaas_customer_id || usuario.asaas_customer_id;
+
+     if (!asaasCustomerId) throw new Error('Cliente não possui ID do Asaas vinculado');
+
      // Criar pagamento no Asaas
      const asaasPayment = await asaasService.createPayment({
-       asaasCustomerId: usuario.asaas_customer_id,
+       asaasCustomerId,
        valor: total,
        metodo: metodo || 'PIX',
        descricao: descricao || 'Cobrança Avulsa'
@@ -239,16 +264,10 @@ router.post('/negativar', async (req, res) => {
 
 /**
  * 💰 LISTAR TODAS AS COBRANÇAS (ERP)
- * Endpoint: /api/payments/list
  */
 router.get('/list', async (req, res) => {
    try {
-      const { data, error } = await supabase
-        .from('payments')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
+      const data = await query('SELECT * FROM payments ORDER BY created_at DESC');
       res.json({ success: true, payments: data });
    } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -257,17 +276,13 @@ router.get('/list', async (req, res) => {
 
 /**
  * 📜 HISTÓRICO DE UMA COBRANÇA
- * Endpoint: /api/payments/:id/history
  */
 router.get('/:id/history', async (req, res) => {
    try {
-      const { data, error } = await supabase
-        .from('payment_status_history')
-        .select('*')
-        .eq('payment_id', req.params.id)
-        .order('created_at', { ascending: true });
-      
-      if (error) throw error;
+      const data = await query(
+         'SELECT * FROM payment_status_history WHERE payment_id = ? ORDER BY created_at ASC',
+         [req.params.id]
+      );
       res.json({ success: true, history: data });
    } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -276,16 +291,15 @@ router.get('/:id/history', async (req, res) => {
 
 /**
  * 💸 LEDGER: TODAS AS TRANSAÇÕES FINANCEIRAS
- * Endpoint: /api/payments/transactions
  */
 router.get('/transactions', async (req, res) => {
    try {
-      const { data, error } = await supabase
-        .from('financial_transactions')
-        .select('*, payments(asaas_id, status)')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
+      const data = await query(`
+         SELECT ft.*, p.asaas_id, p.status as payment_status
+         FROM financial_transactions ft
+         LEFT JOIN payments p ON ft.payment_id = p.id
+         ORDER BY ft.created_at DESC
+      `);
       res.json({ success: true, transactions: data });
    } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -293,3 +307,4 @@ router.get('/transactions', async (req, res) => {
 });
 
 export default router;
+

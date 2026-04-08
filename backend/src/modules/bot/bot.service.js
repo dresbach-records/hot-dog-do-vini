@@ -7,7 +7,8 @@ import makeWASocket, {
 import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode';
 import pino from 'pino';
-import { supabase } from '../../config/supabase.js';
+import { v4 as uuidv4 } from 'uuid';
+import { query } from '../../infrastructure/database.js'; // Alterado de Supabase para MySQL
 import { incomingQueue } from '../../infrastructure/queue.js';
 
 let io = null;
@@ -100,66 +101,90 @@ export const botService = {
      const content = msg.message?.conversation || msg.message?.extendedTextMessage?.text || "";
      const external_id = msg.key.id;
 
-     // 0. Idempotência: Verificar se mensagem já foi processada
-     const { data: existing } = await supabase
-        .from('whatsapp_messages')
-        .select('id')
-        .eq('external_id', external_id)
-        .single();
-     if (existing) return;
+     try {
+        // 0. Idempotência: Verificar se mensagem já foi processada
+        const [existing] = await query(
+           'SELECT id FROM whatsapp_messages WHERE external_id = ? LIMIT 1',
+           [external_id]
+        );
+        if (existing) return;
 
-     // 1. Sincronizar Contato
-     const { data: dbContact } = await supabase
-        .from('whatsapp_contacts')
-        .upsert({ 
-           phone, 
-           name: msg.pushName || phone,
-           pushname: msg.pushName,
-           updated_at: new Date().toISOString()
-        }, { onConflict: 'phone' })
-        .select()
-        .single();
+        // 1. Sincronizar Contato (UPSERT manual MySQL)
+        let dbContact;
+        const [contact] = await query('SELECT id FROM whatsapp_contacts WHERE phone = ? LIMIT 1', [phone]);
+        
+        if (contact) {
+           await query(
+              'UPDATE whatsapp_contacts SET name = ?, pushname = ?, updated_at = NOW() WHERE id = ?',
+              [msg.pushName || phone, msg.pushName, contact.id]
+           );
+           dbContact = { id: contact.id, phone, name: msg.pushName || phone };
+        } else {
+           const newContactId = uuidv4();
+           await query(
+              'INSERT INTO whatsapp_contacts (id, phone, name, pushname) VALUES (?, ?, ?, ?)',
+              [newContactId, phone, msg.pushName || phone, msg.pushName]
+           );
+           dbContact = { id: newContactId, phone, name: msg.pushName || phone };
+        }
 
-     // 2. Sincronizar Conversa
-     const { data: dbConv } = await supabase
-        .from('whatsapp_conversations')
-        .upsert({ 
-           contact_id: dbContact.id,
-           last_message_at: new Date().toISOString()
-        }, { onConflict: 'contact_id' })
-        .select()
-        .single();
+        // 2. Sincronizar Conversa (UPSERT manual MySQL)
+        let dbConv;
+        const [conv] = await query('SELECT id FROM whatsapp_conversations WHERE contact_id = ? LIMIT 1', [dbContact.id]);
+        
+        if (conv) {
+           await query(
+              'UPDATE whatsapp_conversations SET last_message_at = NOW(), updated_at = NOW() WHERE id = ?',
+              [conv.id]
+           );
+           dbConv = { id: conv.id };
+        } else {
+           const newConvId = uuidv4();
+           await query(
+              'INSERT INTO whatsapp_conversations (id, contact_id, last_message_at) VALUES (?, ?, NOW())',
+              [newConvId, dbContact.id]
+           );
+           dbConv = { id: newConvId };
+        }
 
-     // 3. Salvar Mensagem (INBOUND)
-     const { data: dbMsg } = await supabase
-        .from('whatsapp_messages')
-        .insert({
+        // 3. Salvar Mensagem (INBOUND)
+        const newMsgId = uuidv4();
+        await query(
+           'INSERT INTO whatsapp_messages (id, conversation_id, external_id, sender, direction, content) VALUES (?, ?, ?, ?, ?, ?)',
+           [newMsgId, dbConv.id, external_id, 'user', 'IN', content]
+        );
+
+        const dbMsg = {
+           id: newMsgId,
            conversation_id: dbConv.id,
            external_id,
            sender: 'user',
            direction: 'IN',
            content,
-           created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+           created_at: new Date()
+        };
 
-     // 4. Emitir via Socket para a UI (Somente para a sala desta conversa)
-     if (io) {
-        io.to(`conversation_${dbConv.id}`).emit('new-message', dbMsg);
-        io.emit('chat-update', { id: dbConv.id, lastMsg: content }); // Update side-list
+        // 4. Emitir via Socket para a UI
+        if (io) {
+           io.to(`conversation_${dbConv.id}`).emit('new-message', dbMsg);
+           io.emit('chat-update', { id: dbConv.id, lastMsg: content });
+        }
+
+        // 5. Adicionar na Fila Industrial (BullMQ) para processamento IA
+        await incomingQueue.add(`msg_${dbConv.id}`, {
+           message: { body: content, id: external_id },
+           contact: dbContact,
+           conversation: dbConv
+        }, {
+           attempts: 3,
+           backoff: { type: 'exponential', delay: 1000 }
+        });
+
+     } catch (err) {
+        console.error('❌ [processIncomingMessage Error]:', err.message);
      }
-
-     // 5. Adicionar na Fila Industrial (BullMQ) para processamento IA
-     await incomingQueue.add(`msg_${dbConv.id}`, {
-        message: { body: content, id: external_id },
-        contact: dbContact,
-        conversation: dbConv
-     }, {
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 }
-     });
   }
 };
+
 
 

@@ -1,20 +1,34 @@
 import express from 'express';
-import { supabase } from '../../config/supabase.js';
+import { query } from '../../infrastructure/database.js';
 
 const router = express.Router();
 
 // GET /api/whatsapp/conversations
 router.get('/conversations', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('whatsapp_conversations')
-      .select(`
-        *,
-        whatsapp_contacts (*)
-      `)
-      .order('last_message_at', { ascending: false });
+    const rows = await query(`
+      SELECT 
+        c.*, 
+        ct.id as contact_uuid, ct.phone, ct.name, ct.pushname, ct.profile_pic_url, ct.tags, ct.segmento
+      FROM whatsapp_conversations c
+      JOIN whatsapp_contacts ct ON c.contact_id = ct.id
+      ORDER BY c.last_message_at DESC
+    `);
 
-    if (error) throw error;
+    // Mapear para o formato que o frontend espera (contato aninhado)
+    const data = rows.map(row => ({
+      ...row,
+      whatsapp_contacts: {
+        id: row.contact_uuid,
+        phone: row.phone,
+        name: row.name,
+        pushname: row.pushname,
+        profile_pic_url: row.profile_pic_url,
+        tags: row.tags,
+        segmento: row.segmento
+      }
+    }));
+
     res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -25,13 +39,11 @@ router.get('/conversations', async (req, res) => {
 router.get('/messages/:conversationId', async (req, res) => {
   try {
     const { conversationId } = req.params;
-    const { data, error } = await supabase
-      .from('whatsapp_messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
+    const data = await query(
+      'SELECT * FROM whatsapp_messages WHERE conversation_id = ? ORDER BY created_at ASC',
+      [conversationId]
+    );
 
-    if (error) throw error;
     res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
