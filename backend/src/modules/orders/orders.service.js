@@ -1,4 +1,4 @@
-import { query } from '../../infrastructure/database.js';
+import { query } from '../../config/database.js';
 import { asaasService } from '../integrations/asaas/asaas.service.js';
 import { v4 as uuidv4 } from 'uuid';
 

@@ -19,7 +19,7 @@ const STATUS_AGENDAMENTO = {
   cancelado: { label: 'Cancelado', color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
 };
 
-// Mock de pedidos agendados (em produção, viria do Supabase)
+  // Mock de pedidos agendados (dados estáticos para demonstração)
 const MOCK_AGENDAMENTOS_CRISDU = [
   { id: 'AG001', grupo: 'Cris du', cliente: 'Ana Costa', itens: '1x Pastelão Frango c/catupiry', total: 27.99, status: 'pendente', horarioEntrega: '12:00', pedidoEm: '09:30' },
   { id: 'AG002', grupo: 'Cris du', cliente: 'Bruno Lima', itens: '1x Cachorro Quente Especial + Coca 600ml', total: 28.50, status: 'pendente', horarioEntrega: '12:00', pedidoEm: '09:45' },

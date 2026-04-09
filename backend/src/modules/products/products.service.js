@@ -1,4 +1,4 @@
-import { query } from '../../infrastructure/database.js';
+import { query } from '../../config/database.js';
 
 export const productsService = {
   async list() {

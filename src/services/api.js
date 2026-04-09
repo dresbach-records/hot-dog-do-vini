@@ -14,7 +14,7 @@ const api = axios.create({
 
 /**
  * 🔐 INTERCEPTOR DE REQUISIÇÃO
- * Injeta automaticamente o token do Supabase se ele existir no localStorage
+ * Injeta automaticamente o token de autenticação se ele existir no localStorage
  */
 api.interceptors.request.use(
   (config) => {
