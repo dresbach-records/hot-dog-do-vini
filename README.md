@@ -1,10 +1,10 @@
 # 🌭 Vini's Delivery — ERP & PWA Portal (10/10)
 
-Bem-vindo ao repositório oficial do sistema **Vini's Delivery**. Este projeto foi evoluído hoje para uma arquitetura industrial de alta disponibilidade, segurança e escalabilidade.
+Bem-vindo ao repositório oficial do sistema **Vini's Delivery**. Este projeto opera em uma arquitetura industrial de alta disponibilidade com banco de dados próprio (MariaDB/MySQL).
 
 ---
 
-## 🚀 Arquitetura Geral (Zero Trust)
+## 🚀 Arquitetura Geral (Self-Hosted)
 
 O sistema segue o princípio de **"Confiança Zero"** no frontend. Toda a lógica crítica de negócios, cálculos de preços e validações de integridade são executadas exclusivamente no servidor (Backend), protegendo o sistema contra manipulações e fraudes.
 
@@ -14,8 +14,8 @@ O sistema segue o princípio de **"Confiança Zero"** no frontend. Toda a lógic
 /
 ├── backend/               # Servidor Node.js (Express) modularizado
 │   ├── src/
-│   │   ├── modules/       # Domínios de negócio (Orders, Products, Integrations)
-│   │   ├── config/        # Supabase Service Role & Env
+│   │   ├── modules/       # Domínios de negócio (Orders, Products, Motoboys)
+│   │   ├── config/        # Configurações de Banco (MariaDB) e Auth
 │   │   ├── middlewares/   # Auth JWT, Rate Limit, Error Global
 │   │   └── routes/        # Roteamento central /api
 │   └── server.js          # Ponto de entrada (Porta 3001)
@@ -23,35 +23,31 @@ O sistema segue o princípio de **"Confiança Zero"** no frontend. Toda a lógic
 ├── src/ (Frontend)        # Portal PWA em React + Vite
 │   ├── services/          # api.js (Axios Centralizado)
 │   ├── components/        # Componentes UI (Modular CSS)
-│   └── pages/             # Fluxos de Checkout e Portal Cliente
+│   └── pages/             # Fluxos de Dashboard, Gestão e Portal
 │
 └── .env                   # Chaves de Ambiente (Públicas)
 ```
 
 ---
 
-## 🔐 Segurança & Resiliência (Padrão 10/10)
+## 🔐 Segurança & Resiliência
+
+### ✅ Banco de Dados Independente
+O sistema utiliza MariaDB local, eliminando dependências de terceiros como Supabase. Todas as consultas SQL são otimizadas via Pool de conexões.
 
 ### ✅ Barreira de Preço Autoritária
-O backend **ignora** valores monetários vindos do frontend. Todo o total de pedido é recalculado consultando o banco de dados oficial (Supabase) via `SERVICE_ROLE_KEY`.
+O backend **ignora** valores monetários vindos do frontend. Todo o total de pedido é recalculado consultando o banco de dados oficial.
 
-### ✅ Idempotência Técnica
-Proteção contra pedidos duplicados. O sistema valida cliques acidentais e evita múltiplos processamentos para o mesmo usuário em uma janela de 30 segundos.
-
-### ✅ Validação de Esquema (Zod)
-Todos os contratos de entrada (payloads) são validados rigidamente antes de qualquer processamento lógico.
-
-### ✅ Tratamento Modular de Erros
-Diferenciação clara entre:
-- **Erro 400 (Zod)**: Feedback imediato ao front sobre dados inválidos.
-- **Erro 500 (Server)**: Logging estruturado e supressão de stack traces em produção.
+### ✅ Autenticação JWT Customizada
+Sistema robusto de autenticação e autorização via JSON Web Token, com diferenciação entre Admin e Clientes.
 
 ---
 
 ## 📡 Integrações & Proxy Seguro
 
-- **iFood Merchant API**: Fluxo OAuth completo, sincronização de pedidos e status (confirm, dispatch, cancel) com logs estruturados.
-- **PagSeguro**: Geração de pagamentos (Pix/Cartão) com conversão de centavos segura no backend.
+- **iFood Merchant API**: Fluxo OAuth completo, sincronização de pedidos e status.
+- **Asaas / PagSeguro**: Integração financeira para recebimentos automáticos.
+- **ViniBot PRO**: Automação de WhatsApp integrada via Baileys e BullMQ.
 
 ---
 
@@ -59,15 +55,19 @@ Diferenciação clara entre:
 
 ### 1. Requisitos
 - Node.js v18+
-- Supabase projeto ativo (URL e Chaves `ANON` e `SERVICE_ROLE`)
+- MariaDB / MySQL Server
+- Redis (para filas do Bot)
 
-### 2. Configuração de Ambiente (`.env`)
-Certifique-se de ter os dois arquivos configurados:
+### 2. Configuração de Banco
+Importe o arquivo `scripts/database_master_schema.sql` no seu servidor MariaDB.
 
-- **Raiz (`.env`)**: Chaves `VITE_` públicas.
-- **Backend (`backend/.env`)**: Chaves secretas (`SUPABASE_SERVICE_ROLE_KEY`, `IFOOD_CLIENT_SECRET`, etc.).
+### 3. Configuração de Ambiente (`.env`)
+- **Backend (`backend/.env`)**:
+  - `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME`
+  - `JWT_SECRET`
+  - `IFOOD_CLIENT_ID`, `IFOOD_CLIENT_SECRET`
 
-### 3. Iniciar Servidores
+### 4. Iniciar Servidores
 ```bash
 npm install     # Instala dependências root
 npm run dev     # Inicia Frontend (5173) e Backend (3001) simultaneamente
@@ -75,14 +75,12 @@ npm run dev     # Inicia Frontend (5173) e Backend (3001) simultaneamente
 
 ---
 
-## 🚢 Deploy (Padrão Sênior)
+## 🚢 Deploy (Arquitetura VPS)
 
-O deploy ideal utiliza o fluxo:
-1. **Frontend**: Vercel (conectado via `VITE_API_URL`).
-2. **Backend**: Railway / VPS (conectado ao Supabase Admin).
-
-> [!CAUTION]
-> **Atenção**: Nunca exponha a sua `SERVICE_ROLE_KEY` no frontend ou em commits git. Ela deve estar apenas em seu ambiente de servidor seguro.
+O deploy é otimizado para VPS (Ubuntu/Debian) usando:
+1. **Nginx**: Como Proxy Reverso para o Backend e Servidor Estático para o Frontend.
+2. **PM2**: Gerenciamento de processo para o servidor Node.js.
+3. **SSL (Certbot)**: Encriptação TLS obrigatória.
 
 ---
 

@@ -3,77 +3,31 @@ import api from '../services/api';
 import { 
   Clock, ArrowRight, ArrowLeft, MoreHorizontal, 
   AlertCircle, CheckCircle2, Truck, ChefHat, 
-  Plus, Search, User, MapPin, CreditCard, X, Volume2
+  MapPin, CreditCard, X, Volume2, Printer, 
+  Phone, User, MessageSquare, Bike
 } from 'lucide-react';
 import '../styles/admin/pedidos.css';
 
 function Pedidos() {
-  const [orders, setOrders] = useState([]);
+  const [ordersList, setOrdersList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isPDVOpen, setIsPDVOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [availableProducts, setAvailableProducts] = useState([]);
-  const [searchResults, setSearchResults] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [motoboys, setMotoboys] = useState([]);
   
-  // PDV Local State
-  const [newOrder, setNewOrder] = useState({
-    customer_id: null,
-    customer_name: '',
-    customer_phone: '',
-    items: [],
-    total: 0,
-    payment_method: 'Dinheiro',
-    address: { bairro: 'Balcão', rua: 'Retirada Local' }
-  });
-
   const lastOrderCount = useRef(0);
-  const audioContext = useRef(null);
 
-  // Busca Inteligente de Cliente
-  const searchCustomer = async (term) => {
-    if (term.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-    
-    try {
-      // Nota: Backend precisa suportar busca por termo. Por enquanto listamos tudo e filtramos ou usamos endpoint específico.
-      const response = await api.get('/clientes');
-      if (response.success) {
-        const data = response.data.filter(c => 
-          c.nome.toLowerCase().includes(term.toLowerCase()) || 
-          (c.telefone && c.telefone.includes(term))
-        );
-        setSearchResults(data.slice(0, 5));
-      }
-    } catch (err) {
-      console.error('Erro ao buscar clientes:', err);
-    }
-  };
-
-  const selectCustomer = (customer) => {
-    setNewOrder({
-      ...newOrder,
-      customer_id: customer.id,
-      customer_name: customer.nome,
-      customer_phone: customer.telefone || '',
-      address: customer.endereco_padrao || { bairro: 'Balcão', rua: 'Retirada Local' }
-    });
-    setSearchResults([]);
-  };
-
-  // Status flow
+  // Status flow profissional
   const statusFlow = ['novos', 'preparo', 'entrega', 'finalizado'];
 
   const fetchOrders = async () => {
     try {
-      const response = await api.get('/orders/me'); // Ou /orders dependendo do admin role
-      if (response.success) {
-        const data = response.data;
+      const resp = await api.get('/orders');
+      if (resp.success) {
+        const data = resp.data || [];
         if (data.length > lastOrderCount.current && lastOrderCount.current !== 0) {
           handleNewOrderAlert(data[0]);
         }
-        setOrders(data || []);
+        setOrdersList(data);
         lastOrderCount.current = data.length;
       }
     } catch (err) {
@@ -83,257 +37,205 @@ function Pedidos() {
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchMotoboys = async () => {
     try {
-      const response = await api.get('/products');
-      if (response.success) {
-        setAvailableProducts(response.data || []);
-      }
-    } catch (err) {
-      console.error('Erro ao buscar produtos:', err);
-    }
+      const resp = await api.get('/motoboys');
+      if (resp.success) setMotoboys(resp.data || []);
+    } catch (err) {}
   };
 
   useEffect(() => {
     fetchOrders();
-    fetchProducts();
-
-    // Polling ativo para Cloud (Vini's Cloud sync)
-    const interval = setInterval(() => {
-      fetchOrders();
-    }, 30000); // 30s polling
-
-    return () => {
-      clearInterval(interval);
-    };
+    fetchMotoboys();
+    const interval = setInterval(fetchOrders, 20000); // Polling 20s
+    return () => clearInterval(interval);
   }, []);
 
   const handleNewOrderAlert = (order) => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    audio.play().catch(e => console.log("Audio play blocked by browser."));
-
-    const msg = new SpeechSynthesisUtterance();
-    msg.text = `Novo pedido de ${order.cliente_nome || 'Cliente'}`;
-    msg.lang = 'pt-BR';
-    msg.rate = 0.9;
-    window.speechSynthesis.speak(msg);
-  };
-
-  const moveOrder = async (orderId, direction) => {
-    const order = orders.find(o => o.id === orderId);
-    if (!order) return;
-
-    const currentIndex = statusFlow.indexOf(order.status);
-    const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
-
-    if (newIndex >= 0 && newIndex < statusFlow.length) {
-      const newStatus = statusFlow[newIndex];
-      try {
-        const response = await api.put(`/orders/${orderId}`, { status: newStatus });
-        if (response.success) fetchOrders();
-      } catch (err) {
-        console.error('Erro ao mover pedido:', err);
-      }
+    audio.play().catch(() => {});
+    
+    if ('speechSynthesis' in window) {
+      const msg = new SpeechSynthesisUtterance(`Novo pedido de ${order.cliente_nome || 'Cliente'}`);
+      msg.lang = 'pt-BR';
+      window.speechSynthesis.speak(msg);
     }
   };
 
-  const handleAddManualOrder = async () => {
-    const payload = {
-      ...newOrder,
-      status: 'novos'
-    };
-
+  const updateStatus = async (orderId, newStatus) => {
     try {
-      const response = await api.post('/orders', payload);
-      if (response.success) {
-        setIsPDVOpen(false);
+      const res = await api.put(`/orders/${orderId}/status`, { status: newStatus });
+      if (res.success) fetchOrders();
+    } catch (err) {
+      alert('Erro ao atualizar status');
+    }
+  };
+
+  const assignMotoboy = async (orderId, motoboyId) => {
+    try {
+      const res = await api.put(`/orders/${orderId}/motoboy`, { motoboy_id: motoboyId });
+      if (res.success) {
+        alert('Motoboy atribuído!');
         fetchOrders();
-      } else {
-        alert('Erro ao lançar pedido manual');
+        setSelectedOrder(null);
       }
     } catch (err) {
-      alert('Erro ao lançar pedido manual: ' + err);
+      alert('Erro ao atribuir motoboy');
     }
   };
 
-  const getOrdersByStatus = (status) => orders.filter(o => o.status === status);
+  const renderOrderCard = (order) => {
+    const timeAgo = Math.floor((new Date() - new Date(order.created_at)) / 60000);
+    const isUrgent = timeAgo > 15 && order.status !== 'finalizado';
 
-  const StatusIcon = ({ status }) => {
-    switch (status) {
-      case 'novos': return <AlertCircle size={18} />;
-      case 'preparo': return <ChefHat size={18} />;
-      case 'entrega': return <Truck size={18} />;
-      case 'finalizado': return <CheckCircle2 size={18} />;
-      default: return null;
-    }
-  };
-
-  const renderColumn = (title, status, className) => {
-    const columnOrders = getOrdersByStatus(status);
-    
     return (
-      <div className={`kanban-column ${className}`}>
-        <div className="kanban-column-header">
-          <div className="kanban-column-title">
-            <StatusIcon status={status} />
-            {title}
-          </div>
-          <span className="vini-badge-kanban">{columnOrders.length}</span>
+      <div 
+        key={order.id} 
+        className={`kanban-card status-${order.status} ${isUrgent ? 'urgent-border' : ''}`}
+        onClick={() => setSelectedOrder(order)}
+      >
+        <div className="card-header">
+          <span className="order-id">#{order.id.toString().slice(-4)}</span>
+          <span className={`order-time ${isUrgent ? 'text-red' : ''}`}>
+             <Clock size={12} /> {timeAgo}m
+          </span>
         </div>
-        
-        <div className="kanban-cards-container">
-          {columnOrders.map(order => {
-            const timeAgo = Math.floor((new Date() - new Date(order.created_at || Date.now())) / 60000);
-            
-            return (
-              <div key={order.id} className={`kanban-card status-${status}`}>
-                <div className="card-header">
-                  <span className="order-id">#{order.id.toString().slice(-4)}</span>
-                  <span className={`order-time ${timeAgo > 20 ? 'urgent' : ''}`}>
-                    <Clock size={12} /> {timeAgo}m
-                  </span>
-                </div>
-                
-                <div className="customer-name">{order.cliente_nome || 'Cliente Balcão'}</div>
-                
-                <div className="order-context-info">
-                   <div className="info-item"><MapPin size={12} /> {order.endereco?.bairro || 'Retirada'}</div>
-                   <div className="info-item"><CreditCard size={12} /> {order.forma_pagamento || 'Dinheiro'}</div>
-                </div>
 
-                <div className="order-items">{order.itens_snapshot || 'Itens não detalhados'}</div>
-                
-                <div className="card-footer">
-                  <span className="order-total">
-                    R$ {Number(order.total || 0).toFixed(2).replace('.', ',')}
-                  </span>
-                  
-                  <div className="card-actions">
-                    {status !== 'novos' && (
-                      <button className="action-btn" onClick={() => moveOrder(order.id, 'prev')} title="Voltar etapa">
-                        <ArrowLeft size={16} />
-                      </button>
-                    )}
-                    {status !== 'finalizado' && (
-                      <button className="action-btn" onClick={() => moveOrder(order.id, 'next')} title="Avançar etapa">
-                        <ArrowRight size={16} />
-                      </button>
-                    )}
-                    <button className="action-btn" title="Mais opções">
-                      <MoreHorizontal size={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          {columnOrders.length === 0 && (
-            <div style={{ textAlign: 'center', opacity: 0.5, padding: '2rem 0', fontSize: '0.9rem' }}>
-              Nenhum pedido aqui
-            </div>
-          )}
+        <div className="customer-name">{order.cliente_nome || 'Cliente Balcão'}</div>
+        
+        <div className="order-context-info">
+          <div className="info-item"><MapPin size={12} /> {order.bairro || 'Balcão'}</div>
+          <div className="info-item"><CreditCard size={12} /> {order.forma_pagamento || 'Dinheiro'}</div>
+        </div>
+
+        <div className="order-summary-items">
+          {order.itens?.length || 0} intens • R$ {Number(order.total).toFixed(2)}
+        </div>
+
+        <div className="card-footer">
+          <div className="card-actions" onClick={e => e.stopPropagation()}>
+             {order.status !== 'novos' && (
+               <button onClick={() => updateStatus(order.id, statusFlow[statusFlow.indexOf(order.status) - 1])}><ArrowLeft size={14}/></button>
+             )}
+             {order.status !== 'finalizado' && (
+               <button className="btn-next" onClick={() => updateStatus(order.id, statusFlow[statusFlow.indexOf(order.status) + 1])}>
+                 Próximo <ArrowRight size={14}/>
+               </button>
+             )}
+          </div>
         </div>
       </div>
     );
   };
 
+  const getOrders = (status) => ordersList.filter(o => o.status === status);
+
   return (
-    <div className="dashboard" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <header className="dashboard-header" style={{ flexShrink: 0 }}>
+    <div className="pedidos-kanban-page">
+      <header className="page-header">
         <div>
-          <h2>Gestão de Pedidos 🔥</h2>
-          <p>Operação em tempo real (Real-time ativado)</p>
+          <h2>Monitor de Pedidos 🔥</h2>
+          <p>Operação em tempo real • {ordersList.length} pedidos ativos</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-           <div className="vini-glass-panel" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem' }}>
-             <Volume2 size={16} color="var(--c-green)" /> Áudio Ativo
-           </div>
-           <button className="btn vini-btn-primary" onClick={() => setIsPDVOpen(true)}>
-             <Plus size={18} /> Novo Pedido Manual
-           </button>
+        <div className="header-actions">
+           <button className="vini-btn-outline"><Volume2 size={18}/> Som Ativo</button>
         </div>
       </header>
 
-      <div className="kanban-board" style={{ padding: '1rem', background: 'var(--bg-active)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
-        {renderColumn('Novos', 'novos', 'column-novos')}
-        {renderColumn('Em Preparo', 'preparo', 'column-preparo')}
-        {renderColumn('Saiu p/ Entrega', 'entrega', 'column-entrega')}
-        {renderColumn('Finalizados', 'finalizado', 'column-finalizado')}
+      <div className="kanban-container">
+        {['novos', 'preparo', 'entrega', 'finalizado'].map(status => (
+           <div key={status} className={`kanban-col col-${status}`}>
+              <div className="col-header">
+                 <h3>
+                   {status === 'novos' && <AlertCircle size={18}/>}
+                   {status === 'preparo' && <ChefHat size={18}/>}
+                   {status === 'entrega' && <Truck size={18}/>}
+                   {status === 'finalizado' && <CheckCircle2 size={18}/>}
+                   {status.toUpperCase()}
+                 </h3>
+                 <span className="count-badge">{getOrders(status).length}</span>
+              </div>
+              <div className="col-body">
+                 {getOrders(status).map(renderOrderCard)}
+                 {getOrders(status).length === 0 && <div className="empty-state">Vazio</div>}
+              </div>
+           </div>
+        ))}
       </div>
 
-      {/* MODAL PDV MANUAL (ESTILO ANOTA AI) */}
-      {isPDVOpen && (
-        <div className="vini-modal-overlay">
-           <div className="vini-glass-panel pdv-modal">
-              <div className="pdv-header">
-                 <h3>Novo Pedido Manual (Balcão)</h3>
-                 <button onClick={() => setIsPDVOpen(false)}><X /></button>
+      {/* DETALHE DO PEDIDO (MODAL INDUSTRIAL) */}
+      {selectedOrder && (
+        <div className="vini-modal-overlay" onClick={() => setSelectedOrder(null)}>
+           <div className="vini-glass-panel order-detail-modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                 <h3>Pedido #{selectedOrder.id.toString().slice(-6)}</h3>
+                 <button onClick={() => setSelectedOrder(null)}><X/></button>
               </div>
-              
-              <div className="pdv-body">
-                 <div className="pdv-section">
-                    <h4>Cliente (Nome ou WhatsApp)</h4>
-                    <div style={{ position: 'relative' }}>
-                      <input 
-                        type="text" 
-                        placeholder="Pesquisar ou digitar novo nome..." 
-                        className="vini-input-dark"
-                        value={newOrder.customer_name}
-                        onChange={e => {
-                          setNewOrder({...newOrder, customer_name: e.target.value});
-                          searchCustomer(e.target.value);
-                        }}
-                      />
-                      {searchResults.length > 0 && (
-                        <div className="pdv-search-dropdown">
-                          {searchResults.map(c => (
-                            <div key={c.id} className="pdv-search-item" onClick={() => selectCustomer(c)}>
-                              <div style={{ fontWeight: '700' }}>{c.nome}</div>
-                              <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>{c.telefone || 'Sem telefone'}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+
+              <div className="modal-scroll-body">
+                 <div className="detail-section">
+                    <div className="section-title"><User size={16}/> Informações do Cliente</div>
+                    <div className="user-card">
+                       <div className="user-main">
+                          <strong>{selectedOrder.cliente_nome}</strong>
+                          <span><Phone size={14}/> {selectedOrder.cliente_telefone || 'Sem telefone'}</span>
+                       </div>
+                       <div className="user-actions">
+                          <button className="btn-circle"><MessageSquare size={16}/></button>
+                          <button className="btn-circle text-green"><Phone size={16}/></button>
+                       </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
-                      <input 
-                        type="text" 
-                        placeholder="WhatsApp (Opcional)" 
-                        className="vini-input-dark" 
-                        style={{ fontSize: '0.8rem' }}
-                        value={newOrder.customer_phone}
-                        onChange={e => setNewOrder({...newOrder, customer_phone: e.target.value})}
-                      />
-                      <input 
-                        type="text" 
-                        placeholder="CPF/CNPJ (Opcional)" 
-                        className="vini-input-dark" 
-                        style={{ fontSize: '0.8rem' }}
-                      />
+                    <div className="address-box">
+                       <MapPin size={16}/> {selectedOrder.rua}, {selectedOrder.numero} - {selectedOrder.bairro}
+                       {selectedOrder.complemento && <div className="complement">{selectedOrder.complemento}</div>}
                     </div>
                  </div>
 
-                 <div className="pdv-section">
-                    <h4>Produtos</h4>
-                    <div className="pdv-product-search">
-                       <Search size={16} />
-                       <input type="text" placeholder="Buscar no cardápio..." />
-                    </div>
-                    <div className="pdv-product-list">
-                       {availableProducts.slice(0, 5).map(p => (
-                         <div key={p.id} className="pdv-item-row" onClick={() => alert('Item adicionado')}>
-                            <span>{p.titulo}</span>
-                            <span style={{ color: 'var(--c-green)' }}>R$ {p.preco}</span>
-                            <Plus size={14} />
-                         </div>
+                 <div className="detail-section">
+                    <div className="section-title">📦 Itens do Pedido</div>
+                    <div className="items-list">
+                       {selectedOrder.itens?.map((item, idx) => (
+                          <div key={idx} className="item-row">
+                             <div className="item-main">
+                                <span className="item-qty">{item.quantidade}x</span>
+                                <span className="item-name">{item.titulo}</span>
+                             </div>
+                             <span className="item-price">R$ {(Number(item.preco_unitario) * item.quantidade).toFixed(2)}</span>
+                             {item.variacao_nome && <div className="item-sub">• {item.variacao_nome}</div>}
+                             {item.adicionais?.map((a, i) => (
+                               <div key={i} className="item-sub">+ {a.nome}</div>
+                             ))}
+                          </div>
                        ))}
                     </div>
                  </div>
+
+                 <div className="detail-section">
+                    <div className="section-title"><Bike size={16}/> Entrega (Motoboy)</div>
+                    <select 
+                      className="vini-select-dark"
+                      value={selectedOrder.motoboy_id || ''}
+                      onChange={(e) => assignMotoboy(selectedOrder.id, e.target.value)}
+                    >
+                       <option value="">Atribuir Motoboy...</option>
+                       {motoboys.map(m => (
+                         <option key={m.id} value={m.id}>{m.nome} ({m.veiculo})</option>
+                       ))}
+                    </select>
+                 </div>
               </div>
 
-              <div className="pdv-footer">
-                 <button className="btn btn-secondary" onClick={() => setIsPDVOpen(false)}>Cancelar</button>
-                 <button className="btn vini-btn-primary" onClick={handleAddManualOrder}>Finalizar Pedido</button>
+              <div className="modal-footer">
+                 <div className="total-row">
+                    <span>Total a pagar</span>
+                    <strong>R$ {Number(selectedOrder.total).toFixed(2)}</strong>
+                 </div>
+                 <div className="footer-btns">
+                    <button className="btn-outline"><Printer size={18}/> Imprimir</button>
+                    <button className="btn-primary" onClick={() => updateStatus(selectedOrder.id, statusFlow[statusFlow.indexOf(selectedOrder.status) + 1])}>
+                       Avançar Pedido
+                    </button>
+                 </div>
               </div>
            </div>
         </div>

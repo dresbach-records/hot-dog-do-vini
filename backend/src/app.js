@@ -3,6 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import routes from './routes/index.js';
+import { responseHandler } from './middlewares/responseHandler.js';
+import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
 
@@ -17,9 +19,10 @@ app.use(cors({
 }));
 
 /**
- * 2. RATE LIMITING (Resiliência)
- * 100 requisições a cada 15 minutos por IP
+ * 2. PADRONIZAÇÃO & RESILIÊNCIA
  */
+app.use(responseHandler);
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -35,39 +38,8 @@ app.use(limiter);
 app.use('/api', routes);
 
 /**
- * 4. TRATAMENTO GLOBAL DE ERROS (10/10)
+ * 4. TRATAMENTO GLOBAL DE ERROS (Standardized)
  */
-const isDev = process.env.NODE_ENV !== 'production';
-
-app.use((err, req, res, next) => {
-  // Erro de Validação de Esquema (Zod)
-  if (err.name === 'ZodError') {
-    return res.status(400).json({ 
-      success: false, 
-      error: 'Dados inválidos', 
-      details: err.errors 
-    });
-  }
-
-  // Erro de Autenticação (Customizado)
-  if (err.status === 401) {
-    return res.status(401).json({ success: false, error: err.message || 'Não autorizado' });
-  }
-
-  // Logging Estruturado (Hiding Stack in Prod)
-  console.error({
-    timestamp: new Date().toISOString(),
-    path: req.url,
-    method: req.method,
-    message: err.message,
-    stack: isDev ? err.stack : undefined
-  });
-
-  // Resposta Padronizada de Erro de Servidor
-  res.status(500).json({ 
-    success: false, 
-    error: 'Ocorreu um erro interno no servidor.' 
-  });
-});
+app.use(errorHandler);
 
 export default app;

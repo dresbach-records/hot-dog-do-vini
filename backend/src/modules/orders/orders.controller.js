@@ -1,46 +1,43 @@
-import { CreateOrderSchema } from './orders.schema.js';
 import { ordersService } from './orders.service.js';
 
-/**
- * Controller de Pedidos — Orquestração de entrada e saída
- */
 export const ordersController = {
-  
-  /**
-   * Criar Pedido (POST /api/orders)
-   * AuthMiddleware já garante req.user aqui
-   */
+  async list(req, res) {
+    const data = await ordersService.listByUser(req.user.id);
+    res.json(data);
+  },
+
+  async listAll(req, res) {
+    // Admin list
+    const data = await query('SELECT * FROM pedidos ORDER BY created_at DESC');
+    res.json({ success: true, data });
+  },
+
+  async getById(req, res) {
+    const { id } = req.params;
+    const [data] = await query('SELECT * FROM pedidos WHERE id = ?', [id]);
+    if (!data) return res.status(404).json({ success: false, error: 'Pedido não encontrado' });
+    res.json({ success: true, data });
+  },
+
   async create(req, res) {
-    const { body, user } = req;
-
-    // 1. VALIDAÇÃO DE ESQUEMA (ZOD)
-    // Se falhar, o app.js captura automaticamente via middleware de erro
-    const validatedData = CreateOrderSchema.parse(body);
-
-    const result = await ordersService.create(validatedData, user);
-    
-    res.status(201).json(result);
-  },
-
-  /**
-   * Listar Pedidos do Usuário (GET /api/orders)
-   */
-  async listMe(req, res) {
-    const { user } = req;
-    const result = await ordersService.listByUser(user.id);
-    res.json(result);
-  },
-
-  /**
-   * Atualizar Pedido (PUT /api/orders/:id)
-   */
-  async update(req, res) {
     try {
-      const { id } = req.params;
-      const result = await ordersService.update(id, req.body);
-      res.json({ success: true, data: result });
+      const result = await ordersService.create(req.body, req.user);
+      res.status(201).json(result);
     } catch (err) {
-      res.status(500).json({ success: false, error: err.message });
+      res.status(400).json({ success: false, error: err.message });
     }
+  },
+
+  async updateStatus(req, res) {
+    const { id } = req.params;
+    const { status } = req.body;
+    const data = await ordersService.update(id, { status });
+    res.json({ success: true, data });
+  },
+
+  async delete(req, res) {
+    const { id } = req.params;
+    await query('DELETE FROM pedidos WHERE id = ?', [id]);
+    res.json({ success: true });
   }
 };

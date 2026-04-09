@@ -6,7 +6,6 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   optimizeDeps: {
-    exclude: ['react-router-dom'],
-    include: ['cookie', 'set-cookie-parser']
+    exclude: ['react-router-dom']
   },
 })

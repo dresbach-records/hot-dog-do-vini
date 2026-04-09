@@ -1,7 +1,7 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { asaasService } from '../modules/integrations/asaas/asaas.service.js';
-import { query } from '../infrastructure/database.js';
+import { query } from '../config/database.js';
 
 const router = express.Router();
 

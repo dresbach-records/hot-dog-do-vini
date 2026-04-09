@@ -17,25 +17,56 @@ function Motoboys() {
   const [motoboys, setMotoboys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newBoy, setNewBoy] = useState({ nome: '', telefone: '', veiculo: 'Moto', ativa: true });
+  const [newBoy, setNewBoy] = useState({ nome: '', telefone: '', veiculo: 'Moto', status: 'disponivel', tipo: 'freelancer' });
 
   const fetchMotoboys = async () => {
     setLoading(true);
-    // TODO: Consumir API /entregadores do MariaDB
-    setMotoboys([
-      { id: 1, nome: 'Ricardo (Freelancer)', telefone: '(51) 98877-6655', veiculo: 'Moto', status: 'disponivel', entregas: 12, ganho_dia: 60.00, tipo: 'freelancer' },
-      { id: 2, nome: 'iFood Entrega (Demanda)', telefone: 'API iFood', veiculo: 'Moto/Carro', status: 'em_entrega', entregas: 8, ganho_dia: 0.00, tipo: 'ifood' },
-      { id: 3, nome: 'André (Freelancer)', telefone: '(51) 95544-3322', veiculo: 'Carro', status: 'offline', entregas: 0, ganho_dia: 0.00, tipo: 'freelancer' },
-    ]);
-    setLoading(false);
+    try {
+      const res = await api.get('/motoboys');
+      if (res.success) {
+        setMotoboys(res.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching motoboys', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchMotoboys();
   }, []);
 
-  const handleAdd = () => {
-    setIsModalOpen(true);
+  const handleAdd = async () => {
+    try {
+      const res = await api.post('/motoboys', newBoy);
+      if (res.success) {
+        setIsModalOpen(false);
+        setNewBoy({ nome: '', telefone: '', veiculo: 'Moto', status: 'disponivel', tipo: 'freelancer' });
+        fetchMotoboys();
+      }
+    } catch (err) {
+      alert('Erro ao cadastrar motoboy');
+    }
+  };
+
+  const handleRemove = async (id) => {
+    if (!window.confirm('Excluir entregador?')) return;
+    try {
+      const res = await api.delete(`/motoboys/${id}`);
+      if (res.success) fetchMotoboys();
+    } catch (err) {
+      console.error('Delete error', err);
+    }
+  };
+
+  const handleStatusChange = async (id, status) => {
+    try {
+      await api.put(`/motoboys/${id}/status`, { status });
+      fetchMotoboys();
+    } catch (err) {
+      console.error('Status error', err);
+    }
   };
 
   return (
@@ -45,7 +76,7 @@ function Motoboys() {
           <h2>Equipe de Motoboys 🛵</h2>
           <p>Gerencie seus entregadores e acompanhe as diárias em tempo real.</p>
         </div>
-        <button className="btn vini-btn-primary" onClick={handleAdd}>
+        <button className="btn vini-btn-primary" onClick={() => setIsModalOpen(true)}>
           <Plus size={18} /> Cadastrar Entregador
         </button>
       </header>
@@ -78,13 +109,13 @@ function Motoboys() {
                 </div>
                 <div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Diária</div>
-                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--c-green)' }}>R$ {boy.ganho_dia.toFixed(2)}</div>
+                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--c-green)' }}>R$ {(boy.ganho_dia || 0).toFixed(2)}</div>
                 </div>
               </div>
 
               <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
                 <button className="vini-btn-outline" style={{ flex: 1, fontSize: '0.8rem' }}>Histórico</button>
-                <button className="vini-btn-outline" style={{ flex: 1, fontSize: '0.8rem', color: 'var(--c-red)' }}>Remover</button>
+                <button className="vini-btn-outline" style={{ flex: 1, fontSize: '0.8rem', color: 'var(--c-red)' }} onClick={() => handleRemove(boy.id)}>Remover</button>
               </div>
             </div>
           ))}
@@ -100,17 +131,44 @@ function Motoboys() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button className="vini-btn-outline" style={{ flex: 1, borderColor: '#EA1D2C', color: '#EA1D2C' }}>iFood Entrega</button>
-                <button className="vini-btn-outline" style={{ flex: 1 }}>Freelancer</button>
+                <button 
+                  className={`vini-btn-outline ${newBoy.tipo === 'ifood' ? 'active' : ''}`} 
+                  style={{ flex: 1, borderColor: '#EA1D2C', color: newBoy.tipo === 'ifood' ? '#fff' : '#EA1D2C', background: newBoy.tipo === 'ifood' ? '#EA1D2C' : 'transparent' }}
+                  onClick={() => setNewBoy({...newBoy, tipo: 'ifood'})}
+                >iFood Entrega</button>
+                <button 
+                  className={`vini-btn-outline ${newBoy.tipo === 'freelancer' ? 'active' : ''}`} 
+                  style={{ flex: 1, background: newBoy.tipo === 'freelancer' ? 'var(--c-blue)' : 'transparent' }}
+                  onClick={() => setNewBoy({...newBoy, tipo: 'freelancer'})}
+                >Freelancer</button>
               </div>
-              <input type="text" placeholder="Nome do Entregador" className="vini-input-dark" style={{ width: '100%' }} />
-              <input type="text" placeholder="WhatsApp" className="vini-input-dark" style={{ width: '100%' }} />
-              <select className="vini-input-dark" style={{ width: '100%' }}>
+              <input 
+                type="text" 
+                placeholder="Nome do Entregador" 
+                className="vini-input-dark" 
+                style={{ width: '100%' }} 
+                value={newBoy.nome}
+                onChange={e => setNewBoy({...newBoy, nome: e.target.value})}
+              />
+              <input 
+                type="text" 
+                placeholder="WhatsApp" 
+                className="vini-input-dark" 
+                style={{ width: '100%' }} 
+                value={newBoy.telefone}
+                onChange={e => setNewBoy({...newBoy, telefone: e.target.value})}
+              />
+              <select 
+                className="vini-input-dark" 
+                style={{ width: '100%' }}
+                value={newBoy.veiculo}
+                onChange={e => setNewBoy({...newBoy, veiculo: e.target.value})}
+              >
                 <option>Moto</option>
                 <option>Carro</option>
                 <option>Bicicleta</option>
               </select>
-              <button className="btn vini-btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Salvar Cadastro</button>
+              <button className="btn vini-btn-primary" style={{ width: '100%', marginTop: '1rem' }} onClick={handleAdd}>Salvar Cadastro</button>
             </div>
           </div>
         </div>

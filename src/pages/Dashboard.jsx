@@ -8,118 +8,70 @@ import {
 } from 'recharts';
 import '../styles/admin/dashboard.css';
 
-// --- MOCK DATA PARA GRÁFICOS HISTÓRICOS INEXISTENTES NO CONTEXTO ATUAL ---
-const MOCK_FATURAMENTO_DIARIO = [
-  { dia: '15/03', vendas: 210 },
-  { dia: '16/03', vendas: 180 },
-  { dia: '17/03', vendas: 350 },
-  { dia: '18/03', vendas: 190 },
-  { dia: '19/03', vendas: 275 },
-  { dia: '20/03', vendas: 420 },
-  { dia: '21/03', vendas: 595.99 }, // Hoje
-];
-
-const MOCK_FLUXO_CAIXA = [
-  { dia: 'Segunda', entradas: 320, saidas: 150 },
-  { dia: 'Terça', entradas: 250, saidas: 80 },
-  { dia: 'Quarta', entradas: 410, saidas: 200 },
-  { dia: 'Quinta', entradas: 300, saidas: 120 },
-  { dia: 'Sexta', entradas: 580, saidas: 250 },
-  { dia: 'Sábado', entradas: 750, saidas: 300 },
-  { dia: 'Domingo', entradas: 620, saidas: 180 },
-];
-
-const MOCK_VENDAS_SEMANA = [
-  { dia: 'Seg', valor: 320 },
-  { dia: 'Ter', valor: 250 },
-  { dia: 'Qua', valor: 410 },
-  { dia: 'Qui', valor: 300 },
-  { dia: 'Sex', valor: 580 },
-  { dia: 'Sáb', valor: 750 },
-  { dia: 'Dom', valor: 620 },
-];
-
-const MOCK_PRODUTOS = [
-  { nome: 'Pastel Frango', qtd: 45 },
-  { nome: 'Pastel Carne', qtd: 38 },
-  { nome: 'Coca-cola 2L', qtd: 30 },
-  { nome: 'X-Tudo', qtd: 25 },
-  { nome: 'X-Bacon', qtd: 18 },
-];
-
-const MOCK_VENCIMENTOS = [
-  { status: 'Atrasado', valor: 85.50 },
-  { status: 'Hoje', valor: 145.00 },
-  { status: 'Amanhã', valor: 65.00 },
-  { status: 'No Prazo', valor: 84.57 },
-];
-
 function Dashboard() {
-  const { clientes, resumo, pagamentosConfirmados } = useClientes();
+  const { clientes, resumenContext, pagamentosConfirmados } = useClientes();
+  const [stats, setStats] = React.useState({
+    totalSales: 0,
+    totalOrders: 0,
+    totalIncome: 0,
+    totalExpense: 0,
+    totalPending: 0
+  });
+  const [charts, setCharts] = React.useState({
+    dailySales: [],
+    cashFlow: [],
+    topProducts: [],
+    agingVencimentos: []
+  });
   const [asaasBalance, setAsaasBalance] = React.useState(0);
+  const [loading, setLoading] = React.useState(true);
+
+  const fetchData = async () => {
+    try {
+      const [statsRes, chartsRes, balanceRes] = await Promise.all([
+        api.get('/dashboard/stats'),
+        api.get('/dashboard/charts'),
+        api.get('/payments/balance')
+      ]);
+
+      if (statsRes.success) setStats(statsRes.data);
+      if (chartsRes.success) setCharts(chartsRes.data);
+      if (balanceRes.success) setAsaasBalance(balanceRes.balance.balance);
+    } catch (err) {
+      console.error('Error fetching dashboard data', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   React.useEffect(() => {
-     const fetchAsaas = async () => {
-        try {
-           const res = await api.get('/payments/balance');
-           if (res.success) setAsaasBalance(res.balance.balance);
-        } catch (err) { console.error('Error fetching asaas balance', err); }
-     };
-     fetchAsaas();
-
-     const interval = setInterval(fetchAsaas, 30000); // 30s auto-refresh
-     return () => clearInterval(interval);
+    fetchData();
+    const interval = setInterval(fetchData, 30000); // 30s auto-refresh
+    return () => clearInterval(interval);
   }, []);
 
   const metrics = useMemo(() => {
-    let totalSales = 0;
-    let totalPago = 0;
-    let totalFiado = 0;
-    let totalItems = 0;
-    
-    let clientesDevedores = [];
-
-    clientes.forEach(cliente => {
-      // Usando array de quem realmente pagou pra gerar o valor dinâmico global
-      const foiPago = pagamentosConfirmados.includes(cliente.id);
-      
-      const gastoCliente = cliente.total_cliente || 0;
-      const valorFiado = (foiPago ? 0 : (cliente.saldo_devedor || cliente.total_cliente || 0));
-      const valorPago = (foiPago ? gastoCliente : (cliente.total_pago || 0));
-
-      totalSales += gastoCliente;
-      totalPago += valorPago;
-      totalFiado += valorFiado;
-
-      if (cliente.pedidos) {
-        totalItems += cliente.pedidos.length;
-      }
-
-      if (valorFiado > 0) {
-        clientesDevedores.push({
-          nome: cliente.nome,
-          valor: valorFiado
-        });
-      }
-    });
-
-    clientesDevedores.sort((a, b) => b.valor - a.valor);
-    const topDevedores = clientesDevedores.slice(0, 5);
+    // Top devedores calculados a partir da lista de clientes (já real no Context)
+    const clientesDevedores = clientes
+      .filter(c => Number(c.saldo_devedor) > 0)
+      .map(c => ({ nome: c.nome, valor: Number(c.saldo_devedor) }))
+      .sort((a, b) => b.valor - a.valor)
+      .slice(0, 5);
 
     const pizzaRecebimentos = [
-      { name: 'Recebido (Caixa)', value: resumo.total_recebido_confirmado || 0 },
-      { name: 'Em Aberto (Fiado)', value: resumo.total_em_aberto_estimado || 0 },
+      { name: 'Recebido (Caixa)', value: stats.totalIncome },
+      { name: 'Em Aberto (Fiado)', value: stats.totalPending },
     ];
 
     return { 
-      totalSales: resumo.total_vendas_estimado || 0, 
-      totalPago: resumo.total_recebido_confirmado || 0, 
-      totalFiado: resumo.total_em_aberto_estimado || 0, 
-      totalItems: resumo.total_pedidos || 0, 
-      topDevedores, 
+      totalSales: stats.totalSales, 
+      totalPago: stats.totalIncome, 
+      totalFiado: stats.totalPending, 
+      totalItems: stats.totalOrders, 
+      topDevedores: clientesDevedores, 
       pizzaRecebimentos 
     };
-  }, [clientes, resumo, pagamentosConfirmados]);
+  }, [clientes, stats]);
 
   // Cores personalizadas e Tooltip padronizado
   const PIE_COLORS = ['#22c55e', '#ef4444']; 
@@ -207,7 +159,7 @@ function Dashboard() {
           </div>
           <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
-              <LineChart data={MOCK_FATURAMENTO_DIARIO} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+              <LineChart data={charts.dailySales} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                 <XAxis dataKey="dia" stroke="var(--text-secondary)" fontSize={12} tickMargin={10} />
                 <YAxis stroke="var(--text-secondary)" fontSize={12} tickFormatter={(value) => `R$${value}`} />
@@ -283,7 +235,7 @@ function Dashboard() {
           </div>
           <div style={{ width: '100%', height: 250 }}>
             <ResponsiveContainer>
-              <BarChart data={MOCK_PRODUTOS} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+              <BarChart data={charts.topProducts} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-color)" />
                 <XAxis type="number" stroke="var(--text-secondary)" fontSize={12} />
                 <YAxis dataKey="nome" type="category" stroke="var(--text-secondary)" fontSize={12} width={80} />
@@ -302,12 +254,12 @@ function Dashboard() {
           </div>
           <div style={{ width: '100%', height: 250 }}>
             <ResponsiveContainer>
-              <BarChart data={MOCK_VENDAS_SEMANA} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+              <BarChart data={charts.dailySales} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
                 <XAxis dataKey="dia" stroke="var(--text-secondary)" fontSize={12} />
                 <YAxis stroke="var(--text-secondary)" fontSize={12} />
                 <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value}`} />
-                <Bar dataKey="valor" fill="var(--c-blue)" radius={[4, 4, 0, 0]} barSize={20} />
+                <Bar dataKey="vendas" fill="var(--c-blue)" radius={[4, 4, 0, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -321,13 +273,13 @@ function Dashboard() {
           </div>
           <div style={{ width: '100%', height: 250 }}>
             <ResponsiveContainer>
-              <BarChart data={MOCK_VENCIMENTOS} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+              <BarChart data={charts.agingVencimentos} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
                 <XAxis dataKey="status" stroke="var(--text-secondary)" fontSize={10} />
                 <YAxis stroke="var(--text-secondary)" fontSize={12} />
                 <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value.toFixed(2).replace('.', ',')}`} />
                 <Bar dataKey="valor" radius={[4, 4, 0, 0]} barSize={20}>
-                  {MOCK_VENCIMENTOS.map((entry, index) => (
+                  {charts.agingVencimentos.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.status === 'Atrasado' ? '#ef4444' : entry.status === 'Hoje' ? '#eab308' : '#22c55e'} />
                   ))}
                 </Bar>
@@ -344,7 +296,7 @@ function Dashboard() {
           </div>
           <div style={{ width: '100%', height: 250 }}>
             <ResponsiveContainer>
-              <LineChart data={MOCK_FLUXO_CAIXA} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+              <LineChart data={charts.cashFlow} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
                 <XAxis dataKey="dia" stroke="var(--text-secondary)" fontSize={10} />
                 <YAxis stroke="var(--text-secondary)" fontSize={11} />

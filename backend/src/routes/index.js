@@ -6,6 +6,13 @@ import botRoutes from '../modules/bot/bot.routes.js';
 import authRoutes from '../modules/auth/auth.routes.js';
 import clientesRoutes from '../modules/clientes/clientes.routes.js';
 import cuponsRoutes from '../modules/cupons/cupons.routes.js';
+import dashboardRoutes from '../modules/dashboard/dashboard.routes.js';
+import motoboysRoutes from '../modules/motoboys/motoboys.routes.js';
+import categoriesRoutes from '../modules/products/categories.routes.js';
+import despesasRoutes from '../modules/despesas/despesas.routes.js';
+import caixaRoutes from '../modules/caixa/caixa.routes.js';
+import siteConfigRoutes from '../modules/siteConfig/siteConfig.routes.js';
+import juridicoRoutes from '../modules/juridico/juridico.routes.js';
 import { ifoodController } from '../modules/integrations/ifood/ifood.controller.js';
 
 const router = express.Router();
@@ -16,6 +23,13 @@ const router = express.Router();
 router.use('/auth', authRoutes);
 router.use('/clientes', clientesRoutes);
 router.use('/cupons', cuponsRoutes);
+router.use('/dashboard', dashboardRoutes);
+router.use('/motoboys', motoboysRoutes);
+router.use('/categories', categoriesRoutes);
+router.use('/despesas', despesasRoutes);
+router.use('/caixa', caixaRoutes);
+router.use('/config', siteConfigRoutes);
+router.use('/juridico', juridicoRoutes);
 
 /**
  * 🛒 MÓDULO: PRODUTOS (/api/products)

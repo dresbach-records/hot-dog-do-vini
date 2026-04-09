@@ -1,203 +1,178 @@
-import React, { useState } from 'react';
-import { Search, Plus, User, FileText, Edit, X, Save } from 'lucide-react';
-import { useClientes } from '../context/ClientesContext';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
+import { 
+  TrendingUp, TrendingDown, Clock, CheckCircle2, 
+  XCircle, Filter, DollarSign, Calendar, Eye
+} from 'lucide-react';
+import { useCaixa } from '../context/CaixaContext';
 import '../styles/admin/caixa.css';
 
 function Caixa() {
-  const navigate = useNavigate();
-  const { clientes, pagamentosConfirmados, atualizarCliente } = useClientes();
-  // Filtramos os clientes que possuem saldo devedor/status pendente para exibir como "Fiados" 
-  // (ou exibimos todos se for um PDV geral).
-  const clientesFiados = clientes.filter(c => c.status === 'PENDENTE' || c.valor > 0 || c.saldo_devedor > 0);
+  const { sessaoAtiva, fecharCaixa } = useCaixa();
+  const [sessoes, setSessoes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedSessao, setSelectedSessao] = useState(null);
 
-  const [editingClient, setEditingClient] = useState(null);
+  useEffect(() => {
+    fetchSessoes();
+  }, [sessaoAtiva]);
 
-  const handleEditClick = (cliente) => {
-    setEditingClient({ ...cliente });
+  const fetchSessoes = async () => {
+    setLoading(true);
+    try {
+      const resp = await api.get('/caixa/sessoes');
+      if (resp.success) setSessoes(resp.data || []);
+    } catch (err) {
+      console.error('Erro ao carregar histórico de caixa:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSaveEdit = (e) => {
-    e.preventDefault();
-    atualizarCliente(editingClient.nome, editingClient);
-    setEditingClient(null); // Fecha o modal após salvar
+  const handleFecharCaixa = async (sessionId) => {
+    const valor = window.prompt('Informe o valor total em dinheiro no caixa para conferência:');
+    if (valor === null) return;
+
+    const res = await fecharCaixa(sessionId, parseFloat(valor.replace(',', '.')));
+    if (res.success) {
+      alert('Caixa fechado com sucesso!');
+      fetchSessoes();
+    } else {
+      alert('Erro: ' + res.error);
+    }
   };
 
-  const handleModalChange = (field, value) => {
-    setEditingClient({ ...editingClient, [field]: value });
+  const getResumoSessao = async (id) => {
+    try {
+      const res = await api.get(`/caixa/${id}/resumo`);
+      if (res.success) setSelectedSessao(res.data);
+    } catch (err) {
+      alert('Erro ao carregar resumo da sessão');
+    }
   };
 
   return (
-    <div className="dashboard-page animate-fade-in caixa-page" style={{ position: 'relative' }}>
-      <header className="page-header">
+    <div className="dashboard-page animate-fade-in caixa-page" style={{ padding: '2rem' }}>
+      <header className="page-header" style={{ marginBottom: '2rem' }}>
         <div>
-          <h2>PDV & Vendas Fiadas</h2>
-          <p className="text-secondary">Gerenciamento de vendas diárias e controle de fiados.</p>
-        </div>
-        <div className="header-actions">
-          <button className="vini-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Plus size={18} /> Nova Venda
-          </button>
+          <h2 style={{ fontSize: '2rem', fontWeight: '800' }}>Gestão de Caixa Operacional</h2>
+          <p className="text-secondary">Histórico de turnos, fechamentos e conferência de valores.</p>
         </div>
       </header>
 
-      <div className="caixa-content">
-        <div className="fiados-section vini-glass-panel">
-          <div className="section-header-row">
-            <h3>Controle de Fiados</h3>
-            <div className="search-bar">
-              <Search size={16} color="var(--text-muted)" />
-              <input type="text" placeholder="Buscar cliente..." />
-            </div>
+      {/* STATUS DO CAIXA ATUAL */}
+      <div 
+        className="vini-glass-panel" 
+        style={{ 
+          marginBottom: '2rem', padding: '2rem', 
+          background: sessaoAtiva ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)',
+          border: sessaoAtiva ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ 
+            width: '60px', height: '60px', borderRadius: '50%', background: sessaoAtiva ? '#22c55e' : '#ef4444',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+             {sessaoAtiva ? <CheckCircle2 color="#fff" size={30} /> : <XCircle color="#fff" size={30} />}
           </div>
-          
-          <div className="table-responsive">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Telefone</th>
-                  <th>Endereço</th>
-                  <th>Valor Aberto</th>
-                  <th>Última Compra</th>
-                  <th>Status</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {clientesFiados.map((cliente, idx) => {
-                  const valorExibicao = typeof cliente.valor === 'number' ? cliente.valor : (cliente.saldo_devedor || cliente.total_cliente || 0);
-
-                  return (
-                  <tr key={idx}>
-                    <td>
-                      <div className="client-cell">
-                        <div className={`avatar ${cliente.status === 'Quitado' || cliente.status === 'PAGO' ? 'bg-dark-layer' : (valorExibicao > 100 ? 'bg-red-light' : 'bg-yellow-light')}`}>
-                          <User size={14} color={cliente.status === 'Quitado' || cliente.status === 'PAGO' ? 'var(--text-muted)' : (valorExibicao > 100 ? 'var(--c-red)' : 'var(--c-yellow)')} />
-                        </div>
-                        <span>{cliente.nome}</span>
-                      </div>
-                    </td>
-                    <td>{cliente.telefone || 'Sem Tel'}</td>
-                    <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{cliente.endereco || 'Endereço não def.'}</td>
-                    <td className={`font-semibold ${valorExibicao > 0 ? 'text-negative' : 'text-secondary'}`}>
-                      R$ {valorExibicao.toFixed(2).replace('.', ',')}
-                    </td>
-                    <td>{cliente.pedidos ? cliente.pedidos[0]?.data || 'Recente' : 'Recente'}</td>
-                    <td>
-                      <span className={`vini-badge ${cliente.status === 'PENDENTE' ? 'warning' : 'success'}`}>
-                        {cliente.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        {valorExibicao > 0 ? (
-                          <button className="vini-btn-action">Receber</button>
-                        ) : (
-                          <button className="vini-btn-action secondary"><FileText size={16} /></button>
-                        )}
-                        <button className="vini-btn-action secondary" onClick={() => handleEditClick({ ...cliente, valor: valorExibicao })} title="Editar Cliente">
-                          <Edit size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )})}
-              </tbody>
-            </table>
+          <div>
+            <h3 style={{ margin: 0 }}>Terminal {sessaoAtiva ? 'Operacional' : 'Fechado'}</h3>
+            <p style={{ opacity: 0.6, margin: '4px 0 0 0' }}>
+              {sessaoAtiva 
+                ? `Iniciado em ${new Date(sessaoAtiva.aberto_em).toLocaleString()} por ${sessaoAtiva.usuario_abertura}`
+                : 'Abra um novo turno no PDV para iniciar as vendas.'}
+            </p>
           </div>
         </div>
+        {sessaoAtiva && (
+          <button className="vini-btn-primary" onClick={() => handleFecharCaixa(sessaoAtiva.id)}>
+             Encerrar Turno e Conferir
+          </button>
+        )}
+      </div>
 
-        <div className="side-panel">
-          <div className="resumo-caixa vini-glass-panel">
-            <h3>Resumo do Caixa (Hoje)</h3>
-            <div className="resumo-stats">
-              <div className="resumo-item">
-                <span>Recebidos (Pagos Hoje)</span>
-                <h4>R$ {clientes.filter(c => pagamentosConfirmados.includes(c.nome)).reduce((acc, curr) => acc + (curr.total_pago || curr.total_cliente || 0), 0).toFixed(2).replace('.', ',')}</h4>
-              </div>
-              <div className="resumo-item highlight">
-                <span>A Receber (Fiado)</span>
-                <h4 className="text-yellow">R$ {clientesFiados.reduce((acc, curr) => acc + (typeof curr.valor === 'number' ? curr.valor : (curr.saldo_devedor || curr.total_cliente || 0)), 0).toFixed(2).replace('.', ',')}</h4>
-              </div>
-              <div className="divider"></div>
-              <div className="resumo-item total">
-                <span>Total Bruto</span>
-                <h4 className="text-green">R$ {(clientes.filter(c => pagamentosConfirmados.includes(c.nome)).reduce((acc, curr) => acc + (curr.total_pago || curr.total_cliente || 0), 0) + clientesFiados.reduce((acc, curr) => acc + (typeof curr.valor === 'number' ? curr.valor : (curr.saldo_devedor || curr.total_cliente || 0)), 0)).toFixed(2).replace('.', ',')}</h4>
-              </div>
-            </div>
-            <button className="vini-btn-outline" onClick={() => navigate('/admin/fechamento-caixa')}>Fechar Caixa</button>
-          </div>
+      {/* TABELA DE HISTÓRICO */}
+      <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+           <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+             <Clock size={20} /> Histórico de Sessões
+           </h3>
+           <button className="vini-btn-outline"><Filter size={16} /> Filtrar</button>
+        </div>
+
+        <div className="table-responsive">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>ID Turno</th>
+                <th>Responsável</th>
+                <th>Abertura</th>
+                <th>Fechamento</th>
+                <th>Status</th>
+                <th>Saldo Final</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sessoes.map(s => (
+                <tr key={s.id}>
+                  <td style={{ fontWeight: '700' }}>#{s.id.substring(0, 8)}</td>
+                  <td>{s.usuario_abertura}</td>
+                  <td>{new Date(s.aberto_em).toLocaleString()}</td>
+                  <td>{s.fechado_em ? new Date(s.fechado_em).toLocaleString() : '-'}</td>
+                  <td>
+                    <span className={`vini-badge ${s.status === 'aberto' ? 'success' : 'secondary'}`}>
+                       {s.status.toUpperCase()}
+                    </span>
+                  </td>
+                  <td style={{ fontWeight: '800', color: '#22c55e' }}>
+                    R$ {Number(s.valor_total_vendas || 0).toFixed(2)}
+                  </td>
+                  <td>
+                    <button className="vini-btn-outline" style={{ padding: '6px' }} title="Ver Detalhes" onClick={() => getResumoSessao(s.id)}>
+                       <Eye size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {sessoes.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.5 }}>Carregando histórico...</div>}
         </div>
       </div>
 
-      {editingClient && (
-        <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={() => setEditingClient(null)}>
-          <div className="modal-content vini-glass-panel" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header" style={{ marginBottom: '1.5rem' }}>
-              <h3 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Edit color="var(--c-blue)" size={20} />
-                Editar Dados do Cliente
-              </h3>
-              <button className="modal-close" onClick={() => setEditingClient(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                <X size={20} />
+      {/* MODAL DETALHES (OPCIONAL/POSTERIOR) */}
+      {selectedSessao && (
+        <div className="vini-modal-overlay" onClick={() => setSelectedSessao(null)}>
+           <div className="vini-modal-content" style={{ maxWidth: '500px', padding: '2rem' }} onClick={e => e.stopPropagation()}>
+              <h2 style={{ marginBottom: '1.5rem' }}>Resumo da Sessão #{selectedSessao.id.substring(0,8)}</h2>
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Fundo Inicial:</span>
+                    <strong>R$ {Number(selectedSessao.valor_abertura).toFixed(2)}</strong>
+                 </div>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#22c55e' }}>
+                    <span>Total Vendas:</span>
+                    <strong>R$ {Number(selectedSessao.valor_total_vendas).toFixed(2)}</strong>
+                 </div>
+                 <hr style={{ opacity: 0.1 }} />
+                 {selectedSessao.por_metodo && Object.entries(selectedSessao.por_metodo).map(([metodo, valor]) => (
+                    <div key={metodo} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', opacity: 0.8 }}>
+                       <span style={{ textTransform: 'uppercase' }}>{metodo}:</span>
+                       <span>R$ {Number(valor).toFixed(2)}</span>
+                    </div>
+                 ))}
+              </div>
+              <button 
+                className="vini-btn-primary" 
+                style={{ width: '100%', marginTop: '2rem' }}
+                onClick={() => setSelectedSessao(null)}
+              >
+                Fechar Resumo
               </button>
-            </div>
-            
-            <form onSubmit={handleSaveEdit}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Nome do Cliente</label>
-                  <input 
-                    type="text" 
-                    value={editingClient.nome} 
-                    onChange={e => handleModalChange('nome', e.target.value)}
-                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Telefone</label>
-                  <input 
-                    type="text" 
-                    value={editingClient.telefone} 
-                    onChange={e => handleModalChange('telefone', e.target.value)}
-                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
-                  />
-                </div>
-                
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Endereço Completo</label>
-                  <textarea 
-                    value={editingClient.endereco} 
-                    onChange={e => handleModalChange('endereco', e.target.value)}
-                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', color: 'var(--text-primary)', minHeight: '80px', resize: 'vertical' }}
-                  />
-                </div>
-                
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Valor Pendente (R$)</label>
-                  <input 
-                    type="number" 
-                    step="0.01"
-                    value={editingClient.valor} 
-                    onChange={e => handleModalChange('valor', parseFloat(e.target.value) || 0)}
-                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-                <button type="button" className="btn" onClick={() => setEditingClient(null)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="vini-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Save size={16} /> Salvar Alterações
-                </button>
-              </div>
-            </form>
-          </div>
+           </div>
         </div>
       )}
     </div>
@@ -205,4 +180,3 @@ function Caixa() {
 }
 
 export default Caixa;
-

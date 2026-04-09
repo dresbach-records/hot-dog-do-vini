@@ -2,32 +2,58 @@ import { query } from '../../config/database.js';
 
 export const productsService = {
   async list() {
-    return await query('SELECT * FROM produtos ORDER BY titulo');
+    const products = await query('SELECT p.*, c.nome as categoria_nome FROM produtos p LEFT JOIN categorias c ON p.categoria_id = c.id ORDER BY c.ordem, p.titulo');
+    
+    // Para cada produto, buscar variações e adicionais (Otimizado seria um JOIN, mas aqui simplificamos a lógica profissional)
+    return Promise.all(products.map(async (p) => {
+      const variacoes = await query('SELECT * FROM produto_variacoes WHERE produto_id = ?', [p.id]);
+      const adicionais = await query('SELECT * FROM produto_adicionais WHERE produto_id = ?', [p.id]);
+      return { ...p, variacoes, adicionais };
+    }));
   },
 
   async listActive() {
-    return await query('SELECT * FROM produtos WHERE disponivel = 1 ORDER BY titulo');
+    const products = await query('SELECT p.*, c.nome as categoria_nome FROM produtos p LEFT JOIN categorias c ON p.categoria_id = c.id WHERE p.disponivel = 1 ORDER BY c.ordem, p.titulo');
+    return Promise.all(products.map(async (p) => {
+      const variacoes = await query('SELECT * FROM produto_variacoes WHERE produto_id = ?', [p.id]);
+      const adicionais = await query('SELECT * FROM produto_adicionais WHERE produto_id = ?', [p.id]);
+      return { ...p, variacoes, adicionais };
+    }));
   },
 
   async getById(id) {
-    const [product] = await query('SELECT * FROM produtos WHERE id = ?', [id]);
-    return product;
+    const [product] = await query('SELECT p.*, c.nome as categoria_nome FROM produtos p LEFT JOIN categorias c ON p.categoria_id = c.id WHERE p.id = ?', [id]);
+    if (!product) return null;
+
+    const variacoes = await query('SELECT * FROM produto_variacoes WHERE produto_id = ?', [id]);
+    const adicionais = await query('SELECT * FROM produto_adicionais WHERE produto_id = ?', [id]);
+
+    return { ...product, variacoes, adicionais };
   },
 
   async create(data) {
-    const columns = Object.keys(data).join(', ');
-    const placeholders = Object.keys(data).map(() => '?').join(', ');
-    const values = Object.values(data);
+    const { variacoes, adicionais, ...productData } = data;
+    const columns = Object.keys(productData).join(', ');
+    const placeholders = Object.keys(productData).map(() => '?').join(', ');
+    const values = Object.values(productData);
 
     const result = await query(`INSERT INTO produtos (${columns}) VALUES (${placeholders})`, values);
-    return { id: result.insertId, ...data };
+    const productId = data.id || result.insertId;
+
+    // TODO: Implementar salvamento de variações e adicionais se fornecidos no create
+    
+    return this.getById(productId);
   },
 
   async update(id, data) {
-    const sets = Object.keys(data).map(key => `${key} = ?`).join(', ');
-    const values = [...Object.values(data), id];
+    const { variacoes, adicionais, ...productData } = data;
+    
+    if (Object.keys(productData).length > 0) {
+      const sets = Object.keys(productData).map(key => `${key} = ?`).join(', ');
+      const values = [...Object.values(productData), id];
+      await query(`UPDATE produtos SET ${sets} WHERE id = ?`, values);
+    }
 
-    await query(`UPDATE produtos SET ${sets} WHERE id = ?`, values);
     return this.getById(id);
   },
 
@@ -35,6 +61,7 @@ export const productsService = {
     await query('DELETE FROM produtos WHERE id = ?', [id]);
     return { success: true };
   }
+
 };
 
 export const categoriesService = {

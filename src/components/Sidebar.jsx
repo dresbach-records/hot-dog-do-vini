@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, ShoppingBag, Receipt, Users, Store, Settings, LogOut, Flame,
   ChevronDown, ChevronRight, Gift, Megaphone, FileText, Wallet, ArrowRightLeft, CalendarClock, History, ShieldCheck, Key, Lock, Bell,
-  ClipboardList, UtensilsCrossed, Bike, UsersRound, BarChart3, CreditCard, Ticket, Link
+  ClipboardList, UtensilsCrossed, Bike, UsersRound, BarChart3, CreditCard, Ticket, Link, Gavel
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -238,6 +238,12 @@ function Sidebar({ onLogout }) {
                   <NavLink to="/admin/fiscal" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
                     <FileText size={20} />
                     <span>Módulo Fiscal (NF-e)</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/admin/juridico" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+                    <Gavel size={20} />
+                    <span>Gestão Jurídica</span>
                   </NavLink>
                 </li>
                 <li>

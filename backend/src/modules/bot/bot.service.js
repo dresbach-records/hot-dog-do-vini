@@ -8,7 +8,7 @@ import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode';
 import pino from 'pino';
 import { v4 as uuidv4 } from 'uuid';
-import { query } from '../../config/database.js'; // Alterado de Supabase para MySQL
+import { query } from '../../config/database.js';
 import { incomingQueue } from '../../infrastructure/queue.js';
 
 let io = null;

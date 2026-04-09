@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../services/api';
+import { products, categories } from '../services/api';
 import '../styles/admin/dashboard.css';
 import { Plus, CloudDownload, Search, Filter, RefreshCw } from 'lucide-react';
 
@@ -28,8 +28,8 @@ function Cardapio() {
   const fetchDados = async () => {
     setLoading(true);
     try {
-      const catsRes = await api.get('/products/categories');
-      const prodsRes = await api.get('/products');
+      const catsRes = await categories.list();
+      const prodsRes = await products.list();
       
       if (catsRes.success) setCategorias(catsRes.data || []);
       if (prodsRes.success) setProdutos(prodsRes.data || []);
@@ -46,7 +46,7 @@ function Cardapio() {
 
   const handleSaveProduto = async (produtoData) => {
     try {
-      const isNew = !produtoData.id || typeof produtoData.id === 'string' && produtoData.id.startsWith('p_');
+      const isNew = !produtoData.id || (typeof produtoData.id === 'string' && produtoData.id.startsWith('p_'));
       
       const payload = {
         titulo: produtoData.titulo,
@@ -59,9 +59,9 @@ function Cardapio() {
 
       let response;
       if (isNew) {
-        response = await api.post('/products', payload);
+        response = await products.create(payload);
       } else {
-        response = await api.put(`/products/${produtoData.id}`, payload);
+        response = await products.update(produtoData.id, payload);
       }
 
       if (!response.success) throw new Error(response.error);
@@ -70,12 +70,13 @@ function Cardapio() {
       setEditingProduto(null);
       fetchDados();
     } catch (err) {
-      alert('Erro ao salvar produto: ' + err.message);
+      alert('Erro ao salvar produto: ' + err);
     }
   };
 
   const handleSyncIfood = async () => {
     setIsSyncing(true);
+    // Simulação ou chamada real se implementado no backend
     await new Promise(r => setTimeout(r, 2000));
     alert('Sincronização com iFood concluída!');
     setIsSyncing(false);
@@ -84,7 +85,7 @@ function Cardapio() {
 
   const handleToggleDisponibilidade = async (produto) => {
     try {
-      const response = await api.put(`/products/${produto.id}`, { disponivel: !produto.disponivel });
+      const response = await products.update(produto.id, { disponivel: !produto.disponivel });
       if (response.success) {
         setProdutos(prev => prev.map(p => p.id === produto.id ? { ...p, disponivel: !p.disponivel } : p));
       }
@@ -97,7 +98,7 @@ function Cardapio() {
     if (!window.confirm('Tem certeza que deseja excluir esta categoria?')) return;
     
     try {
-      const response = await api.delete(`/products/categories/${id}`);
+      const response = await categories.delete(id);
       if (response.success) fetchDados();
     } catch (err) {
       console.error('Erro ao excluir categoria:', err);

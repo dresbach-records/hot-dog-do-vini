@@ -19,15 +19,6 @@ const STATUS_AGENDAMENTO = {
   cancelado: { label: 'Cancelado', color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
 };
 
-  // Mock de pedidos agendados (dados estáticos para demonstração)
-const MOCK_AGENDAMENTOS_CRISDU = [
-  { id: 'AG001', grupo: 'Cris du', cliente: 'Ana Costa', itens: '1x Pastelão Frango c/catupiry', total: 27.99, status: 'pendente', horarioEntrega: '12:00', pedidoEm: '09:30' },
-  { id: 'AG002', grupo: 'Cris du', cliente: 'Bruno Lima', itens: '1x Cachorro Quente Especial + Coca 600ml', total: 28.50, status: 'pendente', horarioEntrega: '12:00', pedidoEm: '09:45' },
-  { id: 'AG003', grupo: 'Cris du', cliente: 'Carla Mendes', itens: '1x Pastelão Carne + Suco Laranja', total: 33.49, status: 'confirmado', horarioEntrega: '12:00', pedidoEm: '08:20' },
-  { id: 'AG004', grupo: 'Cris du', cliente: 'Diego Santos', itens: '2x Cachorro Quente Especial', total: 43.00, status: 'pendente', horarioEntrega: '12:00', pedidoEm: '10:15' },
-  { id: 'AG005', grupo: 'Outros', cliente: 'Fernanda Oliveira', itens: '1x X-Tudo Artesanal + Fritas', total: 52.90, status: 'pendente', horarioEntrega: '13:00', pedidoEm: '11:00' },
-];
-
 function badgeStatus(status) {
   const s = STATUS_AGENDAMENTO[status] || STATUS_AGENDAMENTO.pendente;
   return (
@@ -38,13 +29,43 @@ function badgeStatus(status) {
 }
 
 export default function Agendamentos() {
-  const [agendamentos, setAgendamentos] = useState(MOCK_AGENDAMENTOS_CRISDU);
+  const [agendamentos, setAgendamentos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filtroGrupo, setFiltroGrupo] = useState('todos');
   const [expandidos, setExpandidos] = useState({ 'Cris du': true });
   const [showNovoAgendamento, setShowNovoAgendamento] = useState(false);
   const [novoItem, setNovoItem] = useState({ cliente: '', itens: '', total: '', horarioEntrega: '18:45', grupo: 'Cris du' });
   const { clientes, fetchData } = useClientes();
   const [loadingAprovacao, setLoadingAprovacao] = useState(false);
+
+  const fetchAgendamentos = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/orders/scheduled');
+      if (res.success) {
+        // Adaptar campos do banco para o que o componente espera
+        const adaptados = (res.data || []).map(p => ({
+            id: p.id,
+            grupo: p.cliente_id ? 'Cris du' : 'Outros', // Lógica simplificada: se tem cliente_id é do convênio
+            cliente: p.endereco_entrega?.nome || 'Cliente',
+            itens: JSON.parse(p.itens || '[]').map(i => i.titulo).join(', '),
+            total: p.total,
+            status: p.status,
+            horarioEntrega: new Date(p.agendado_para).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            pedidoEm: new Date(p.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        }));
+        setAgendamentos(adaptados);
+      }
+    } catch (err) {
+      console.error('Error fetching agendamentos', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAgendamentos();
+  }, []);
 
   // Lista de clientes que solicitaram vínculo e estão pendentes
   const solicitacoesPendentes = useMemo(() => {
@@ -97,29 +118,53 @@ export default function Agendamentos() {
   const pendentes = agendamentos.filter(a => a.status === 'pendente').length;
 
   // Ações
-  const mudarStatus = (id, novoStatus) => {
-    setAgendamentos(p => p.map(a => a.id === id ? { ...a, status: novoStatus } : a));
+  const mudarStatus = async (id, novoStatus) => {
+    try {
+      const response = await api.put(`/orders/${id}`, { status: novoStatus });
+      if (response.success) fetchAgendamentos();
+    } catch (err) {
+      alert('Erro ao atualizar status');
+    }
   };
 
-  const confirmarEmLote = (grupo) => {
-    setAgendamentos(p => p.map(a => a.grupo === grupo && a.status === 'pendente' ? { ...a, status: 'confirmado' } : a));
+  const confirmarEmLote = async (grupo) => {
+    const pendentesGrupo = agendamentos.filter(a => a.grupo === grupo && a.status === 'pendente');
+    setLoading(true);
+    try {
+      await Promise.all(pendentesGrupo.map(a => api.put(`/orders/${a.id}`, { status: 'confirmado' })));
+      fetchAgendamentos();
+    } catch (err) {
+      alert('Erro ao confirmar em lote');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const adicionarAgendamento = () => {
+  const adicionarAgendamento = async () => {
     if (!novoItem.cliente || !novoItem.itens) return;
-    const novo = {
-      id: `AG${Date.now()}`,
-      grupo: novoItem.grupo,
-      cliente: novoItem.cliente,
-      itens: novoItem.itens,
-      total: parseFloat(novoItem.total.replace(',', '.')) || 0,
-      status: 'pendente',
-      horarioEntrega: novoItem.horarioEntrega,
-      pedidoEm: horaAtual,
+    
+    const dataAgendamento = new Date();
+    dataAgendamento.setDate(dataAgendamento.getDate() + 1);
+    const [h, m] = novoItem.horarioEntrega.split(':');
+    dataAgendamento.setHours(h, m, 0, 0);
+
+    const payload = {
+      itens: [{ id: 'manual', titulo: novoItem.itens, quantidade: 1, preco: parseFloat(novoItem.total.replace(',', '.')) || 0 }],
+      pagamento: { metodo: 'pendente' },
+      endereco: { nome: novoItem.cliente },
+      agendamento: { data: dataAgendamento.toISOString() }
     };
-    setAgendamentos(p => [novo, ...p]);
-    setNovoItem({ cliente: '', itens: '', total: '', horarioEntrega: '12:00', grupo: 'Cris du' });
-    setShowNovoAgendamento(false);
+
+    try {
+      const res = await api.post('/orders', payload);
+      if (res.success) {
+        fetchAgendamentos();
+        setNovoItem({ cliente: '', itens: '', total: '', horarioEntrega: '12:00', grupo: 'Cris du' });
+        setShowNovoAgendamento(false);
+      }
+    } catch (err) {
+      alert('Erro ao criar agendamento');
+    }
   };
 
   const toggleExpandir = (grupo) => setExpandidos(e => ({ ...e, [grupo]: !e[grupo] }));

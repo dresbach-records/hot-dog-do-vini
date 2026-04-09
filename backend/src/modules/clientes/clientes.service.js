@@ -2,7 +2,7 @@ import { query } from '../../config/database.js';
 
 export const clientesService = {
   async list() {
-    // Pegar clientes e seus pedidos (simulando a relação do Supabase)
+    // Pegar clientes e seus pedidos relacionando via MariaDB
     const clientes = await query('SELECT * FROM clientes');
     const pedidos = await query('SELECT * FROM pedidos');
 

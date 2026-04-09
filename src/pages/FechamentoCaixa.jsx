@@ -16,7 +16,8 @@ import { useClientes } from '../context/ClientesContext';
 
 function FechamentoCaixa() {
   const navigate = useNavigate();
-  const { resumo, loading, fetchData } = useClientes();
+  const { loading: loadingResumo } = useClientes();
+  const [loading, setLoading] = useState(true);
   const [etapa, setEtapa] = useState(1); // 1: Conferência, 2: Finalizado
   const [conferencia, setConferencia] = useState({
     dinheiroGaveta: '',
@@ -25,12 +26,34 @@ function FechamentoCaixa() {
     observacoes: ''
   });
 
-  // Valores esperados do sistema (Simulado/Real do Context)
-  const esperados = {
-    dinheiro: resumo.total_vendas_estimado * 0.3, // Exemplo: 30% em dinheiro
-    pix: resumo.total_vendas_estimado * 0.4,      // Exemplo: 40% em pix
-    cartao: resumo.total_vendas_estimado * 0.3    // Exemplo: 30% em cartão
+  const [esperados, setEsperados] = useState({ dinheiro: 0, pix: 0, cartao: 0 });
+
+  const fetchDadosCaixa = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/dashboard/stats');
+      if (res.success && res.data.paymentMethods) {
+        const methods = res.data.paymentMethods;
+        const find = (m) => {
+            const match = methods.find(item => item.metodo.toLowerCase().includes(m.toLowerCase()));
+            return match ? parseFloat(match.valor) : 0;
+        };
+        setEsperados({
+          dinheiro: find('dinheiro'),
+          pix: find('pix'),
+          cartao: find('cartao') + find('credito') + find('debito')
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching caixa data', err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchDadosCaixa();
+  }, []);
 
   const diferenca = (Number(conferencia.dinheiroGaveta) || 0) - esperados.dinheiro;
 
@@ -39,7 +62,7 @@ function FechamentoCaixa() {
     // TODO: Integrar com API para salvar log de fechamento no MariaDB
   };
 
-  if (loading) return <div className="p-8 text-center">Calculando fechamento...</div>;
+  if (loading || loadingResumo) return <div className="p-8 text-center">Calculando fechamento...</div>;
 
   return (
     <div className="dashboard animate-fade-in">
@@ -98,7 +121,7 @@ function FechamentoCaixa() {
                 <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)' }}>
                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                       <span style={{ fontWeight: '700' }}>TOTAL BRUTO</span>
-                      <span style={{ fontWeight: '900', fontSize: '1.5rem', color: 'var(--c-green)' }}>R$ {resumo.total_vendas_estimado.toFixed(2)}</span>
+                      <span style={{ fontWeight: '900', fontSize: '1.5rem', color: 'var(--c-green)' }}>R$ {esperados.total?.toFixed(2) || '0.00'}</span>
                    </div>
                 </div>
               </div>

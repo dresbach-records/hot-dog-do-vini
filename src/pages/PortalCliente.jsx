@@ -30,8 +30,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
-import api from '../services/api';
-import { menuItems, categories as siteCategories } from '../lib/siteData';
+import { products as apiProducts, categories as apiCategories } from '../services/api';
 import ProductModal from '../components/Site/ProductModal';
 import CartDrawer from '../components/Site/CartDrawer';
 import '../styles/cliente/layout.css';
@@ -44,11 +43,36 @@ const PortalCliente = ({ session }) => {
   const provisionAttempted = useRef(false);
   const [showPix, setShowPix] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('destaques');
-  const [cartItems, setCartItems] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [dbProducts, setDbProducts] = useState([]);
+  const [dbCategories, setDbCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const menuRef = useRef(null);
+
+  // Fetch real data from MariaDB
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [prodRes, catRes] = await Promise.all([
+          apiProducts.listActive(),
+          apiCategories.list()
+        ]);
+        
+        if (prodRes.success) setDbProducts(prodRes.data);
+        if (catRes.success) {
+          const cats = catRes.data;
+          setDbCategories(cats);
+          if (cats.length > 0) setSelectedCategory(cats[0].id);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar cardápio real:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const clienteLogado = useMemo(() => {
     if (!clientes || !session?.user) return null;
@@ -126,28 +150,21 @@ const PortalCliente = ({ session }) => {
     };
   }, [clienteLogado]);
 
-  const viniCategories = [
-    { id: 'destaques', name: 'Mais Pedidos', icon: <Flame size={24} color="#EA1D2C" />, bgColor: '#FEF2F2' },
-    { id: 'hotdog', name: 'Hot Dogs', icon: <Utensils size={24} color="#EA1D2C" />, bgColor: '#FFF7ED' },
-    { id: 'burgers', name: 'Burgers', icon: <Beef size={24} color="#EA1D2C" />, bgColor: '#F0FDF4' },
-    { id: 'combos', name: 'Combos', icon: <Package size={24} color="#EA1D2C" />, bgColor: '#F5F3FF' },
-    { id: 'batatas', name: 'Batatas', icon: <Soup size={24} color="#EA1D2C" />, bgColor: '#FFFBEB' },
-    { id: 'bebidas', name: 'Bebidas', icon: <Beer size={24} color="#EA1D2C" />, bgColor: '#EFF6FF' },
-  ];
-
   const filteredProducts = useMemo(() => {
-    if (selectedCategory === 'todos') return menuItems;
-    return menuItems.filter(item => item.category === selectedCategory);
-  }, [selectedCategory]);
+    if (!dbProducts) return [];
+    if (selectedCategory === 'todos') return dbProducts;
+    return dbProducts.filter(item => item.categoria_id === selectedCategory);
+  }, [selectedCategory, dbProducts]);
 
   const viniOffers = useMemo(() => {
-    return menuItems.filter(item => item.oldPrice).slice(0, 4);
-  }, []);
+    if (!dbProducts) return [];
+    return dbProducts.filter(item => item.destaque === 1).slice(0, 4);
+  }, [dbProducts]);
 
   const handleAddToCart = (product) => {
     setCartItems(prev => {
       // Check if item with same observations already exists
-      const existingIdx = prev.findIndex(item => item.title === product.title && item.observations === product.observations);
+      const existingIdx = prev.findIndex(item => item.id === product.id && item.observations === product.observations);
       if (existingIdx > -1) {
         const newItems = [...prev];
         const item = newItems[existingIdx];
@@ -155,7 +172,7 @@ const PortalCliente = ({ session }) => {
         newItems[existingIdx] = {
            ...item,
            quantity: newQty,
-           totalPrice: parseFloat(item.price.replace('R$ ', '').replace(',', '.')) * newQty
+           totalPrice: item.preco * newQty
         };
         return newItems;
       }
@@ -306,15 +323,14 @@ const PortalCliente = ({ session }) => {
         </div>
         
         <div className="vini-portal-subnav-right">
-           <div className={`vini-portal-subnav-item ${selectedCategory === 'combos' ? 'active' : ''}`} onClick={() => setSelectedCategory('combos')}>
-             <Package size={18} /> <span>Combos</span>
+           <div className={`vini-portal-subnav-item ${selectedCategory === 'todos' ? 'active' : ''}`} onClick={() => setSelectedCategory('todos')}>
+             <span>Todos</span>
            </div>
-           <div className={`vini-portal-subnav-item ${selectedCategory === 'hotdog' ? 'active' : ''}`} onClick={() => setSelectedCategory('hotdog')}>
-             <Utensils size={18} /> <span>Hot Dogs</span>
-           </div>
-           <div className="vini-portal-subnav-item" onClick={() => window.location.href = '/convenios'}>
-             <Store size={18} /> <span>Empresas</span>
-           </div>
+           {dbCategories.slice(0, 3).map(cat => (
+             <div key={cat.id} className={`vini-portal-subnav-item ${selectedCategory === cat.id ? 'active' : ''}`} onClick={() => setSelectedCategory(cat.id)}>
+                <span>{cat.nome}</span>
+             </div>
+           ))}
         </div>
       </nav>
 
@@ -380,16 +396,16 @@ const PortalCliente = ({ session }) => {
           <p className="vini-portal-section-subtitle">Escolha o que deseja saborear hoje!</p>
 
           <div className="vini-portal-category-grid" style={{ marginBottom: '40px' }}>
-            {viniCategories.map(cat => (
+            {dbCategories.map(cat => (
               <div 
                 key={cat.id} 
                 className={`vini-portal-category-card ${selectedCategory === cat.id ? 'active' : ''}`} 
                 onClick={() => setSelectedCategory(cat.id)}
               >
-                <div className="vini-portal-category-card-img-wrap" style={{ backgroundColor: cat.bgColor }}>
-                  {cat.icon}
+                <div className="vini-portal-category-card-img-wrap" style={{ backgroundColor: '#FEF2F2' }}>
+                  <Utensils size={24} color="#EA1D2C" />
                 </div>
-                <span className="vini-portal-category-name">{cat.name}</span>
+                <span className="vini-portal-category-name">{cat.nome}</span>
               </div>
             ))}
           </div>
@@ -397,18 +413,18 @@ const PortalCliente = ({ session }) => {
           {/* Dynamic Products Grid (Main Filtered Menu) */}
           <div style={{ marginBottom: '50px' }}>
             <h2 className="vini-portal-section-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-               {selectedCategory === 'todos' ? 'Todos os Produtos' : viniCategories.find(c => c.id === selectedCategory)?.name}
+               {selectedCategory === 'todos' ? 'Todos os Produtos' : dbCategories.find(c => c.id === selectedCategory)?.nome}
                <span style={{ fontSize: '14px', fontWeight: '400', color: '#999' }}>({filteredProducts.length} itens)</span>
             </h2>
             <div className="vini-portal-offers-grid">
                 {filteredProducts.map(product => (
-                  <div key={product.title} className="vini-portal-offer-card" style={{ cursor: 'pointer' }} onClick={() => setSelectedProduct(product)}>
-                     <img src={product.image} alt={product.title} className="vini-portal-offer-img" />
+                  <div key={product.id} className="vini-portal-offer-card" style={{ cursor: 'pointer' }} onClick={() => setSelectedProduct(product)}>
+                     <img src={product.imagem_url || 'https://via.placeholder.com/300x200'} alt={product.titulo} className="vini-portal-offer-img" />
                      <div className="vini-portal-offer-body">
-                        <h4 className="vini-portal-offer-title">{product.title}</h4>
-                        <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.description}</p>
+                        <h4 className="vini-portal-offer-title">{product.titulo}</h4>
+                        <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.descricao}</p>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                           <span className="vini-portal-offer-price">{product.price}</span>
+                           <span className="vini-portal-offer-price">R$ {product.preco.toFixed(2).replace('.', ',')}</span>
                            <button style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                               <ArrowRight size={16} color="var(--p-red)" />
                            </button>
@@ -418,6 +434,7 @@ const PortalCliente = ({ session }) => {
                ))}
             </div>
           </div>
+
 
           {/* Finance Warning if balance > 0 */}
           {stats.saldo > 0 && (

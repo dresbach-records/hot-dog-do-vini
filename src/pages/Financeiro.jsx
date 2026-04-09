@@ -1,7 +1,60 @@
+import React, { useState, useEffect } from 'react';
 import { Plus, Tag, ArrowDownRight, TrendingDown, DollarSign, Wallet } from 'lucide-react';
+import { despesas } from '../services/api';
 import '../styles/admin/dashboard.css';
 
 function Financeiro() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ total_mes: 0, insumos: 0, a_vencer: 0 });
+
+  useEffect(() => {
+    fetchDespesas();
+  }, []);
+
+  const fetchDespesas = async () => {
+    setLoading(true);
+    try {
+      const response = await despesas.list();
+      if (response.success) {
+        const data = response.data || [];
+        setItems(data);
+        
+        // Calcular estatísticas simples
+        const total = data.reduce((acc, curr) => acc + Number(curr.valor), 0);
+        const insumos = data.filter(d => d.categoria === 'Insumos').reduce((acc, curr) => acc + Number(curr.valor), 0);
+        const aVencer = data.filter(d => !d.pago).reduce((acc, curr) => acc + Number(curr.valor), 0);
+        
+        setStats({ total_mes: total, insumos, a_vencer: aVencer });
+      }
+    } catch (err) {
+      console.error('Erro ao buscar despesas:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateDespesa = async () => {
+    const descricao = window.prompt('Descrição da despesa:');
+    if (!descricao) return;
+    const valor = window.prompt('Valor (R$):');
+    if (!valor) return;
+    const categoria = window.prompt('Categoria (Insumos, Fixo, Outros):', 'Insumos');
+    
+    try {
+      const response = await despesas.create({
+        descricao,
+        valor: parseFloat(valor.replace(',', '.')),
+        categoria,
+        pago: true,
+        data_pagamento: new Date().toISOString().split('T')[0]
+      });
+      if (response.success) fetchDespesas();
+    } catch (err) {
+      alert('Erro ao criar despesa: ' + err);
+    }
+  };
+
   return (
     <div className="dashboard-page animate-fade-in" style={{ padding: '1.5rem', background: 'var(--bg-base)' }}>
       <header className="page-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
@@ -10,7 +63,7 @@ function Financeiro() {
           <p className="text-secondary">Registro de gastos fixos, compras de insumos e contas a pagar.</p>
         </div>
         <div className="header-actions">
-          <button className="vini-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button className="vini-btn-primary" onClick={handleCreateDespesa} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Plus size={18} /> Lançar Despesa
           </button>
         </div>
@@ -23,9 +76,8 @@ function Financeiro() {
             <TrendingDown size={24} color="var(--c-red)" />
           </div>
           <div className="stat-info">
-            <span className="stat-label">Despesas Totais (Mês)</span>
-            <h3 className="stat-value text-negative">R$ 6.400,00</h3>
-            <span className="stat-trend negative">32% da receita bruta</span>
+            <span className="stat-label">Despesas Totais</span>
+            <h3 className="stat-value text-negative">R$ {stats.total_mes.toFixed(2).replace('.', ',')}</h3>
           </div>
         </div>
 
@@ -34,9 +86,8 @@ function Financeiro() {
             <DollarSign size={24} color="var(--c-blue)" />
           </div>
           <div className="stat-info">
-            <span className="stat-label">Insumos (Custos Variáveis)</span>
-            <h3 className="stat-value">R$ 4.250,00</h3>
-            <span className="stat-trend positive">Margem sob controle</span>
+            <span className="stat-label">Insumos</span>
+            <h3 className="stat-value">R$ {stats.insumos.toFixed(2).replace('.', ',')}</h3>
           </div>
         </div>
 
@@ -45,9 +96,8 @@ function Financeiro() {
             <Wallet size={24} color="var(--c-yellow)" />
           </div>
           <div className="stat-info">
-            <span className="stat-label">Contas a Vencer</span>
-            <h3 className="stat-value text-negative">R$ 850,00</h3>
-            <span className="stat-trend neutral">Vencem nos próximos 7 dias</span>
+            <span className="stat-label">Contas em Aberto</span>
+            <h3 className="stat-value text-negative">R$ {stats.a_vencer.toFixed(2).replace('.', ',')}</h3>
           </div>
         </div>
       </div>
@@ -69,34 +119,34 @@ function Financeiro() {
                 </tr>
               </thead>
               <tbody>
-                <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '1rem' }}>
-                    <div className="client-cell" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                      <div className="avatar bg-dark-layer" style={{ width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-active)' }}>
-                        <Tag size={16} color="var(--text-secondary)" />
+                {items.map(item => (
+                  <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <td style={{ padding: '1rem' }}>
+                      <div className="client-cell" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                        <div className="avatar bg-dark-layer" style={{ width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-active)' }}>
+                          <Tag size={16} color="var(--text-secondary)" />
+                        </div>
+                        <strong style={{ display: 'block' }}>{item.descricao}</strong>
                       </div>
-                      <strong style={{ display: 'block' }}>Compra Salsicha (Fornecedor A)</strong>
-                    </div>
-                  </td>
-                  <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>Insumos</td>
-                  <td style={{ padding: '1rem' }}>Hoje</td>
-                  <td style={{ padding: '1rem', fontWeight: '600', color: 'var(--c-red)' }}>-R$ 340,00</td>
-                  <td style={{ padding: '1rem' }}><span className="vini-badge success" style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--c-green)' }}>Pago</span></td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '1rem' }}>
-                    <div className="client-cell" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                      <div className="avatar bg-dark-layer" style={{ width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-active)' }}>
-                        <Tag size={16} color="var(--text-secondary)" />
-                      </div>
-                      <strong style={{ display: 'block' }}>Conta de Luz - Filial Centro</strong>
-                    </div>
-                  </td>
-                  <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>Gastos Fixos</td>
-                  <td style={{ padding: '1rem' }}>15/10/2023</td>
-                  <td style={{ padding: '1rem', fontWeight: '600', color: 'var(--c-red)' }}>-R$ 850,00</td>
-                  <td style={{ padding: '1rem' }}><span className="vini-badge warning" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--c-yellow)' }}>A Vencer</span></td>
-                </tr>
+                    </td>
+                    <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{item.categoria}</td>
+                    <td style={{ padding: '1rem' }}>{new Date(item.created_at).toLocaleDateString()}</td>
+                    <td style={{ padding: '1rem', fontWeight: '600', color: 'var(--c-red)' }}>-R$ {Number(item.valor).toFixed(2).replace('.', ',')}</td>
+                    <td style={{ padding: '1rem' }}>
+                      <span className={`vini-badge ${item.pago ? 'success' : 'warning'}`} style={{ 
+                        background: item.pago ? 'rgba(34, 197, 94, 0.1)' : 'rgba(245, 158, 11, 0.1)', 
+                        color: item.pago ? 'var(--c-green)' : 'var(--c-yellow)' 
+                      }}>
+                        {item.pago ? 'Pago' : 'Pendente'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {items.length === 0 && (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', opacity: 0.5 }}>Sem despesas lançadas.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -104,26 +154,18 @@ function Financeiro() {
 
         <div className="side-panel">
           <div className="resumo-caixa vini-glass-panel" style={{ padding: '1.5rem', background: 'var(--bg-surface-elevated)' }}>
-            <h3 style={{ margin: '0 0 1.5rem 0' }}>Resumo (Este Mês)</h3>
+            <h3 style={{ margin: '0 0 1.5rem 0' }}>Resumo Geral</h3>
             <div className="resumo-stats" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="resumo-item" style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>Total em Insumos</span>
-                <h4 style={{ margin: 0, fontWeight: '500' }}>R$ 4.250,00</h4>
-              </div>
-              <div className="resumo-item" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Gastos Fixos</span>
-                <h4 style={{ margin: 0, fontWeight: '500' }}>R$ 2.150,00</h4>
+                <h4 style={{ margin: 0, fontWeight: '500' }}>R$ {stats.insumos.toFixed(2).replace('.', ',')}</h4>
               </div>
               <div className="divider" style={{ borderTop: '1px dashed var(--border-color)', margin: '0.5rem 0' }}></div>
               <div className="resumo-item total" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: '600' }}>Total de Despesas</span>
-                <h4 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--c-red)' }}>R$ 6.400,00</h4>
+                <span style={{ fontWeight: '600' }}>Total Acumulado</span>
+                <h4 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--c-red)' }}>R$ {stats.total_mes.toFixed(2).replace('.', ',')}</h4>
               </div>
             </div>
-            
-            <button className="vini-btn-outline" style={{ width: '100%', marginTop: '1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-              <ArrowDownRight size={16} /> Ver PDF / Balanço
-            </button>
           </div>
         </div>
       </div>

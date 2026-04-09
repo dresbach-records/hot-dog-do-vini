@@ -32,6 +32,7 @@ import Motoboys from './pages/Motoboys';
 import Fiscal from './pages/Fiscal';
 import PDVBalcao from './pages/PDVBalcao';
 import Estoque from './pages/Estoque';
+import Juridico from './pages/Juridico';
 
 // Novos Módulos Financeiros ERP
 import FinancasHub from './pages/FinancasHub';
@@ -58,6 +59,7 @@ import Ajuda from './pages/Portal/Ajuda';
 // Contexto Global
 import { ClientesProvider } from './context/ClientesContext';
 import { SettingsProvider } from './context/SettingsContext';
+import { CaixaProvider } from './context/CaixaContext';
 
 import './App.css';
 
@@ -148,113 +150,114 @@ function App() {
   return (
     <SettingsProvider>
       <ClientesProvider>
-      <Router>
-        <Routes>
-          {/* == LANDING PAGE PÚBLICA (RAIZ) == */}
-          <Route path="/" element={<Home />} />
+        <CaixaProvider>
+          <Router>
+            <Routes>
+              {/* == LANDING PAGE PÚBLICA (RAIZ) == */}
+              <Route path="/" element={<Home />} />
 
-          {/* == LOGIN PORTAL DO CLIENTE == */}
-          <Route path="/login.vinis" element={session && !isAdmin ? <Navigate to="/cliente.vinis" /> : <LoginCliente />} />
-          
-          {/* == PORTAL DO CLIENTE (PROTEGIDO) == */}
-          <Route path="/cliente.vinis" element={
-            session && !isAdmin ? <PortalCliente session={session} /> : <Navigate to="/login.vinis" />
-          } />
+              {/* == LOGIN PORTAL DO CLIENTE == */}
+              <Route path="/login.vinis" element={session && !isAdmin ? <Navigate to="/cliente.vinis" /> : <LoginCliente />} />
+              
+              {/* == PORTAL DO CLIENTE (PROTEGIDO) == */}
+              <Route path="/cliente.vinis" element={
+                session && !isAdmin ? <PortalCliente session={session} /> : <Navigate to="/login.vinis" />
+              } />
 
-          <Route path="/convenios" element={
-            session && !isAdmin ? <ConveniosFlow session={session} /> : <Navigate to="/login.vinis" />
-          } />
+              <Route path="/convenios" element={
+                session && !isAdmin ? <ConveniosFlow session={session} /> : <Navigate to="/login.vinis" />
+              } />
 
-          <Route path="/checkout" element={
-            session && !isAdmin ? <Checkout session={session} /> : <Navigate to="/login.vinis" />
-          } />
+              <Route path="/checkout" element={
+                session && !isAdmin ? <Checkout session={session} /> : <Navigate to="/login.vinis" />
+              } />
 
-          <Route path="/cliente/pedidos" element={
-            session && !isAdmin ? <MeusPedidos session={session} /> : <Navigate to="/login.vinis" />
-          } />
-          
-          <Route path="/cliente/perfil" element={
-            session && !isAdmin ? <Perfil session={session} /> : <Navigate to="/login.vinis" />
-          } />
+              <Route path="/cliente/pedidos" element={
+                session && !isAdmin ? <MeusPedidos session={session} /> : <Navigate to="/login.vinis" />
+              } />
+              
+              <Route path="/cliente/perfil" element={
+                session && !isAdmin ? <Perfil session={session} /> : <Navigate to="/login.vinis" />
+              } />
 
-          <Route path="/cliente/fidelidade" element={
-            session && !isAdmin ? <Fidelidade session={session} /> : <Navigate to="/login.vinis" />
-          } />
+              <Route path="/cliente/fidelidade" element={
+                session && !isAdmin ? <Fidelidade session={session} /> : <Navigate to="/login.vinis" />
+              } />
 
-          <Route path="/cliente/cupons" element={
-            session && !isAdmin ? <Cupons session={session} /> : <Navigate to="/login.vinis" />
-          } />
+              <Route path="/cliente/cupons" element={
+                session && !isAdmin ? <Cupons session={session} /> : <Navigate to="/login.vinis" />
+              } />
 
-          <Route path="/cliente/ajuda" element={
-            session && !isAdmin ? <Ajuda session={session} /> : <Navigate to="/login.vinis" />
-          } />
+              <Route path="/cliente/ajuda" element={
+                session && !isAdmin ? <Ajuda session={session} /> : <Navigate to="/login.vinis" />
+              } />
 
-          {/* == LOGIN ADMIN ERP == */}
-          <Route path="/login" element={session && isAdmin ? <Navigate to="/admin/dashboard" /> : <Login onLogin={() => {}} />} />
+              {/* == LOGIN ADMIN ERP == */}
+              <Route path="/login" element={session && isAdmin ? <Navigate to="/admin/dashboard" /> : <Login onLogin={() => {}} />} />
 
-          {/* == ÁREA ADMINISTRATIVA CLOUD (PROTEGIDA) == */}
-          <Route path="/admin/*" element={
-            session && isAdmin ? (
-              <div className="app-container admin-container">
-                <Sidebar user={session.user} onLogout={() => {
-                  localStorage.removeItem('vinis_auth_token');
-                  setSession(null);
-                }} />
-                <main className="main-content">
-                  <Routes>
-                    <Route path="" element={<Navigate to="/admin/dashboard" />} />
-                    <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="pedidos" element={<Pedidos />} />
-                    <Route path="cardapio" element={<Cardapio />} />
-                    <Route path="cardapio" element={<Cardapio />} />
-                    <Route path="entregas" element={<Entregas />} />
-                    <Route path="area-entrega" element={<AreaEntrega />} />
-                    <Route path="clientes" element={<Clientes />} />
-                    <Route path="fidelidade" element={<Sorteios />} />
-                    <Route path="caixa" element={<Caixa />} />
-                    <Route path="fechamento-caixa" element={<FechamentoCaixa />} />
-                    <Route path="vini-bot" element={<ViniBot />} />
-                    <Route path="impressao" element={<Impressao />} />
-                    <Route path="despesas" element={<Financeiro />} />
-                    <Route path="rh" element={<RH />} />
-                    <Route path="filiais" element={<Filiais />} />
-                    <Route path="relatorios" element={<Relatorios />} />
-                    <Route path="marketing" element={<Marketing />} />
-                    <Route path="convenios" element={<ConveniosAdmin />} />
-                    <Route path="convenios" element={<ConveniosAdmin />} />
-                    <Route path="integracoes" element={<Integracoes />} />
-                    <Route path="configuracoes" element={<Configuracoes />} />
-                    <Route path="motoboys" element={<Motoboys />} />
-                    <Route path="fiscal" element={<Fiscal />} />
-                    <Route path="pdv-balcao" element={<PDVBalcao />} />
-                    <Route path="estoque" element={<Estoque />} />
-                    <Route path="cupons" element={<Cupons />} />
-                    <Route path="pagamentos" element={<Cobrancas />} />
-                    
-                    {/* Financeiro 360° Routes */}
-                    <Route path="financas-hub" element={<FinancasHub />} />
-                    <Route path="cobrancas" element={<Cobrancas />} />
-                    <Route path="transferencias" element={<Transferencias />} />
-                    <Route path="assinaturas" element={<Assinaturas />} />
-                    <Route path="antecipacoes" element={<Antecipacoes />} />
-                    <Route path="kyc" element={<KYCStatus />} />
-                    <Route path="api-keys" element={<APIKeys />} />
-                    <Route path="notificacoes" element={<Notificacoes />} />
+              {/* == ÁREA ADMINISTRATIVA CLOUD (PROTEGIDA) == */}
+              <Route path="/admin/*" element={
+                session && isAdmin ? (
+                  <div className="app-container admin-container">
+                    <Sidebar user={session.user} onLogout={() => {
+                      localStorage.removeItem('vinis_auth_token');
+                      setSession(null);
+                    }} />
+                    <main className="main-content">
+                      <Routes>
+                        <Route path="" element={<Navigate to="/admin/dashboard" />} />
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="pedidos" element={<Pedidos />} />
+                        <Route path="cardapio" element={<Cardapio />} />
+                        <Route path="entregas" element={<Entregas />} />
+                        <Route path="area-entrega" element={<AreaEntrega />} />
+                        <Route path="clientes" element={<Clientes />} />
+                        <Route path="fidelidade" element={<Sorteios />} />
+                        <Route path="caixa" element={<Caixa />} />
+                        <Route path="fechamento-caixa" element={<FechamentoCaixa />} />
+                        <Route path="vini-bot" element={<ViniBot />} />
+                        <Route path="impressao" element={<Impressao />} />
+                        <Route path="despesas" element={<Financeiro />} />
+                        <Route path="rh" element={<RH />} />
+                        <Route path="filiais" element={<Filiais />} />
+                        <Route path="relatorios" element={<Relatorios />} />
+                        <Route path="marketing" element={<Marketing />} />
+                        <Route path="convenios" element={<ConveniosAdmin />} />
+                        <Route path="integracoes" element={<Integracoes />} />
+                        <Route path="configuracoes" element={<Configuracoes />} />
+                        <Route path="motoboys" element={<Motoboys />} />
+                        <Route path="fiscal" element={<Fiscal />} />
+                        <Route path="pdv-balcao" element={<PDVBalcao />} />
+                        <Route path="estoque" element={<Estoque />} />
+                        <Route path="cupons" element={<Cupons />} />
+                        <Route path="pagamentos" element={<Cobrancas />} />
+                        <Route path="juridico" element={<Juridico />} />
+                        
+                        {/* Financeiro 360° Routes */}
+                        <Route path="financas-hub" element={<FinancasHub />} />
+                        <Route path="cobrancas" element={<Cobrancas />} />
+                        <Route path="transferencias" element={<Transferencias />} />
+                        <Route path="assinaturas" element={<Assinaturas />} />
+                        <Route path="antecipacoes" element={<Antecipacoes />} />
+                        <Route path="kyc" element={<KYCStatus />} />
+                        <Route path="api-keys" element={<APIKeys />} />
+                        <Route path="notificacoes" element={<Notificacoes />} />
 
-                    <Route path="*" element={<Navigate to="/admin/dashboard" />} />
-                  </Routes>
-                </main>
-              </div>
-            ) : (
-              <Navigate to="/login" />
-            )
-          } />
+                        <Route path="*" element={<Navigate to="/admin/dashboard" />} />
+                      </Routes>
+                    </main>
+                  </div>
+                ) : (
+                  <Navigate to="/login" />
+                )
+              } />
 
-          {/* Catch-all for Root level */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </Router>
-    </ClientesProvider>
+              {/* Catch-all for Root level */}
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </Router>
+        </CaixaProvider>
+      </ClientesProvider>
     </SettingsProvider>
   );
 }
