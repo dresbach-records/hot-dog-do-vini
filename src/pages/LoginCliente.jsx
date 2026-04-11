@@ -142,6 +142,7 @@ function LoginCliente() {
                   placeholder="Seu nome" 
                   required 
                   style={{ width: '100%', padding: '0.8rem 0.8rem 0.8rem 2.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} 
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -159,6 +160,7 @@ function LoginCliente() {
                   placeholder="seu@email.com" 
                   required 
                   style={{ width: '100%', padding: '0.8rem 0.8rem 0.8rem 2.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} 
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -178,6 +180,7 @@ function LoginCliente() {
                   placeholder="••••••••" 
                   required 
                   style={{ width: '100%', padding: '0.8rem 0.8rem 0.8rem 2.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} 
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -195,6 +198,7 @@ function LoginCliente() {
                  placeholder="••••••••" 
                  required 
                  style={{ width: '100%', padding: '0.8rem 0.8rem 0.8rem 2.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} 
+                 autoComplete="off"
                />
              </div>
            </div>

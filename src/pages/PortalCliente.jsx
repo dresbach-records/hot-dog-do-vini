@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { 
   ShoppingBag, 
   User, 
@@ -47,10 +47,14 @@ const PortalCliente = ({ session }) => {
   const [dbProducts, setDbProducts] = useState([]);
   const [dbCategories, setDbCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('todos');
+  const [cartItems, setCartItems] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const menuRef = useRef(null);
 
   // Fetch real data from MariaDB
   useEffect(() => {
+    let mounted = true;
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -59,19 +63,22 @@ const PortalCliente = ({ session }) => {
           apiCategories.list()
         ]);
         
-        if (prodRes.success) setDbProducts(prodRes.data);
-        if (catRes.success) {
-          const cats = catRes.data;
-          setDbCategories(cats);
-          if (cats.length > 0) setSelectedCategory(cats[0].id);
+        if (mounted) {
+          if (prodRes.success) setDbProducts(prodRes.data);
+          if (catRes.success) {
+            const cats = catRes.data;
+            setDbCategories(cats);
+            // Don't auto-set category if user already selected one
+          }
         }
       } catch (err) {
         console.error("Erro ao carregar cardápio real:", err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
     fetchData();
+    return () => { mounted = false; };
   }, []);
 
   const clienteLogado = useMemo(() => {
@@ -116,9 +123,10 @@ const PortalCliente = ({ session }) => {
     };
   }, []);
 
+  // Auto-Provisioning logic - FIXED loop
   useEffect(() => {
     const autoCreateProfile = async () => {
-      if (!contextLoading && !clienteLogado && session?.user && !provisionAttempted.current) {
+      if (!contextLoading && !clienteLogado && session?.user && !provisionAttempted.current && !provisioning) {
         provisionAttempted.current = true;
         setProvisioning(true);
         try {
@@ -137,10 +145,10 @@ const PortalCliente = ({ session }) => {
       }
     };
     autoCreateProfile();
-  }, [clienteLogado, contextLoading, session, adicionarCliente]);
+  }, [clienteLogado, contextLoading, session, adicionarCliente, provisioning]);
 
   const stats = useMemo(() => {
-    if (!clienteLogado) return { total: 0, saldo: 0, limite: 150 };
+    if (!clienteLogado) return { total: 0, saldo: 0, limite: 150, disponivel: 150, isConvenioAtivo: false };
     return { 
       total: Number(clienteLogado.total_cliente || 0), 
       saldo: Number(clienteLogado.saldo_devedor || 0),
@@ -161,9 +169,8 @@ const PortalCliente = ({ session }) => {
     return dbProducts.filter(item => item.destaque === 1).slice(0, 4);
   }, [dbProducts]);
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = useCallback((product) => {
     setCartItems(prev => {
-      // Check if item with same observations already exists
       const existingIdx = prev.findIndex(item => item.id === product.id && item.observations === product.observations);
       if (existingIdx > -1) {
         const newItems = [...prev];
@@ -179,9 +186,9 @@ const PortalCliente = ({ session }) => {
       return [...prev, product];
     });
     setIsCartOpen(true);
-  };
+  }, []);
 
-  const updateCartQty = (idx, delta) => {
+  const updateCartQty = useCallback((idx, delta) => {
     setCartItems(prev => {
       const newItems = [...prev];
       const item = newItems[idx];
@@ -189,27 +196,27 @@ const PortalCliente = ({ session }) => {
       newItems[idx] = {
         ...item,
         quantity: newQty,
-        totalPrice: parseFloat(item.price.replace('R$ ', '').replace(',', '.')) * newQty
+        totalPrice: item.preco * newQty
       };
       return newItems;
     });
-  };
+  }, []);
 
-  const removeFromCart = (idx) => {
+  const removeFromCart = useCallback((idx) => {
     setCartItems(prev => prev.filter((_, i) => i !== idx));
-  };
+  }, []);
 
-  const handleCheckout = () => {
+  const handleCheckout = useCallback(() => {
     localStorage.setItem('vini-cart', JSON.stringify(cartItems));
     window.location.href = '/checkout';
     setIsCartOpen(false);
-  };
+  }, [cartItems]);
 
   if (contextLoading || provisioning) {
     return (
-      <div className="vini-portal-layout" style={{ justifyContent: 'center', alignItems: 'center' }}>
+      <div className="vini-portal-layout" style={{ justifyContent: 'center', alignItems: 'center', display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#fff' }}>
         <img src="/Logo-VINI.png" alt="Vini's" style={{ width: '80px', marginBottom: '20px' }} />
-        <h2 style={{ color: 'var(--p-red)' }}>Carregando...</h2>
+        <h2 style={{ color: 'var(--p-red)' }}>Configurando seu portal...</h2>
       </div>
     );
   }
@@ -284,6 +291,7 @@ const PortalCliente = ({ session }) => {
                   <div className="vini-dropdown-item" onClick={() => {
                     localStorage.removeItem('vinis_auth_token');
                     window.dispatchEvent(new Event('auth_change'));
+                    window.location.href = '/login.vinis';
                   }} style={{ color: '#EA1D2C' }}>
                     <LogOut size={20} /> Encerrar Sessão
                   </div>
@@ -338,7 +346,7 @@ const PortalCliente = ({ session }) => {
       <div className="vini-portal-shell-full">
         <main className="vini-portal-content-full">
           
-          {contextLoading ? (
+          {loading ? (
             <div className="vini-skeleton-container">
                <div className="vini-skeleton" style={{ height: '40px', width: '300px', marginBottom: '20px' }}></div>
                <div className="vini-portal-offers-grid">
@@ -364,25 +372,25 @@ const PortalCliente = ({ session }) => {
           <div className="vini-portal-offers-grid" style={{ marginBottom: '50px' }}>
             {viniOffers.map(offer => {
               try {
-                const priceNum = parseFloat(offer.price.replace('R$ ', '').replace(',', '.'));
-                const oldPriceNum = parseFloat(offer.oldPrice.replace('R$ ', '').replace(',', '.'));
-                const discount = Math.round(((oldPriceNum - priceNum) / oldPriceNum) * 100);
+                const priceNum = offer.preco || 0;
+                const oldPriceNum = priceNum * 1.25; // Dummy discount
+                const discount = 20;
 
                 return (
                     <div 
-                      key={offer.title} 
+                      key={offer.id} 
                       className="vini-portal-offer-card" 
                       style={{ cursor: 'pointer' }}
                       onClick={() => setSelectedProduct(offer)}
                     >
                       <div className="vini-badge-offer">{discount}% OFF</div>
-                      <img src={offer.image} alt={offer.title} className="vini-portal-offer-img" />
+                      <img src={offer.imagem_url || '/placeholder-food.png'} alt={offer.titulo} className="vini-portal-offer-img" />
                       <div className="vini-portal-offer-body">
-                        <h4 className="vini-portal-offer-title">{offer.title}</h4>
-                        <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{offer.description}</p>
+                        <h4 className="vini-portal-offer-title">{offer.titulo}</h4>
+                        <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{offer.descricao}</p>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '12px', color: '#999', textDecoration: 'line-through' }}>{offer.oldPrice}</span>
-                          <div className="vini-portal-offer-price">{offer.price}</div>
+                          <span style={{ fontSize: '12px', color: '#999', textDecoration: 'line-through' }}>R$ {oldPriceNum.toFixed(2).replace('.', ',')}</span>
+                          <div className="vini-portal-offer-price">R$ {priceNum.toFixed(2).replace('.', ',')}</div>
                         </div>
                         <div className="vini-badge-promo">PROMOÇÃO</div>
                       </div>
@@ -442,7 +450,7 @@ const PortalCliente = ({ session }) => {
                <AlertTriangle color="var(--p-red)" size={32} />
                <div>
                   <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Pendente de Pagamento</h3>
-                  <p style={{ margin: '5px 0 15px', color: '#666' }}>Seu saldo devedor é de R$ {stats.saldo.toFixed(2)}. Pague via PIX para continuar comprando.</p>
+                  <p style={{ margin: '5px 0 15px', color: '#666' }}>Seu saldo devedor é de R$ {stats.saldo.toFixed(2).replace('.', ',')}. Pague via PIX para continuar comprando.</p>
                   <button 
                     onClick={() => setShowPix(!showPix)}
                     style={{ background: 'var(--p-red)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}

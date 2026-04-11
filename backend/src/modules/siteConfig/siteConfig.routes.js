@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getConfigs, updateConfig } from './siteConfig.controller.js';
-import { authenticate } from '../../middlewares/auth.js';
+import { authMiddleware } from '../../middlewares/auth.middleware.js';
 
 const router = Router();
 
@@ -8,6 +8,6 @@ const router = Router();
 router.get('/', getConfigs);
 
 // Admin only to update
-router.post('/', authenticate, updateConfig);
+router.post('/', authMiddleware, updateConfig);
 
 export default router;

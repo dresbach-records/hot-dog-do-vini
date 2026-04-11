@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { db } from '../config/database.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';

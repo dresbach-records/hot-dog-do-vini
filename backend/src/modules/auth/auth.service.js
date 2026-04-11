@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { query } from '../../config/database.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 export const authService = {
   async register({ email, password, role = 'cliente', name = '' }) {

@@ -1,5 +1,5 @@
 import { db } from '../../config/database.js';
-import { crypto } from 'crypto';
+import crypto from 'node:crypto';
 
 export const caixaService = {
   async getActiveSession(userId) {

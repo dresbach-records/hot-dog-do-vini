@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 const ClientesContext = createContext();
@@ -23,7 +23,7 @@ export const ClientesProvider = ({ children }) => {
   const [isFetching, setIsFetching] = useState(false);
 
   // Carregar dados iniciais do Backend
-  const fetchData = async (silent = false) => {
+  const fetchData = useCallback(async (silent = false) => {
     if (isFetching) return;
     if (!silent) setLoading(true);
     setIsFetching(true);
@@ -102,9 +102,9 @@ export const ClientesProvider = ({ children }) => {
       setIsFetching(false);
       setLoading(false);
     }
-  };
+  }, [isFetching]);
 
-  const adicionarEmpresa = async (dados) => {
+  const adicionarEmpresa = useCallback(async (dados) => {
     try {
       const response = await api.post('/empresas', dados);
       if (response.success) {
@@ -115,10 +115,10 @@ export const ClientesProvider = ({ children }) => {
     } catch (err) {
       return { success: false, error: err };
     }
-  };
+  }, [fetchData]);
 
   // Adicionar Cliente no Banco Real (com verificação de duplicidade)
-  const adicionarCliente = async (dados) => {
+  const adicionarCliente = useCallback(async (dados) => {
     try {
       const response = await api.post('/clientes', {
         nome: dados.nome,
@@ -138,10 +138,10 @@ export const ClientesProvider = ({ children }) => {
     } catch (err) {
       return { success: false, error: err };
     }
-  };
+  }, [fetchData]);
 
   // Marcar como Pago: Zera saldo devedor e soma ao total pago
-  const marcarComoPago = async (id) => {
+  const marcarComoPago = useCallback(async (id) => {
     const cliente = clientes.find(c => c.id === id);
     if (!cliente) return { success: false, error: 'Cliente não encontrado' };
 
@@ -161,10 +161,10 @@ export const ClientesProvider = ({ children }) => {
     } catch (err) {
       return { success: false, error: err };
     }
-  };
+  }, [clientes, fetchData]);
 
   // Atualizar Cliente no Banco Real
-  const atualizarCliente = async (id, dadosAtualizados) => {
+  const atualizarCliente = useCallback(async (id, dadosAtualizados) => {
     try {
       const response = await api.put(`/clientes/${id}`, dadosAtualizados);
       if (response.success) {
@@ -175,9 +175,9 @@ export const ClientesProvider = ({ children }) => {
     } catch (err) {
       return { success: false, error: err };
     }
-  };
+  }, [fetchData]);
 
-  const gerenciarSolicitacao = async (solId, clienteId, status, info) => {
+  const gerenciarSolicitacao = useCallback(async (solId, clienteId, status, info) => {
     const updateData = { convenio_status: status };
     if (status === 'ativo') {
       updateData.convenio_limite = info.limite;
@@ -194,7 +194,7 @@ export const ClientesProvider = ({ children }) => {
     } catch (err) {
       return { success: false, error: err.message };
     }
-  };
+  }, [fetchData]);
 
   useEffect(() => {
     fetchData();
@@ -205,7 +205,7 @@ export const ClientesProvider = ({ children }) => {
     }, 15000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
 
   return (
     <ClientesContext.Provider value={{

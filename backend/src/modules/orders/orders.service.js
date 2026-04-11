@@ -1,6 +1,6 @@
 import { query } from '../../config/database.js';
 import { asaasService } from '../integrations/asaas/asaas.service.js';
-import { crypto } from 'crypto';
+import crypto from 'node:crypto';
 
 /**
  * Orders Service — Lógica Operacional Profissional

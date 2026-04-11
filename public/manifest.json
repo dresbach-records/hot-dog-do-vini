@@ -8,10 +8,9 @@
   "theme_color": "#EA1D2C",
   "lang": "pt-BR",
   "icons": [
-    { "src": "/favicon.ico",         "sizes": "48x48",   "type": "image/x-icon" },
-    { "src": "/icon-192.png",        "sizes": "192x192", "type": "image/png", "purpose": "maskable any" },
-    { "src": "/icon-512.png",        "sizes": "512x512", "type": "image/png", "purpose": "maskable any" },
-    { "src": "/apple-touch-icon.png","sizes": "180x180", "type": "image/png" }
+    { "src": "/favicon.ico", "sizes": "48x48 64x64 128x128 256x256", "type": "image/x-icon" },
+    { "src": "/Logo-VINI.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/Logo-VINI.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ],
   "shortcuts": [
     { "name": "Pedir no iFood",    "url": "https://www.ifood.com.br/delivery/taquara-rs/hot-dog-do-vini-recreio" },

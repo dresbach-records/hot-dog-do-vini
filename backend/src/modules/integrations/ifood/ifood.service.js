@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { query } from '../../../config/database.js';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TOKEN_FILE = join(__dirname, '../../../../tokens.json');
