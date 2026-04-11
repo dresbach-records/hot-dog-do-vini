@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
 
 const ClientesContext = createContext();
@@ -20,89 +20,51 @@ export const ClientesProvider = ({ children }) => {
   const [empresas, setEmpresas] = useState([]);
   const [solicitacoes, setSolicitacoes] = useState([]);
 
-  const [isFetching, setIsFetching] = useState(false);
+  // Usar Ref para evitar que o fetchData mude de identidade e cause loops infinitos
+  const isFetchingRef = useRef(false);
 
   // Carregar dados iniciais do Backend
   const fetchData = useCallback(async (silent = false) => {
-    if (isFetching) return;
+    if (isFetchingRef.current) return;
+    
     if (!silent) setLoading(true);
-    setIsFetching(true);
+    isFetchingRef.current = true;
     
     try {
-      // 1. Buscar Clientes (Backend já retorna com pedidos incluídos)
-      const response = await api.get('/clientes');
+      // 1. Buscar Clientes, Resumo Estatístico e Gráficos em paralelo
+      const [resClientes, resStats, resCharts] = await Promise.all([
+        api.get('/clientes'),
+        api.get('/dashboard/stats'),
+        api.get('/dashboard/charts')
+      ]);
       
-      if (response.success) {
-        const clientesData = response.data;
-        setClientes(clientesData || []);
+      if (resClientes.success) {
+        setClientes(resClientes.data || []);
+      }
+
+      if (resStats.success && resCharts.success) {
+        const s = resStats.data;
+        const c = resCharts.data;
         
-        // Calcular Resumo e Pagamentos
-        let totalVendas = 0;
-        let totalPago = 0;
-        let totalPendentes = 0;
-        let countPedidos = 0;
-        const pagosIds = [];
-        const produtoMap = {};
-        const bairroMap = {};
-
-        clientesData?.forEach(c => {
-          totalVendas += Number(c.total_cliente || 0);
-          totalPago += Number(c.total_pago || 0);
-          totalPendentes += Number(c.saldo_devedor || 0);
-          const customerPedidos = c.pedidos || [];
-          
-          customerPedidos.forEach(p => {
-            countPedidos++;
-            
-            // Processar Bairros
-            const bairro = p.endereco_entrega?.bairro || 'Balcão/Outros';
-            bairroMap[bairro] = (bairroMap[bairro] || 0) + Number(p.total || 0);
-
-            // Processar Produtos
-            if (p.itens) {
-              const itensArr = Array.isArray(p.itens) ? p.itens : [];
-              itensArr.forEach(item => {
-                const name = item.titulo || item.name || 'Produto Desconhecido';
-                const qtd = Number(item.qtd || 1);
-                produtoMap[name] = (produtoMap[name] || 0) + qtd;
-              });
-            }
-          });
-
-          if (Number(c.saldo_devedor) === 0 && Number(c.total_cliente) > 0) {
-            pagosIds.push(c.id);
-          }
-        });
-
-        // Formatar Top Produtos
-        const topProdList = Object.entries(produtoMap)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([name, qty]) => ({ name, qty }));
-
-        // Formatar Vendas por Bairro
-        const bairroList = Object.entries(bairroMap)
-          .map(([name, valor]) => ({ name, valor }))
-          .sort((a, b) => b.valor - a.valor);
-
+        // Mapear retorno do backend para o formato do context
         setResumo({
-          total_pedidos: countPedidos,
-          total_vendas_estimado: totalVendas,
-          total_recebido_confirmado: totalPago,
-          total_em_aberto_estimado: totalPendentes,
-          ticket_medio: countPedidos > 0 ? (totalVendas / countPedidos) : 0,
-          top_produtos: topProdList,
-          vendas_por_bairro: bairroList
+          total_pedidos: s.totalOrders,
+          total_vendas_estimado: s.totalSales,
+          total_recebido_confirmado: s.totalIncome,
+          total_em_aberto_estimado: s.totalPending,
+          ticket_medio: s.totalOrders > 0 ? (s.totalSales / s.totalOrders) : 0,
+          // Mapeamento para Relatorios.jsx
+          top_produtos: c.topProducts?.map(p => ({ name: p.nome, qty: p.qtd })) || [], 
+          vendas_por_bairro: c.dailySales?.map(d => ({ name: d.dia, valor: d.vendas })) || [] // Simplificado para dia por enquanto
         });
-        setPagamentosConfirmados(pagosIds);
       }
     } catch (err) {
       console.error('Fetch error:', err);
     } finally {
-      setIsFetching(false);
+      isFetchingRef.current = false;
       setLoading(false);
     }
-  }, [isFetching]);
+  }, []); // Identidade ESTÁVEL!
 
   const adicionarEmpresa = useCallback(async (dados) => {
     try {
@@ -142,26 +104,24 @@ export const ClientesProvider = ({ children }) => {
 
   // Marcar como Pago: Zera saldo devedor e soma ao total pago
   const marcarComoPago = useCallback(async (id) => {
-    const cliente = clientes.find(c => c.id === id);
-    if (!cliente) return { success: false, error: 'Cliente não encontrado' };
+    // Pegamos a última versão dos clientes do estado no momento da execução
+    setClientes(currentClientes => {
+      const cliente = currentClientes.find(c => c.id === id);
+      if (!cliente) return currentClientes;
 
-    const novoTotalPago = Number(cliente.total_pago || 0) + Number(cliente.saldo_devedor || 0);
+      const novoTotalPago = Number(cliente.total_pago || 0) + Number(cliente.saldo_devedor || 0);
 
-    try {
-      const response = await api.put(`/clientes/${id}`, {
+      api.put(`/clientes/${id}`, {
         total_pago: novoTotalPago,
         saldo_devedor: 0
+      }).then(res => {
+        if (res.success) fetchData();
       });
 
-      if (response.success) {
-        fetchData();
-        return { success: true };
-      }
-      return { success: false, error: response.error };
-    } catch (err) {
-      return { success: false, error: err };
-    }
-  }, [clientes, fetchData]);
+      return currentClientes; // O estado será atualizado pelo fetchData() quando o PUT terminar
+    });
+    return { success: true };
+  }, [fetchData]);
 
   // Atualizar Cliente no Banco Real
   const atualizarCliente = useCallback(async (id, dadosAtualizados) => {
@@ -171,9 +131,22 @@ export const ClientesProvider = ({ children }) => {
         fetchData();
         return { success: true };
       }
-      return { success: false, error: response.error };
+      return { success: false, error: response.error || 'Erro desconhecido' };
     } catch (err) {
-      return { success: false, error: err };
+      return { success: false, error: err.message };
+    }
+  }, [fetchData]);
+
+  const excluirCliente = useCallback(async (id) => {
+    try {
+      const response = await api.delete(`/clientes/${id}`);
+      if (response.success) {
+        fetchData();
+        return { success: true };
+      }
+      return { success: false, error: response.error || 'Erro ao excluir' };
+    } catch (err) {
+      return { success: false, error: err.message };
     }
   }, [fetchData]);
 
@@ -220,7 +193,8 @@ export const ClientesProvider = ({ children }) => {
       adicionarCliente,
       marcarComoPago,
       adicionarEmpresa,
-      gerenciarSolicitacao
+      gerenciarSolicitacao,
+      excluirCliente
     }}>
       {children}
     </ClientesContext.Provider>

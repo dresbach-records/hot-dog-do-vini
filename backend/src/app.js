@@ -25,7 +25,7 @@ app.use(responseHandler);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 500, // Aumentado para desenvolvimento
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Muitas requisições. Tente novamente mais tarde.' }

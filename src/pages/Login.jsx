@@ -80,6 +80,10 @@ function Login() {
         </div>
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+          {/* Dummy fields and unique names to fight aggressive browser autofill */}
+          <input type="text" name="vini_dummy_user" style={{ display: 'none' }} aria-hidden="true" />
+          <input type="password" name="vini_dummy_pass" style={{ display: 'none' }} aria-hidden="true" />
+          
           {error && (
             <div style={{ backgroundColor: 'rgba(234, 29, 44, 0.1)', border: '1px solid #ea1d2c', color: '#ea1d2c', padding: '10px', borderRadius: '8px', fontSize: '0.85rem', textAlign: 'center' }}>
               {error}
@@ -106,6 +110,7 @@ function Login() {
                   outline: 'none'
                 }}
                 autoComplete="off"
+                name="vini_login_email"
               />
             </div>
           </div>

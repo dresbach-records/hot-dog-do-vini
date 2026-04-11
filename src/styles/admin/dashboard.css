@@ -121,3 +121,62 @@
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-color);
 }
+/* Action Buttons */
+.vini-btn-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vini-btn-action:hover {
+  background: var(--bg-active);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.vini-btn-action.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #999;
+}
+
+.vini-btn-action.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.vini-btn-action.danger {
+  color: #ef4444;
+}
+
+.vini-btn-action.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.vini-btn-action svg, .vini-btn-primary svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Utilities */
+.clickable-na {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  transition: color 0.2s;
+}
+
+.clickable-na:hover {
+  color: var(--c-red) !important;
+}
+
+.bg-red-light { background: rgba(239, 68, 68, 0.1); }
+.bg-green-light { background: rgba(34, 197, 94, 0.1); }

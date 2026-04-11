@@ -54,7 +54,8 @@ function Cardapio() {
         preco: Number(produtoData.preco),
         categoria_id: produtoData.categoria_id,
         imagem_url: produtoData.imagem_url,
-        disponivel: produtoData.disponivel
+        disponivel: produtoData.disponivel,
+        ncm: produtoData.ncm
       };
 
       let response;
@@ -69,8 +70,10 @@ function Cardapio() {
       setIsProdutoModalOpen(false);
       setEditingProduto(null);
       fetchDados();
+      return response; // Retorna para o modal poder usar o ID se for novo
     } catch (err) {
       alert('Erro ao salvar produto: ' + err);
+      return { success: false, error: err };
     }
   };
 

@@ -13,6 +13,9 @@ import despesasRoutes from '../modules/despesas/despesas.routes.js';
 import caixaRoutes from '../modules/caixa/caixa.routes.js';
 import siteConfigRoutes from '../modules/siteConfig/siteConfig.routes.js';
 import juridicoRoutes from '../modules/juridico/juridico.routes.js';
+import fiscalRoutes from '../modules/fiscal/fiscal.routes.js';
+import rhRoutes from '../modules/rh/rh.routes.js';
+import estoqueRoutes from '../modules/estoque/estoque.routes.js';
 import { ifoodController } from '../modules/integrations/ifood/ifood.controller.js';
 
 const router = express.Router();
@@ -30,6 +33,9 @@ router.use('/despesas', despesasRoutes);
 router.use('/caixa', caixaRoutes);
 router.use('/config', siteConfigRoutes);
 router.use('/juridico', juridicoRoutes);
+router.use('/fiscal', fiscalRoutes);
+router.use('/rh', rhRoutes);
+router.use('/estoque', estoqueRoutes);
 
 /**
  * 🛒 MÓDULO: PRODUTOS (/api/products)

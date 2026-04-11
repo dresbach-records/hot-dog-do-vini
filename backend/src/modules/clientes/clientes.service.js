@@ -37,21 +37,30 @@ export const clientesService = {
     const oldCliente = await this.getById(id);
     if (!oldCliente) throw new Error('Cliente não encontrado');
 
-    const sets = Object.keys(data).map(key => `${key} = ?`).join(', ');
-    const values = [...Object.values(data), id];
+    // Filtrar apenas campos que realmente queremos salvar na tabela Clientes
+    // O campo 'memo' é usado apenas para o histórico de transações
+    const { memo, ...updateData } = data;
 
-    const sql = `UPDATE clientes SET ${sets} WHERE id = ?`;
-    await query(sql, values);
+    if (Object.keys(updateData).length > 0) {
+      const sets = Object.keys(updateData).map(key => `${key} = ?`).join(', ');
+      const values = [...Object.values(updateData), id];
+
+      const sql = `UPDATE clientes SET ${sets} WHERE id = ?`;
+      await query(sql, values);
+    }
 
     // Lógica de registro de transação se houver mudança financeira
     if (data.saldo_devedor !== undefined || data.total_pago !== undefined) {
-      const diffSaldo = (data.saldo_devedor !== undefined) ? (data.saldo_devedor - oldCliente.saldo_devedor) : 0;
-      const diffPago = (data.total_pago !== undefined) ? (data.total_pago - oldCliente.total_pago) : 0;
+      const currentSaldo = data.saldo_devedor !== undefined ? Number(data.saldo_devedor) : Number(oldCliente.saldo_devedor);
+      const currentPago = data.total_pago !== undefined ? Number(data.total_pago) : Number(oldCliente.total_pago);
+      
+      const diffSaldo = currentSaldo - Number(oldCliente.saldo_devedor);
+      const diffPago = currentPago - Number(oldCliente.total_pago);
 
       if (diffSaldo !== 0 || diffPago !== 0) {
         let tipo = 'debito';
         let valor = Math.abs(diffSaldo || diffPago);
-        let descricao = data.memo || 'Ajuste manual de saldo';
+        let descricao = memo || 'Ajuste manual de saldo';
 
         if (diffSaldo < 0 || diffPago > 0) {
            tipo = 'credito';
@@ -59,12 +68,19 @@ export const clientesService = {
 
         await query(
           'INSERT INTO transacoes (id, cliente_id, tipo, valor, saldo_anterior, saldo_posterior, descricao) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [uuidv4(), id, tipo, valor, oldCliente.saldo_devedor, data.saldo_devedor || oldCliente.saldo_devedor, descricao]
+          [uuidv4(), id, tipo, valor, oldCliente.saldo_devedor, currentSaldo, descricao]
         );
       }
     }
 
     return this.getById(id);
+  },
+
+  async delete(id) {
+    await query('DELETE FROM transacoes WHERE cliente_id = ?', [id]);
+    await query('DELETE FROM pedidos WHERE cliente_id = ?', [id]);
+    await query('DELETE FROM clientes WHERE id = ?', [id]);
+    return { success: true };
   },
 
   async getHistory(id) {

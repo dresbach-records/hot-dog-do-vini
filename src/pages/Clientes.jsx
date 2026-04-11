@@ -13,14 +13,17 @@ import {
   Clock, 
   CreditCard, 
   Wallet,
-  AlertCircle
+  AlertCircle,
+  Trash2,
+  FileUp,
+  Database
 } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
 import { toast } from 'react-hot-toast';
 import '../styles/admin/dashboard.css';
 
 function Clientes() {
-  const { clientes, atualizarCliente, marcarComoPago, fetchData } = useClientes();
+  const { clientes, resumo, adicionarCliente, atualizarCliente, excluirCliente, marcarComoPago, fetchData } = useClientes();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDebtors, setFilterDebtors] = useState(false);
   
@@ -28,6 +31,9 @@ function Clientes() {
   const [editingClient, setEditingClient] = useState(null);
   const [viewingHistory, setViewingHistory] = useState(null);
   const [isReceivingPayment, setIsReceivingPayment] = useState(null);
+  const [isManualImportOpen, setIsManualImportOpen] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importPreview, setImportPreview] = useState([]);
 
   // Form States for Edit
   const [editForm, setEditForm] = useState({
@@ -89,10 +95,26 @@ function Clientes() {
         setEditingClient(null);
         fetchData();
       } else {
-        toast.error('Erro ao atualizar cliente');
+        toast.error(`Erro: ${res.error || 'Não foi possível salvar'}`);
       }
     } catch (err) {
       toast.error('Falha na comunicação com o servidor');
+    }
+  };
+
+  const handleDeleteClient = async (id, nome) => {
+    if (window.confirm(`Tem certeza que deseja excluir o cliente ${nome}? Todos os registros, pedidos e transações serão removidos.`)) {
+      try {
+        const res = await excluirCliente(id);
+        if (res.success) {
+          toast.success('Cliente removido com sucesso!');
+          fetchData();
+        } else {
+          toast.error(res.error || 'Erro ao remover cliente');
+        }
+      } catch (err) {
+        toast.error('Erro na comunicação');
+      }
     }
   };
 
@@ -122,6 +144,79 @@ function Clientes() {
     }
   };
 
+  const handleParseImport = () => {
+    if (!importText.trim()) return;
+    
+    const lines = importText.split('\n').filter(l => l.trim());
+    const results = [];
+
+    lines.forEach(line => {
+      const segments = line.split(/(?<=\bpago\b)/i);
+      
+      segments.forEach(seg => {
+        let s = seg.trim();
+        if (!s) return;
+        
+        let saldo = 0;
+        const valMatch = s.match(/R\$\s*(\d+[,.]\d+)/i);
+        if (valMatch) {
+          const cleanVal = valMatch[1].replace(',', '.');
+          saldo = parseFloat(cleanVal);
+        }
+        
+        let isPago = s.toLowerCase().includes('pago');
+        let nome = s.split(/→|R\$|pago/i)[0].trim().replace(/^,/, '').trim();
+        
+        if (nome && nome.length > 1) {
+          results.push({
+            nome,
+            saldo: isPago ? 0 : saldo,
+            status: isPago ? 'PAGO' : 'EM DÍVIDA',
+            selected: true
+          });
+        }
+      });
+    });
+    
+    setImportPreview(results);
+  };
+
+  const handleConfirmImport = async () => {
+    const clientsToImport = importPreview.filter(p => p.selected);
+    if (clientsToImport.length === 0) return toast.error('Selecione ao menos um cliente');
+
+    const toastId = toast.loading(`Importando ${clientsToImport.length} clientes...`);
+    let successCount = 0;
+    
+    try {
+      for (const item of clientsToImport) {
+        const existing = (clientes || []).find(c => c.nome.toLowerCase() === item.nome.toLowerCase());
+        
+        if (existing) {
+          await atualizarCliente(existing.id, {
+            saldo_devedor: item.saldo,
+            memo: 'Carga manual em massa'
+          });
+        } else {
+          await adicionarCliente({ 
+            nome: item.nome, 
+            saldo_devedor: item.saldo,
+            memo: 'Primeira carga manual'
+          });
+        }
+        successCount++;
+      }
+      
+      toast.success(`${successCount} clientes processados!`, { id: toastId });
+      setIsManualImportOpen(false);
+      setImportText('');
+      setImportPreview([]);
+      fetchData();
+    } catch (err) {
+      toast.error('Erro na importação em massa', { id: toastId });
+    }
+  };
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -140,15 +235,57 @@ function Clientes() {
                 style={{ padding: '0.6rem 1rem 0.6rem 2.5rem', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)', width: '300px' }}
               />
            </div>
-           <button 
-             className={`btn ${filterDebtors ? 'vini-btn-primary' : 'vini-btn-secondary'}`}
-             onClick={() => setFilterDebtors(!filterDebtors)}
-             style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-           >
-             <Filter size={16} /> {filterDebtors ? 'Mostrando Devedores' : 'Filtrar Devedores'}
-           </button>
-        </div>
+            <button 
+              className={`btn ${filterDebtors ? 'vini-btn-primary' : 'vini-btn-secondary'}`}
+              onClick={() => setFilterDebtors(!filterDebtors)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <Filter size={16} /> {filterDebtors ? 'Mostrando Devedores' : 'Filtrar Devedores'}
+            </button>
+            <button 
+              className="btn vini-btn-primary"
+              onClick={() => setIsManualImportOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--c-blue)', borderColor: 'var(--c-blue)' }}
+            >
+              <FileUp size={16} /> Carga Manual
+            </button>
+         </div>
       </header>
+
+      <div className="stats-grid" style={{ marginBottom: '2rem' }}>
+        <div className="vini-glass-panel vini-card-stat">
+          <div className="stat-icon-wrapper blue"><User size={24} /></div>
+          <div>
+            <span className="stat-label">Total de Clientes</span>
+            <div className="stat-value">{resumo.total_clientes || 0}</div>
+            <span className="stat-trend neutral">Cadastrados no sistema</span>
+          </div>
+        </div>
+        <div className="vini-glass-panel vini-card-stat">
+          <div className="stat-icon-wrapper green"><Activity size={24} /></div>
+          <div>
+            <span className="stat-label">Clientes Ativos</span>
+            <div className="stat-value">{resumo.total_ativos || 0}</div>
+            <span className="stat-trend positive">Pagaram / Em dia</span>
+          </div>
+        </div>
+        <div className="vini-glass-panel vini-card-stat">
+          <div className="stat-icon-wrapper red"><AlertCircle size={24} /></div>
+          <div>
+            <span className="stat-label">Em Dívida</span>
+            <div className="stat-value">{resumo.total_devedores || 0}</div>
+            <span className="stat-trend negative">Inadimplentes</span>
+          </div>
+        </div>
+        <div className="vini-glass-panel vini-card-stat">
+          <div className="stat-icon-wrapper yellow"><DollarSign size={24} /></div>
+          <div>
+            <span className="stat-label">Total Pendente</span>
+            <div className="stat-value">R$ {Number(resumo.total_em_aberto_estimado || 0).toFixed(2).replace('.', ',')}</div>
+            <span className="stat-trend neutral">Valor a receber</span>
+          </div>
+        </div>
+      </div>
       
       <div className="dashboard-content" style={{ display: 'block' }}>
         <div className="vini-glass-panel" style={{ overflow: 'hidden' }}>
@@ -178,24 +315,37 @@ function Clientes() {
                           </div>
                           <div>
                             <span style={{ fontWeight: '600', display: 'block' }}>{cliente.nome}</span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{cliente.email || 'sem email'}</span>
+                            <span 
+                              className={!cliente.email ? 'clickable-na' : ''}
+                              onClick={() => !cliente.email && handleEditClick(cliente)}
+                              style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}
+                            >
+                              {cliente.email || 'sem email (clique p/ inserir)'}
+                            </span>
                           </div>
                         </div>
                       </td>
                       <td style={{ padding: '1rem' }}>
-                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                        <div 
+                          className={!cliente.telefone ? 'clickable-na' : ''}
+                          onClick={() => !cliente.telefone && handleEditClick(cliente)}
+                          style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}
+                        >
                           <Phone size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
-                          {cliente.telefone || 'N/A'}
+                          {cliente.telefone || 'N/A (clique p/ inserir)'}
                         </div>
                       </td>
                       <td style={{ padding: '1rem' }}>
                         {isDevedor ? (
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', width: 'fit-content' }}>DEVEDOR</span>
+                            <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', width: 'fit-content' }}>⏳ EM DÍVIDA</span>
                             <span style={{ fontSize: '0.9rem', color: '#ef4444', fontWeight: '800', marginTop: '4px' }}>R$ {saldoFormatado}</span>
                           </div>
                         ) : (
-                          <span className="badge" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>EM DIA</span>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span className="badge" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', width: 'fit-content' }}>✅ PAGO</span>
+                            <span style={{ fontSize: '0.75rem', color: '#22c55e', marginTop: '4px' }}>Sem pendências</span>
+                          </div>
                         )}
                       </td>
                       <td style={{ padding: '1rem' }}>
@@ -232,6 +382,13 @@ function Clientes() {
                             onClick={() => setViewingHistory(cliente)}
                           >
                             <Clock size={16} />
+                          </button>
+                          <button 
+                            className="vini-btn-action secondary danger" 
+                            title="Excluir Cliente"
+                            onClick={() => handleDeleteClient(cliente.id, cliente.nome)}
+                          >
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -429,6 +586,108 @@ function Clientes() {
                   <div style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 'bold' }}>SALDO DEVEDOR ATUAL</div>
                   <div style={{ fontSize: '1.5rem', fontWeight: '900', color: '#ef4444' }}>R$ {Number(viewingHistory.saldo_devedor || 0).toFixed(2).replace('.', ',')}</div>
                </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MANUAL IMPORT MODAL */}
+      {isManualImportOpen && (
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="vini-glass-panel animate-scale-in" style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}><FileUp /> Carga Manual em Massa</h3>
+                <p style={{ margin: '4px 0 0', color: '#999', fontSize: '0.85rem' }}>Cole a lista de clientes para processamento automático.</p>
+              </div>
+              <button onClick={() => setIsManualImportOpen(false)} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer' }}><X size={24} /></button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+              {importPreview.length === 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    Exemplo de formato aceito:<br />
+                    <code>Nome do Cliente pago</code><br />
+                    <code>Nome do Cliente → R$ 25,00</code>
+                  </p>
+                  <textarea 
+                    placeholder="Cole sua lista aqui..." 
+                    value={importText}
+                    onChange={(e) => setImportText(e.target.value)}
+                    style={{ width: '100%', minHeight: '300px', background: 'rgba(0,0,0,0.3)', border: '1px solid #333', borderRadius: '12px', padding: '1rem', color: '#fff', fontSize: '0.9rem', fontFamily: 'monospace' }}
+                  />
+                  <button onClick={handleParseImport} className="vini-btn-primary" style={{ padding: '1rem' }}>
+                    Processar Lista
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div className="table-responsive" style={{ border: '1px solid #333', borderRadius: '12px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        <tr>
+                          <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.8rem' }}></th>
+                          <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.8rem' }}>Cliente</th>
+                          <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.8rem' }}>Saldo</th>
+                          <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.8rem' }}>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {importPreview.map((item, idx) => (
+                          <tr key={idx} style={{ borderTop: '1px solid #222' }}>
+                            <td style={{ padding: '10px' }}>
+                              <input 
+                                type="checkbox" 
+                                checked={item.selected} 
+                                onChange={(e) => {
+                                  const newList = [...importPreview];
+                                  newList[idx].selected = e.target.checked;
+                                  setImportPreview(newList);
+                                }}
+                              />
+                            </td>
+                            <td style={{ padding: '10px' }}>
+                              <input 
+                                type="text" 
+                                value={item.nome} 
+                                onChange={(e) => {
+                                  const newList = [...importPreview];
+                                  newList[idx].nome = e.target.value;
+                                  setImportPreview(newList);
+                                }}
+                                style={{ background: 'none', border: 'none', borderBottom: '1px solid transparent', color: '#fff', width: '100%' }}
+                              />
+                            </td>
+                            <td style={{ padding: '10px' }}>
+                              <input 
+                                type="number" 
+                                value={item.saldo} 
+                                onChange={(e) => {
+                                  const newList = [...importPreview];
+                                  newList[idx].saldo = Number(e.target.value);
+                                  setImportPreview(newList);
+                                }}
+                                style={{ background: 'none', border: 'none', borderBottom: '1px solid transparent', color: item.saldo > 0 ? '#ef4444' : '#22c55e', width: '80px', fontWeight: 'bold' }}
+                              />
+                            </td>
+                            <td style={{ padding: '10px' }}>
+                              <span style={{ fontSize: '0.7rem', color: item.status === 'PAGO' ? '#22c55e' : '#ef4444' }}>{item.status}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button onClick={handleConfirmImport} className="vini-btn-primary" style={{ flex: 1, padding: '1rem' }}>
+                      Confirmar Importação de {importPreview.filter(p => p.selected).length} itens
+                    </button>
+                    <button onClick={() => setImportPreview([])} className="vini-btn-secondary" style={{ padding: '1rem' }}>
+                      Voltar e Corrigir
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

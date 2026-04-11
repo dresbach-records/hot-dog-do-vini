@@ -71,6 +71,7 @@ export const orders = {
   listAll: () => api.get('/orders/all'),
   create: (data) => api.post('/orders', data),
   updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
+  despachar: (id, motoboy_id) => api.post(`/orders/${id}/despachar`, { motoboy_id }),
 };
 
 export const cupons = {
@@ -107,6 +108,21 @@ export const caixa = {
 export const auth = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   me: () => api.get('/auth/me'),
+};
+
+export const rh = {
+  list: () => api.get('/rh'),
+  create: (data) => api.post('/rh', data),
+  update: (id, data) => api.put(`/rh/${id}`, data),
+  delete: (id) => api.delete(`/rh/${id}`),
+};
+
+export const estoque = {
+  listInsumos: () => api.get('/estoque/insumos'),
+  createInsumo: (data) => api.post('/estoque/insumos', data),
+  movimentar: (id, quantidade, motivo) => api.post(`/estoque/insumos/${id}/movimentar`, { quantidade, motivo }),
+  getReceita: (id) => api.get(`/estoque/receita/${id}`),
+  saveReceita: (produto_id, insumos) => api.post('/estoque/receita', { produto_id, insumos }),
 };
 
 export default api;

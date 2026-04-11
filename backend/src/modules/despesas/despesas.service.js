@@ -1,27 +1,33 @@
-import { query } from '../../config/database.js';
+import { db } from '../../config/database.js';
+import crypto from 'node:crypto';
 
 export const despesasService = {
   async list() {
-    return await query('SELECT * FROM despesas ORDER BY vencimento ASC');
+    const [rows] = await db.query('SELECT * FROM despesas ORDER BY created_at DESC');
+    return rows;
   },
 
   async create(data) {
-    const columns = Object.keys(data).join(', ');
-    const placeholders = Object.keys(data).map(() => '?').join(', ');
-    const values = Object.values(data);
-    const result = await query(`INSERT INTO despesas (${columns}) VALUES (${placeholders})`, values);
-    return { id: result.insertId, ...data };
-  },
+    const id = crypto.randomUUID();
+    const { descricao, valor, categoria, pago, data_pagamento } = data;
+    await db.query(
+      'INSERT INTO despesas (id, descricao, valor, categoria, pago, data_pagamento) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, descricao, valor, categoria, pago ? 1 : 0, data_pagamento]
+    );
 
-  async update(id, data) {
-    const sets = Object.keys(data).map(key => `${key} = ?`).join(', ');
-    const values = [...Object.values(data), id];
-    await query(`UPDATE despesas SET ${sets} WHERE id = ?`, values);
+    // Se estiver pago, gera saída automática no caixa
+    if (pago) {
+      await db.query(
+        'INSERT INTO caixa_movimentacoes (id, tipo, valor, origem) VALUES (?, ?, ?, ?)',
+        [crypto.randomUUID(), 'saida', valor, `Despesa: ${descricao}`]
+      );
+    }
+
     return { id, ...data };
   },
 
   async delete(id) {
-    await query('DELETE FROM despesas WHERE id = ?', [id]);
+    await db.query('DELETE FROM despesas WHERE id = ?', [id]);
     return { success: true };
   }
 };

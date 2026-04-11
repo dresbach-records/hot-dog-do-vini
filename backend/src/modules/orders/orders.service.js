@@ -1,5 +1,6 @@
 import { query } from '../../config/database.js';
 import { asaasService } from '../integrations/asaas/asaas.service.js';
+import { focusnfeService } from '../integrations/focusnfe/focusnfe.service.js';
 import crypto from 'node:crypto';
 
 /**
@@ -87,18 +88,46 @@ export const ordersService = {
       ]
     );
 
-    // 4. REGISTRO DE PAGAMENTOS (Multi-método / Split)
+    // 4. REGISTRO DE PAGAMENTOS (Multi-método / Split) & FLUXO DE CAIXA REAL
     if (pagamentos && pagamentos.length > 0) {
       for (const p of pagamentos) {
+        const pagId = crypto.randomUUID();
         await query(
           'INSERT INTO pedido_pagamentos (id, pedido_id, metodo, valor, status, pago_em) VALUES (?, ?, ?, ?, ?, ?)',
-          [crypto.randomUUID(), orderId, p.metodo, p.valor, 'pago', new Date()]
+          [pagId, orderId, p.metodo, p.valor, 'pago', new Date()]
+        );
+
+        // 💰 NOVO: Entrada automática no Fluxo de Caixa
+        await query(
+          'INSERT INTO caixa_movimentacoes (id, tipo, valor, origem, pedido_id) VALUES (?, ?, ?, ?, ?)',
+          [crypto.randomUUID(), 'entrada', p.valor, `Venda: Pedido #${orderId.substring(0, 5)}`, orderId]
         );
       }
     }
 
-    // 5. INTEGRAÇÃO FINANCEIRA (Exemplo Asaas se for Pix)
-    // ... lógica do asaas mantida ou refatorada se necessário ...
+    // 📦 NOVO: BAIXA AUTOMÁTICA DE ESTOQUE (Baseado em Receita)
+    for (const item of itensProcessados) {
+      try {
+        // Buscar se o produto tem receita cadastrada
+        const insumosNecessarios = await query(
+          'SELECT insumo_id, quantidade_necessaria FROM produto_insumos WHERE produto_id = ?',
+          [item.id]
+        );
+
+        for (const rec of insumosNecessarios) {
+          const qtdTotalBaixa = Number(rec.quantidade_necessaria) * Number(item.quantidade);
+          
+          await query(
+            'UPDATE insumos SET quantidade = quantidade - ? WHERE id = ?',
+            [qtdTotalBaixa, rec.insumo_id]
+          );
+
+          console.log(`[Estoque] Baixa de ${qtdTotalBaixa} do insumo ${rec.insumo_id} devido ao pedido ${orderId}`);
+        }
+      } catch (err) {
+        console.error(`[Estoque Error] Falha na baixa do item ${item.id}:`, err);
+      }
+    }
 
     return { 
       success: true, 
@@ -109,23 +138,43 @@ export const ordersService = {
   },
 
   async updateStatus(id, status, userId) {
-    await query('UPDATE pedidos SET status = ? WHERE id = ?', [status, id]);
+    await query('UPDATE pedidos SET status = ?, status_entrega = ? WHERE id = ?', [status, status === 'em_rota' ? 'em_rota' : 'concluido', id]);
     
     // Log de Auditoria
     await query(
       'INSERT INTO system_logs (user_id, acao, modulo, dados_novos) VALUES (?, ?, ?, ?)',
       [userId, `Alterou status para ${status}`, 'pedidos', JSON.stringify({ pedido_id: id })]
     );
+    
+    // 🏷️ GATILHO FISCAL: Emissão Automática de NFC-e
+    if (status === 'pago') {
+       focusnfeService.emitirNFCe(id).catch(err => console.error('[Fatal Fiscal Hook]', err));
+    }
 
     return { success: true, status };
   },
 
+  async despachar(id, motoboyId, userId) {
+    await query(
+      'UPDATE pedidos SET status = "em_rota", status_entrega = "em_rota", motoboy_id = ? WHERE id = ?',
+      [motoboyId, id]
+    );
+
+    await query(
+      'INSERT INTO system_logs (user_id, acao, modulo, dados_novos) VALUES (?, ?, ?, ?)',
+      [userId, `Despachou pedido com motoboy ${motoboyId}`, 'logistica', JSON.stringify({ pedido_id: id, motoboy_id: motoboyId })]
+    );
+
+    return { success: true };
+  },
+
   async listAll() {
     return await query(`
-      SELECT p.*, c.nome as cliente_nome, u.nome as operator_nome 
+      SELECT p.*, c.nome as cliente_nome, u.nome as operator_nome, f.nome as motoboy_nome 
       FROM pedidos p
       LEFT JOIN clientes c ON p.cliente_id = c.id
       LEFT JOIN users u ON p.user_id = u.id
+      LEFT JOIN funcionarios f ON p.motoboy_id = f.id
       ORDER BY p.created_at DESC
     `);
   }

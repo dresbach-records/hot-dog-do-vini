@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import { 
   FileText, 
   ShieldCheck, 
@@ -28,6 +29,60 @@ function Fiscal() {
   const handleToggle = () => {
     setFiscalConfig(prev => ({ ...prev, active: !prev.active }));
   };
+
+  const [certStatus, setCertStatus] = useState({
+    loading: true,
+    found: false,
+    message: 'Verificando...',
+    data: null
+  });
+
+  useEffect(() => {
+    const checkCert = async () => {
+      try {
+        const res = await api.get('/fiscal/status');
+        if (res.success && res.status === 'ENCONTRADO') {
+          setCertStatus({
+            loading: false,
+            found: true,
+            message: 'Certificado Detectado',
+            data: res.data
+          });
+        } else {
+          setCertStatus({
+            loading: false,
+            found: false,
+            message: res.message || 'Não Encontrado',
+            data: res.data
+          });
+        }
+      } catch (err) {
+        setCertStatus({
+          loading: false,
+          found: false,
+          message: 'Erro de Conexão',
+          data: null
+        });
+      }
+    };
+    checkCert();
+
+    const fetchConfig = async () => {
+      try {
+        const res = await api.get('/fiscal/config');
+        if (res.success) {
+          setFiscalConfig(prev => ({
+            ...prev,
+            ...res.data,
+            active: res.data.token_ativo
+          }));
+        }
+      } catch (err) {
+        console.error('Erro ao buscar config fiscal', err);
+      }
+    };
+    fetchConfig();
+  }, []);
 
   return (
     <div className="dashboard animate-fade-in">
@@ -124,14 +179,23 @@ function Fiscal() {
                 <ShieldCheck size={18} color="var(--c-blue)" /> Status do Sistema
              </h3>
              <ul style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.85rem' }}>
-                <li style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                  <span className="text-secondary">API Fiscal (FocusNFe)</span>
-                  <strong style={{ color: 'var(--c-yellow)' }}>Aguardando Token</strong>
-                </li>
-                <li style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                  <span className="text-secondary">Certificado Digital</span>
-                  <strong style={{ color: 'var(--c-red)' }}>Não Encontrado</strong>
-                </li>
+                 <li style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                   <span className="text-secondary">API Fiscal (FocusNFe)</span>
+                   <strong style={{ color: fiscalConfig.token_ativo ? 'var(--c-green)' : 'var(--c-yellow)' }}>
+                     {fiscalConfig.token_ativo ? 'Conectado (Token OK)' : 'Aguardando Token'}
+                   </strong>
+                 </li>
+                 <li style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                   <span className="text-secondary">Certificado Digital</span>
+                   <strong style={{ color: certStatus.found ? 'var(--c-green)' : 'var(--c-red)' }}>
+                     {certStatus.message}
+                   </strong>
+                 </li>
+                 {certStatus.found && (
+                   <li style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '-5px' }}>
+                     Caminho: {certStatus.data?.path}
+                   </li>
+                 )}
                 <li style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span className="text-secondary">Última NF emitida</span>
                   <strong style={{ color: 'var(--text-muted)' }}>Nenhuma</strong>

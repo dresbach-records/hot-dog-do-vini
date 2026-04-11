@@ -130,6 +130,10 @@ function LoginCliente() {
           mode === 'recover' ? handleRecovery : 
           handleUpdatePassword
         }>
+          {/* Dummy fields to trick browser autofill */}
+          <input type="text" name="vini_dummy_customer" style={{ display: 'none' }} aria-hidden="true" />
+          <input type="password" name="vini_dummy_customer_pass" style={{ display: 'none' }} aria-hidden="true" />
+
           {mode === 'signup' && (
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#475569', marginBottom: '0.4rem' }}>Nome Completo</label>
@@ -143,6 +147,7 @@ function LoginCliente() {
                   required 
                   style={{ width: '100%', padding: '0.8rem 0.8rem 0.8rem 2.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} 
                   autoComplete="off"
+                  name="vini_customer_name"
                 />
               </div>
             </div>
@@ -161,6 +166,7 @@ function LoginCliente() {
                   required 
                   style={{ width: '100%', padding: '0.8rem 0.8rem 0.8rem 2.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} 
                   autoComplete="off"
+                  name="vini_customer_email"
                 />
               </div>
             </div>
@@ -180,7 +186,8 @@ function LoginCliente() {
                   placeholder="••••••••" 
                   required 
                   style={{ width: '100%', padding: '0.8rem 0.8rem 0.8rem 2.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} 
-                  autoComplete="off"
+                  autoComplete="new-password"
+                  name="vini_customer_pass"
                 />
               </div>
             </div>
@@ -198,7 +205,8 @@ function LoginCliente() {
                  placeholder="••••••••" 
                  required 
                  style={{ width: '100%', padding: '0.8rem 0.8rem 0.8rem 2.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }} 
-                 autoComplete="off"
+                 autoComplete="new-password"
+                 name="vini_customer_signup_pass"
                />
              </div>
            </div>

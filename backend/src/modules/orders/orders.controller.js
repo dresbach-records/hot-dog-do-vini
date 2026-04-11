@@ -31,8 +31,15 @@ export const ordersController = {
   async updateStatus(req, res) {
     const { id } = req.params;
     const { status } = req.body;
-    const data = await ordersService.update(id, { status });
+    const data = await ordersService.updateStatus(id, status, req.user?.id);
     res.json({ success: true, data });
+  },
+
+  async despachar(req, res) {
+    const { id } = req.params;
+    const { motoboy_id } = req.body;
+    await ordersService.despachar(id, motoboy_id, req.user?.id);
+    res.json({ success: true, message: 'Pedido despachado' });
   },
 
   async delete(req, res) {
