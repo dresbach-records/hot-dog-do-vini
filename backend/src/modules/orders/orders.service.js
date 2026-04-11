@@ -19,122 +19,143 @@ export const ordersService = {
       sessao_id = null 
     } = data;
 
-    // 1. BARREIRA DE IDEMPOTÊNCIA
-    const recentOrders = await query(
-      'SELECT id, created_at FROM pedidos WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
-      [user.id]
-    );
+    let conn;
+    try {
+      conn = await db.getConnection();
+      await conn.beginTransaction();
 
-    if (recentOrders && recentOrders.length > 0) {
-      const diffSeconds = (new Date() - new Date(recentOrders[0].created_at)) / 1000;
-      if (diffSeconds < 5) {
-        throw new Error('Processando pedido... aguarde alguns segundos.');
-      }
-    }
+      // 1. BARREIRA DE IDEMPOTÊNCIA (Dentro da transação para lock)
+      const [recentOrders] = await conn.execute(
+        'SELECT id, created_at FROM pedidos WHERE user_id = ? ORDER BY created_at DESC LIMIT 1 FOR UPDATE',
+        [user.id]
+      );
 
-    // 2. RECÁLCULO TOTAL (Zero Trust)
-    let totalGeral = 0;
-    const itensProcessados = [];
-
-    for (const item of itens) {
-      const [product] = await query('SELECT preco, titulo FROM produtos WHERE id = ?', [item.id]);
-      if (!product) throw new Error(`Produto ${item.id} não encontrado`);
-
-      let precoBase = Number(product.preco);
-      
-      // Adiciona preço da variação
-      if (item.selectedVariacao) {
-        const [variacao] = await query('SELECT preco_adicional FROM produto_variacoes WHERE id = ?', [item.selectedVariacao.id]);
-        if (variacao) precoBase += Number(variacao.preco_adicional);
+      if (recentOrders && recentOrders.length > 0) {
+        const diffSeconds = (new Date() - new Date(recentOrders[0].created_at)) / 1000;
+        if (diffSeconds < 5) {
+          throw new Error('Processando pedido... aguarde alguns segundos.');
+        }
       }
 
-      // Adiciona preço dos adicionais
-      if (item.selectedAdicionais?.length > 0) {
-        const adicIds = item.selectedAdicionais.map(a => a.id);
-        const [adicionais] = await query('SELECT SUM(preco) as extra FROM produto_adicionais WHERE id IN (?)', [adicIds]);
-        if (adicionais.extra) precoBase += Number(adicionais.extra);
-      }
+      // 2. RECÁLCULO TOTAL (Zero Trust) e VALIDAÇÃO DE ESTOQUE
+      let totalGeral = 0;
+      const itensProcessados = [];
 
-      const subtotal = precoBase * item.quantidade;
-      totalGeral += subtotal;
+      for (const item of itens) {
+        const [products] = await conn.execute('SELECT preco, titulo FROM produtos WHERE id = ? FOR UPDATE', [item.id]);
+        const product = products[0];
+        if (!product) throw new Error(`Produto ${item.id} não encontrado`);
 
-      itensProcessados.push({
-        ...item,
-        titulo: product.titulo,
-        preco_unitario: precoBase,
-        subtotal
-      });
-    }
+        let precoBase = Number(product.preco);
+        
+        // Adiciona preço da variação
+        if (item.selectedVariacao) {
+          const [variacoes] = await conn.execute('SELECT preco_adicional FROM produto_variacoes WHERE id = ?', [item.selectedVariacao.id]);
+          if (variacoes[0]) precoBase += Number(variacoes[0].preco_adicional);
+        }
 
-    // 3. PERSISTÊNCIA DO PEDIDO
-    const orderId = crypto.randomUUID();
-    await query(
-      `INSERT INTO pedidos (
-        id, user_id, cliente_id, sessao_id, itens, total, 
-        endereco_entrega, forma_pagamento, status, created_at, agendado_para
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        orderId, 
-        user.id, 
-        cliente_id || null, 
-        sessao_id || null,
-        JSON.stringify(itensProcessados), 
-        totalGeral,
-        JSON.stringify(endereco || {}),
-        pagamentos && pagamentos.length > 0 ? pagamentos[0].metodo : 'pendente', // Legado: primeiro método
-        'pendente',
-        new Date(),
-        agendamento ? new Date(agendamento) : null
-      ]
-    );
+        // Adiciona preço dos adicionais
+        if (item.selectedAdicionais?.length > 0) {
+          const adicIds = item.selectedAdicionais.map(a => a.id);
+          const [adicionais] = await conn.execute(`SELECT SUM(preco) as extra FROM produto_adicionais WHERE id IN (${adicIds.join(',')})`);
+          if (adicionais[0].extra) precoBase += Number(adicionais[0].extra);
+        }
 
-    // 4. REGISTRO DE PAGAMENTOS (Multi-método / Split) & FLUXO DE CAIXA REAL
-    if (pagamentos && pagamentos.length > 0) {
-      for (const p of pagamentos) {
-        const pagId = crypto.randomUUID();
-        await query(
-          'INSERT INTO pedido_pagamentos (id, pedido_id, metodo, valor, status, pago_em) VALUES (?, ?, ?, ?, ?, ?)',
-          [pagId, orderId, p.metodo, p.valor, 'pago', new Date()]
-        );
+        const subtotal = precoBase * item.quantidade;
+        totalGeral += subtotal;
 
-        // 💰 NOVO: Entrada automática no Fluxo de Caixa
-        await query(
-          'INSERT INTO caixa_movimentacoes (id, tipo, valor, origem, pedido_id) VALUES (?, ?, ?, ?, ?)',
-          [crypto.randomUUID(), 'entrada', p.valor, `Venda: Pedido #${orderId.substring(0, 5)}`, orderId]
-        );
-      }
-    }
+        itensProcessados.push({
+          ...item,
+          titulo: product.titulo,
+          preco_unitario: precoBase,
+          subtotal
+        });
 
-    // 📦 NOVO: BAIXA AUTOMÁTICA DE ESTOQUE (Baseado em Receita)
-    for (const item of itensProcessados) {
-      try {
-        // Buscar se o produto tem receita cadastrada
-        const insumosNecessarios = await query(
+        // 📦 NOVA VALIDAÇÃO CRÍTICA DE ESTOQUE (LOCK)
+        const [insumosNecessarios] = await conn.execute(
           'SELECT insumo_id, quantidade_necessaria FROM produto_insumos WHERE produto_id = ?',
           [item.id]
         );
 
         for (const rec of insumosNecessarios) {
+          const [insumos] = await conn.execute(
+            'SELECT nome, quantidade FROM insumos WHERE id = ? FOR UPDATE',
+            [rec.insumo_id]
+          );
+          const insumo = insumos[0];
+
           const qtdTotalBaixa = Number(rec.quantidade_necessaria) * Number(item.quantidade);
           
-          await query(
+          if (insumo.quantidade < qtdTotalBaixa) {
+            throw new Error(`Estoque insuficiente para o insumo: ${insumo.nome}. Disponível: ${insumo.quantidade}`);
+          }
+
+          // Realiza a baixa
+          await conn.execute(
             'UPDATE insumos SET quantidade = quantidade - ? WHERE id = ?',
             [qtdTotalBaixa, rec.insumo_id]
           );
 
-          console.log(`[Estoque] Baixa de ${qtdTotalBaixa} do insumo ${rec.insumo_id} devido ao pedido ${orderId}`);
+          // Log de movimentação de estoque
+          await conn.execute(
+            'INSERT INTO estoque_movimentacoes (id, insumo_id, tipo, quantidade, observacao) VALUES (?, ?, ?, ?, ?)',
+            [crypto.randomUUID(), rec.insumo_id, 'saida', qtdTotalBaixa, `Venda: Pedido Base`]
+          );
         }
-      } catch (err) {
-        console.error(`[Estoque Error] Falha na baixa do item ${item.id}:`, err);
       }
-    }
 
-    return { 
-      success: true, 
-      id: orderId,
-      total: totalGeral,
-      message: 'Pedido registrado com sucesso!' 
-    };
+      // 3. PERSISTÊNCIA DO PEDIDO
+      const orderId = crypto.randomUUID();
+      await conn.execute(
+        `INSERT INTO pedidos (
+          id, user_id, cliente_id, sessao_id, itens, total, 
+          endereco_entrega, forma_pagamento, status, created_at, agendado_para
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          orderId, 
+          user.id, 
+          cliente_id || null, 
+          sessao_id || null,
+          JSON.stringify(itensProcessados), 
+          totalGeral,
+          JSON.stringify(endereco || {}),
+          pagamentos && pagamentos.length > 0 ? pagamentos[0].metodo : 'pendente',
+          'pendente',
+          new Date(),
+          agendamento ? new Date(agendamento) : null
+        ]
+      );
+
+      // 4. REGISTRO DE PAGAMENTOS & CAIXA
+      if (pagamentos && pagamentos.length > 0) {
+        for (const p of pagamentos) {
+          const pagId = crypto.randomUUID();
+          await conn.execute(
+            'INSERT INTO pedido_pagamentos (id, pedido_id, metodo, valor, status, pago_em) VALUES (?, ?, ?, ?, ?, ?)',
+            [pagId, orderId, p.metodo, p.valor, 'pago', new Date()]
+          );
+
+          await conn.execute(
+            'INSERT INTO caixa_movimentacoes (id, tipo, valor, origem, pedido_id) VALUES (?, ?, ?, ?, ?)',
+            [crypto.randomUUID(), 'entrada', p.valor, `Venda: Pedido #${orderId.substring(0, 5)}`, orderId]
+          );
+        }
+      }
+
+      await conn.commit();
+      
+      return { 
+        success: true, 
+        id: orderId,
+        total: totalGeral,
+        message: 'Pedido registrado com sucesso e estoque atualizado!' 
+      };
+    } catch (error) {
+      if (conn) await conn.rollback();
+      throw error;
+    } finally {
+      if (conn) conn.release();
+    }
   },
 
   async updateStatus(id, status, userId) {

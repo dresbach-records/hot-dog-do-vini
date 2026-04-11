@@ -1,3 +1,5 @@
+import logger from '../utils/logger.js';
+
 /**
  * Middleware Global de Tratamento de Erros
  * Captura todos os erros e responde no formato padronizado
@@ -5,13 +7,13 @@
 export const errorHandler = (err, req, res, next) => {
   const isDev = process.env.NODE_ENV !== 'production';
   
-  // Log estruturado para o backend
-  console.error({
-    timestamp: new Date().toISOString(),
+  // Log estruturado profissional com Winston
+  logger.error({
+    message: err.message,
     path: req.url,
     method: req.method,
-    message: err.message,
-    stack: isDev ? err.stack : undefined
+    stack: err.stack,
+    user: req.user ? req.user.id : 'anonymous'
   });
 
   // Erros de Validação (Zod)

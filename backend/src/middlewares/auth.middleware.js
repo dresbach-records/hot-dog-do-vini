@@ -34,6 +34,16 @@ export async function authMiddleware(req, res, next) {
       });
     }
 
+    // 🔐 TRAVA ZERO TRUST: Apenas o ADMIN acessa o ERP
+    const ADMIN_EMAIL = 'admin@hotdogdovini.com.br';
+    if (decoded.email !== ADMIN_EMAIL) {
+      console.warn(`[Security Alert] Acesso negado para: ${decoded.email}`);
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Acesso restrito: Apenas o administrador principal pode acessar este módulo.' 
+      });
+    }
+
     // Injeção de Contexto para os Controllers
     req.user = decoded;
     next();
