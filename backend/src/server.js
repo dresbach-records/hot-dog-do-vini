@@ -16,8 +16,12 @@ const io = new Server(httpServer, {
   cors: { origin: '*' }
 });
 
-// Inicializar o Bot com acesso ao Socket.io
-botService.init(io);
+// Inicializar o Bot com acesso ao Socket.io (Apenas se não estiver desativado)
+if (process.env.DISABLE_BOT !== 'true') {
+  botService.init(io);
+} else {
+  console.log('🤖 ViniBot: Desativado via configuração (DISABLE_BOT=true).');
+}
 
 httpServer.listen(PORT, () => {
   console.log(`\n🚀 Backend Industrial Vini's Delivery + ViniBot ON: http://localhost:${PORT}`);
