@@ -144,6 +144,12 @@ function App() {
       <h3>Carregando Vini's Cloud...</h3>
     </div>
   );
+  
+  // Detecção de Subdomínio para Roteamento Inteligente
+  const hostname = window.location.hostname;
+  const isERP = hostname.startsWith('erp.');
+  const isCliente = hostname.startsWith('cliente.') || hostname.startsWith('area_do_cliente.');
+  const isCheckout = hostname.startsWith('checkout.');
 
   const isAdmin = session && session.user?.role !== 'cliente';
 
@@ -153,8 +159,16 @@ function App() {
         <CaixaProvider>
           <Router>
             <Routes>
-              {/* == LANDING PAGE PÚBLICA (RAIZ) == */}
-              <Route path="/" element={<Home />} />
+              {/* == LÓGICA DE SUBDOMÍNIO (ROOT REDIRECTS) == */}
+              <Route path="/" element={
+                 isERP ? <Navigate to="/admin/dashboard" /> :
+                 isCliente ? <Navigate to="/cliente.vinis" /> :
+                 isCheckout ? <Navigate to="/checkout" /> :
+                 <Home />
+              } />
+
+              {/* == LANDING PAGE PÚBLICA == */}
+              {/* Já tratada acima no root / */}
 
               {/* == LOGIN PORTAL DO CLIENTE == */}
               <Route path="/login.vinis" element={session && !isAdmin ? <Navigate to="/cliente.vinis" /> : <LoginCliente />} />
