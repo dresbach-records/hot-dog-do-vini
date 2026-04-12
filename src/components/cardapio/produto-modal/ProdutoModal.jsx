@@ -11,7 +11,8 @@ const ProdutoModal = ({ isOpen, onClose, onSave, produto, categorias }) => {
     categoria_id: '',
     imagem_url: '',
     disponivel: true,
-    ncm: '2106.90.90'
+    ncm: '2106.90.90',
+    barcode: ''
   });
 
   const [insumosList, setInsumosList] = useState([]);
@@ -30,7 +31,8 @@ const ProdutoModal = ({ isOpen, onClose, onSave, produto, categorias }) => {
           categoria_id: produto.categoria_id || '',
           imagem_url: produto.imagem_url || '',
           disponivel: produto.disponivel !== undefined ? produto.disponivel : true,
-          ncm: produto.ncm || '2106.90.90'
+          ncm: produto.ncm || '2106.90.90',
+          barcode: produto.barcode || ''
         });
       } else {
         setReceita([]);
@@ -41,7 +43,8 @@ const ProdutoModal = ({ isOpen, onClose, onSave, produto, categorias }) => {
           categoria_id: categorias[0]?.id || '',
           imagem_url: '',
           disponivel: true,
-          ncm: '2106.90.90'
+          ncm: '2106.90.90',
+          barcode: ''
         });
       }
     }
@@ -145,6 +148,19 @@ const ProdutoModal = ({ isOpen, onClose, onSave, produto, categorias }) => {
               <div className="form-group">
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.5rem' }}>Título do Produto</label>
                 <input type="text" name="titulo" value={formData.titulo} onChange={handleChange} placeholder="Ex: Hot Dog Especial" style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border-color)' }} required />
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.5rem' }}>Código de Barras (EAN/Scanner)</label>
+                <input 
+                  type="text" 
+                  name="barcode" 
+                  value={formData.barcode} 
+                  onChange={handleChange} 
+                  autoFocus 
+                  placeholder="Escaneie ou digite o código..." 
+                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #EA1D2C', background: '#fff' }} 
+                />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

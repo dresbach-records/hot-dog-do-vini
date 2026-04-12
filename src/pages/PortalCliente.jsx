@@ -249,6 +249,18 @@ const PortalCliente = ({ session }) => {
         </div>
 
         <div className="vini-portal-header-actions">
+          {/* BOTÃO IFOOD — NOVO CANAL */}
+          <a 
+            href="https://www.ifood.com.br/delivery/taquara-rs/vinis-delivery-centro/f5ed90d6-17b5-48b4-826d-7d8856ce814d" 
+            target="_blank" 
+            rel="noreferrer"
+            className="vini-portal-action-item ifood-highlight"
+            style={{ textDecoration: 'none', background: '#EA1D2C', padding: '8px 15px', borderRadius: '12px', color: '#fff' }}
+          >
+            <Store size={22} strokeWidth={2.5} />
+            <span style={{ fontWeight: '800', fontSize: '12px' }}>Peça no iFood</span>
+          </a>
+
           <div className="vini-portal-action-item" onClick={() => setIsCartOpen(true)}>
             <div style={{ position: 'relative' }}>
               <ShoppingBag size={28} strokeWidth={2.5} />

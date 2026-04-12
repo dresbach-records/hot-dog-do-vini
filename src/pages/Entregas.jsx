@@ -109,8 +109,17 @@ function Entregas() {
 
       <div className="vini-tabs" style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
         <button onClick={() => setActiveTab('expedicao')} style={{ background: 'none', border: 'none', fontSize: '1rem', fontWeight: activeTab === 'expedicao' ? '700' : '500', color: activeTab === 'expedicao' ? 'var(--c-red)' : 'var(--text-secondary)', paddingBottom: '0.5rem', borderBottom: activeTab === 'expedicao' ? '2px solid var(--c-red)' : 'none', cursor: 'pointer' }}>Quadro de Expedição</button>
+        <button onClick={() => setActiveTab('mapa')} style={{ background: 'none', border: 'none', fontSize: '1rem', fontWeight: activeTab === 'mapa' ? '700' : '500', color: activeTab === 'mapa' ? 'var(--c-red)' : 'var(--text-secondary)', paddingBottom: '0.5rem', borderBottom: activeTab === 'mapa' ? '2px solid var(--c-red)' : 'none', cursor: 'pointer' }}>Mapa de Entregas</button>
         <button onClick={() => setActiveTab('motoboys')} style={{ background: 'none', border: 'none', fontSize: '1rem', fontWeight: activeTab === 'motoboys' ? '700' : '500', color: activeTab === 'motoboys' ? 'var(--c-red)' : 'var(--text-secondary)', paddingBottom: '0.5rem', borderBottom: activeTab === 'motoboys' ? '2px solid var(--c-red)' : 'none', cursor: 'pointer' }}>Entregadores (RH)</button>
       </div>
+
+      {activeTab === 'mapa' && (
+         <div className="vini-glass-panel" style={{ padding: '0', height: '600px', overflow: 'hidden', borderRadius: '24px' }}>
+            <div id="vini-logistics-map" style={{ height: '100%', width: '100%' }}></div>
+            {/* Lógica de Mapa Injetada via useEffect no pai ou componente */}
+            <MapLogic pedidos={expedicao} />
+         </div>
+      )}
 
       {activeTab === 'expedicao' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
@@ -186,6 +195,62 @@ function Entregas() {
       )}
     </div>
   );
+}
+
+function MapLogic({ pedidos }) {
+  useEffect(() => {
+    if (!window.L) return;
+
+    // Coordenadas iniciais (Taquara/RS)
+    const storeLat = -29.6514;
+    const storeLng = -50.7797;
+
+    const map = window.L.map('vini-logistics-map').setView([storeLat, storeLng], 13);
+
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Marcador da Loja
+    const storeIcon = window.L.divIcon({
+      className: 'store-marker',
+      html: '<div style="background: #EA1D2C; width: 15px; height: 15px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.3)"></div>',
+      iconSize: [20, 20]
+    });
+
+    window.L.marker([storeLat, storeLng], { icon: storeIcon })
+      .addTo(map)
+      .bindPopup('<b>Vini\'s Delivery</b><br/>Sede Central')
+      .openPopup();
+
+    // Geocodificação de Pedidos (Simplificada)
+    pedidos.forEach(async (p) => {
+      const end = JSON.parse(p.endereco_entrega || '{}');
+      if (!end.logradouro) return;
+
+      const fullAddress = `${end.logradouro}, ${end.numero}, ${end.bairro}, Taquara, RS, Brasil`;
+      
+      try {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}`);
+        const data = await resp.json();
+        
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0];
+          window.L.marker([lat, lon])
+            .addTo(map)
+            .bindPopup(`<b>Pedido #${p.id.substring(0,5)}</b><br/>${p.cliente_nome || 'Consumidor'}<br/>${end.logradouro}`);
+        }
+      } catch (err) {
+        console.warn('Erro geocoding:', fullAddress);
+      }
+    });
+
+    return () => {
+      map.remove();
+    };
+  }, [pedidos]);
+
+  return null;
 }
 
 export default Entregas;

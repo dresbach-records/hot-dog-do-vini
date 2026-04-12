@@ -25,6 +25,54 @@ function Cardapio() {
     fetchDados();
   }, []);
 
+  // 🖱️ LÓGICA DE SCANNER (USB HID / KEYBOARD EMULATION)
+  useEffect(() => {
+    let barcodeString = '';
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e) => {
+      // Ignora se estiver digitando em outros inputs normais (descrição, preço, etc)
+      if (e.target.tagName === 'INPUT' && e.target.name !== 'barcode' && e.target.name !== 'search') return;
+      if (e.target.tagName === 'TEXTAREA') return;
+
+      const currentTime = Date.now();
+      
+      // Scanners reais enviam as teclas muito rápido (< 50ms)
+      if (currentTime - lastKeyTime > 100) {
+        barcodeString = '';
+      }
+
+      if (e.key === 'Enter') {
+        if (barcodeString.length > 3) {
+          processBarcode(barcodeString);
+          barcodeString = '';
+        }
+      } else if (e.key.length === 1 && /[0-9]/.test(e.key)) {
+        barcodeString += e.key;
+      }
+
+      lastKeyTime = currentTime;
+    };
+
+    const processBarcode = (code) => {
+      console.log('🔍 Barcode detectado:', code);
+      // Busca produto localmente
+      const found = produtos.find(p => p.barcode === code);
+      
+      if (found) {
+         setEditingProduto(found);
+         setIsProdutoModalOpen(true);
+      } else {
+         // Se for novo, abre o modal para criar
+         setEditingProduto({ barcode: code, titulo: '', preco: '', categoria_id: activeCategoriaId });
+         setIsProdutoModalOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [produtos, activeCategoriaId]);
+
   const fetchDados = async () => {
     setLoading(true);
     try {
@@ -55,7 +103,8 @@ function Cardapio() {
         categoria_id: produtoData.categoria_id,
         imagem_url: produtoData.imagem_url,
         disponivel: produtoData.disponivel,
-        ncm: produtoData.ncm
+        ncm: produtoData.ncm,
+        barcode: produtoData.barcode
       };
 
       let response;

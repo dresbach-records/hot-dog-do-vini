@@ -1,7 +1,8 @@
-import { query } from '../../config/database.js';
+import { query, db } from '../../config/database.js';
 import { asaasService } from '../integrations/asaas/asaas.service.js';
 import { focusnfeService } from '../integrations/focusnfe/focusnfe.service.js';
 import { botService } from '../bot/bot.service.js';
+import { pagarmeService } from '../integrations/pagarme/pagarme.service.js';
 import crypto from 'node:crypto';
 
 /**
@@ -106,12 +107,38 @@ export const ordersService = {
       }
 
       // 3. PERSISTÊNCIA DO PEDIDO
+      let pagamentoExternoId = null;
+      let extraPixData = null;
+
+      // 💳 INTEGRAÇÃO PAGAR.ME (Stone)
+      if (pagamentos && pagamentos.length > 0) {
+        const p = pagamentos[0];
+        if (p.metodo === 'pagarme_pix') {
+          const pixRes = await pagarmeService.createPixOrder({
+            items: itensProcessados,
+            cliente: data.cliente || { nome: 'Cliente', email: 'anon@vini.com' }
+          });
+          if (pixRes.success) {
+            pagamentoExternoId = pixRes.order_id;
+            extraPixData = { qr_code: pixRes.qr_code, qr_code_url: pixRes.qr_code_url };
+          }
+        } else if (p.metodo === 'pagarme_card' && p.card_token) {
+           const cardRes = await pagarmeService.createCardOrder({
+             items: itensProcessados,
+             cliente: data.cliente
+           }, p.card_token);
+           if (cardRes.success) {
+             pagamentoExternoId = cardRes.order_id;
+           }
+        }
+      }
+
       const orderId = crypto.randomUUID();
       await conn.execute(
         `INSERT INTO pedidos (
           id, user_id, cliente_id, sessao_id, itens, total, 
-          endereco_entrega, forma_pagamento, status, created_at, agendado_para
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          endereco_entrega, forma_pagamento, pagamento_externo_id, status, created_at, agendado_para
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           orderId, 
           user.id, 
@@ -121,6 +148,7 @@ export const ordersService = {
           totalGeral,
           JSON.stringify(endereco || {}),
           pagamentos && pagamentos.length > 0 ? pagamentos[0].metodo : 'pendente',
+          pagamentoExternoId,
           'pendente',
           new Date(),
           agendamento ? new Date(agendamento) : null
@@ -145,10 +173,19 @@ export const ordersService = {
 
       await conn.commit();
       
+      // 🤖 GATILHO WHATSAPP: Boas vindas / Aguardando PIX
+      if (pagamentoExternoId && pagamentos[0].metodo === 'pagarme_pix') {
+         const [cli] = await query('SELECT telefone FROM clientes WHERE id = ?', [cliente_id]);
+         if (cli?.telefone) {
+            botService.sendOrderUpdate(cli.telefone, orderId, 'aguardando_confirmacao');
+         }
+      }
+
       return { 
         success: true, 
         id: orderId,
         total: totalGeral,
+        pagamento: extraPixData,
         message: 'Pedido registrado com sucesso e estoque atualizado!' 
       };
     } catch (error) {
