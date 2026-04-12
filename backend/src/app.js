@@ -9,6 +9,13 @@ import { errorHandler } from './middlewares/errorHandler.js';
 const app = express();
 
 /**
+ * 0. SEGURANÇA VPS: Trust Proxy
+ * Necessário para que o rate-limit e logs enxerguem o IP real do cliente
+ * quando rodando atrás do Nginx (Proxy Reverso).
+ */
+app.set('trust proxy', 1);
+
+/**
  * 1. CONFIGURAÇÕES BÁSICAS
  */
 app.use(express.json());
