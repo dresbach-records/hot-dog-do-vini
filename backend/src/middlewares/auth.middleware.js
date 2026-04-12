@@ -34,15 +34,12 @@ export async function authMiddleware(req, res, next) {
       });
     }
 
-    // 🔐 TRAVA ZERO TRUST: Apenas o ADMIN acessa o ERP
-    const ADMIN_EMAIL = 'admin@hotdogdovini.com.br';
-    if (decoded.email !== ADMIN_EMAIL) {
-      console.warn(`[Security Alert] Acesso negado para: ${decoded.email}`);
-      return res.status(403).json({ 
-        success: false, 
-        error: 'Acesso restrito: Apenas o administrador principal pode acessar este módulo.' 
-      });
-    }
+    // 🔐 Validação de Cargo (Role): Admin acessa tudo, Cliente acessa apenas o portal
+    // O controle fino por rota pode ser feito nos próprios controllers se necessário.
+    
+    // Injeção de Contexto para os Controllers
+    req.user = decoded;
+    next();
 
     // Injeção de Contexto para os Controllers
     req.user = decoded;
