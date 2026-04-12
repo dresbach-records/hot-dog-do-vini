@@ -232,7 +232,7 @@ const PortalCliente = ({ session }) => {
             src="/Logo-VINI.png" 
             alt="Vini Logo" 
             className="vini-portal-logo" 
-            onClick={() => window.location.href = '/'} 
+            onClick={() => navigate('/')} 
             style={{ cursor: 'pointer' }} 
           />
         </div>
@@ -274,20 +274,20 @@ const PortalCliente = ({ session }) => {
                 </div>
                 
                 <div className="vini-user-dropdown-list">
-                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/pedidos'}>
+                  <div className="vini-dropdown-item" onClick={() => navigate('/cliente/pedidos')}>
                     <ClipboardList size={20} color="#64748b" /> Meus Pedidos
                   </div>
-                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/cupons'}>
+                  <div className="vini-dropdown-item" onClick={() => navigate('/cliente/cupons')}>
                     <Ticket size={20} color="#EA1D2C" /> Meus Cupons
                   </div>
                   <div className="vini-dropdown-item">
                     <Heart size={20} color="#64748b" /> Favoritos
                   </div>
-                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/fidelidade'}>
+                  <div className="vini-dropdown-item" onClick={() => navigate('/cliente/fidelidade')}>
                     <Star size={20} color="#F59E0B" /> Fidelidade Vini
                   </div>
                   <div className="vini-dropdown-divider"></div>
-                  <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/perfil'}>
+                  <div className="vini-dropdown-item" onClick={() => navigate('/cliente/perfil')}>
                     <Settings size={20} color="#64748b" /> Meus Dados
                   </div>
                   <div className="vini-dropdown-item" onClick={() => {

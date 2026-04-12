@@ -38,9 +38,6 @@ export async function authMiddleware(req, res, next) {
     // O controle fino por rota pode ser feito nos próprios controllers se necessário.
     
     // Injeção de Contexto para os Controllers
-    req.user = decoded;
-    next();
-
     // Injeção de Contexto para os Controllers
     req.user = decoded;
     next();
