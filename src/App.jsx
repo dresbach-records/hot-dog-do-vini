@@ -148,8 +148,7 @@ function App() {
   // Detecção de Subdomínio para Roteamento Inteligente
   const hostname = window.location.hostname;
   const isERP = hostname.startsWith('erp.');
-  const isCliente = hostname.startsWith('cliente.') || hostname.startsWith('area_do_cliente.');
-  const isCheckout = hostname.startsWith('checkout.');
+  const isCliente = hostname.startsWith('cliente.');
 
   const isAdmin = session && session.user?.role !== 'cliente';
 
@@ -163,7 +162,6 @@ function App() {
               <Route path="/" element={
                  isERP ? <Navigate to="/admin/dashboard" /> :
                  isCliente ? <Navigate to="/cliente.vinis" /> :
-                 isCheckout ? <Navigate to="/checkout" /> :
                  <Home />
               } />
 
