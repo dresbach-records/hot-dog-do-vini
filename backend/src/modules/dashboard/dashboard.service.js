@@ -59,18 +59,33 @@ export const dashboardService = {
         ORDER BY DATE(created_at) ASC
       `);
 
-      // 3. Top Produtos (Análise Profunda por JSON)
-      const [topProducts] = await db.query(`
-        SELECT 
-          JSON_UNQUOTE(JSON_EXTRACT(item, '$.titulo')) as nome,
-          SUM(JSON_EXTRACT(item, '$.quantidade')) as qtd
-        FROM pedidos,
-        JSON_TABLE(itens, '$[*]' COLUMNS (item JSON PATH '$')) as jt
-        WHERE status != 'CANCELADO'
-        GROUP BY nome
-        ORDER BY qtd DESC
-        LIMIT 5
+      // 3. Top Produtos (Agregação In-Memory para Compatibilidade Universal MariaDB)
+      const [pedidosRecentes] = await db.query(`
+        SELECT itens 
+        FROM pedidos 
+        WHERE status != 'CANCELADO' 
+        AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        LIMIT 100
       `);
+
+      const productCounts = {};
+      pedidosRecentes.forEach(p => {
+        try {
+          const itens = typeof p.itens === 'string' ? JSON.parse(p.itens) : p.itens;
+          if (Array.isArray(itens)) {
+            itens.forEach(item => {
+              const nome = item.titulo || 'Produto';
+              const qtd = Number(item.quantidade) || 1;
+              productCounts[nome] = (productCounts[nome] || 0) + qtd;
+            });
+          }
+        } catch (e) { /* Ignora erros de parse individual */ }
+      });
+
+      const topProducts = Object.entries(productCounts)
+        .map(([nome, qtd]) => ({ nome, qtd }))
+        .sort((a, b) => b.qtd - a.qtd)
+        .slice(0, 5);
 
       // 4. Fiado por Vencimento (Status de Risco)
       const [agingVencimentos] = await db.query(`
