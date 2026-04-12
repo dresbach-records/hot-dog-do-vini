@@ -117,4 +117,9 @@ router.post('/print', async (req, res) => {
   }
 });
 
+// ROTA DE SAÚDE (Health Check para Docker)
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
 export default router;
