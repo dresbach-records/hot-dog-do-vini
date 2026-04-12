@@ -63,5 +63,26 @@ export const juridicoService = {
       [id, dados.nome, dados.tipo, dados.url, dados.data_vencimento]
     );
     return { success: true, id };
+  },
+
+  async updateTemplate(id, dados) {
+    await query(
+      'UPDATE contratos_templates SET nome = ?, tipo = ?, conteudo = ? WHERE id = ?',
+      [dados.nome, dados.tipo, dados.conteudo, id]
+    );
+    return { success: true };
+  },
+
+  async listFiscalSales() {
+    return await query('SELECT * FROM vendas_fiscais_manuais ORDER BY data_venda DESC');
+  },
+
+  async createFiscalSale(dados) {
+    const id = crypto.randomUUID();
+    await query(
+      'INSERT INTO vendas_fiscais_manuais (id, cliente_nome, documento, valor, status) VALUES (?, ?, ?, ?, ?)',
+      [id, dados.cliente_nome, dados.documento, dados.valor, 'pendente']
+    );
+    return { success: true, id };
   }
 };

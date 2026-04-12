@@ -30,6 +30,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ifoodService from '../services/ifood/ifoodService';
 import { useClientes } from '../context/ClientesContext';
 import { products as apiProducts, categories as apiCategories } from '../services/api';
 import ProductModal from '../components/Site/ProductModal';
@@ -60,6 +61,13 @@ const PortalCliente = ({ session }) => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Inicializa o Widget iFood no Cliente também
+        ifoodService.getStatus().then(res => {
+          if (res.success && res.merchants?.length > 0) {
+            ifoodService.initWidget(res.merchants.map(m => m.id));
+          }
+        });
+
         const [prodRes, catRes] = await Promise.all([
           apiProducts.listActive(),
           apiCategories.list()
@@ -124,6 +132,10 @@ const PortalCliente = ({ session }) => {
       events.forEach(name => document.removeEventListener(name, resetTimer));
     };
   }, []);
+
+  const isTestUser = useMemo(() => {
+    return session?.user?.email === 'viniamaral2026@gmail.com';
+  }, [session]);
 
   // Auto-Provisioning logic - FIXED loop
   useEffect(() => {
@@ -250,24 +262,28 @@ const PortalCliente = ({ session }) => {
 
         <div className="vini-portal-header-actions">
           {/* BOTÃO IFOOD — NOVO CANAL */}
-          <a 
-            href="https://www.ifood.com.br/delivery/taquara-rs/vinis-delivery-centro/f5ed90d6-17b5-48b4-826d-7d8856ce814d" 
-            target="_blank" 
-            rel="noreferrer"
-            className="vini-portal-action-item ifood-highlight"
-            style={{ textDecoration: 'none', background: '#EA1D2C', padding: '8px 15px', borderRadius: '12px', color: '#fff' }}
-          >
-            <Store size={22} strokeWidth={2.5} />
-            <span style={{ fontWeight: '800', fontSize: '12px' }}>Peça no iFood</span>
-          </a>
+          {isTestUser && (
+            <a 
+              href="https://www.ifood.com.br/delivery/taquara-rs/vinis-delivery-centro/f5ed90d6-17b5-48b4-826d-7d8856ce814d" 
+              target="_blank" 
+              rel="noreferrer"
+              className="vini-portal-action-item ifood-highlight"
+              style={{ textDecoration: 'none', background: '#EA1D2C', padding: '8px 15px', borderRadius: '12px', color: '#fff' }}
+            >
+              <Store size={22} strokeWidth={2.5} />
+              <span style={{ fontWeight: '800', fontSize: '12px' }}>Peça no iFood</span>
+            </a>
+          )}
 
-          <div className="vini-portal-action-item" onClick={() => setIsCartOpen(true)}>
-            <div style={{ position: 'relative' }}>
-              <ShoppingBag size={28} strokeWidth={2.5} />
-              {cartItems.length > 0 && <span className="vini-badge-cart">{cartItems.length}</span>}
+          {isTestUser && (
+            <div className="vini-portal-action-item" onClick={() => setIsCartOpen(true)}>
+              <div style={{ position: 'relative' }}>
+                <ShoppingBag size={28} strokeWidth={2.5} />
+                {cartItems.length > 0 && <span className="vini-badge-cart">{cartItems.length}</span>}
+              </div>
+              <span>Sacola</span>
             </div>
-            <span>Sacola</span>
-          </div>
+          )}
 
           <div className="vini-portal-action-item user-trigger" onClick={() => setShowUserMenu(!showUserMenu)} style={{ position: 'relative' }}>
             <User size={28} strokeWidth={2.5} />
@@ -369,116 +385,125 @@ const PortalCliente = ({ session }) => {
             </div>
           ) : (
             <>
-              {/* OFERTAS NO TOPO — PREMIUM CARDS */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
-                <div>
-                  <h2 className="vini-portal-section-title">Ofertas Imperdíveis 🔥</h2>
-                  <p className="vini-portal-section-subtitle">Os favoritos do Vini com preços especiais</p>
+            {/* OFERTAS NO TOPO — PREMIUM CARDS */}
+            {isTestUser ? (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
+                  <div>
+                    <h2 className="vini-portal-section-title">Ofertas Imperdíveis 🔥</h2>
+                    <p className="vini-portal-section-subtitle">Os favoritos do Vini com preços especiais</p>
+                  </div>
+                  <button 
+                    className="vini-portal-subnav-item" 
+                    onClick={() => setSelectedCategory('todos')}
+                    style={{ background: 'none', border: 'none', color: '#EA1D2C', marginBottom: '20px' }}
+                  >
+                    Ver todos <ArrowRight size={16} />
+                  </button>
                 </div>
-                <button 
-                  className="vini-portal-subnav-item" 
-                  onClick={() => setSelectedCategory('todos')}
-                  style={{ background: 'none', border: 'none', color: '#EA1D2C', marginBottom: '20px' }}
-                >
-                  Ver todos <ArrowRight size={16} />
-                </button>
+                {/* ... existing offers grid ... */}
+              </>
+            ) : (
+              <div style={{ padding: '80px 20px', textAlign: 'center', background: '#fff', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', marginTop: '40px' }}>
+                 <div style={{ fontSize: '50px', marginBottom: '20px' }}>🚧</div>
+                 <h2 style={{ fontSize: '2rem', fontWeight: '900', color: '#111' }}>Em Breve!</h2>
+                 <p style={{ color: '#64748b', fontSize: '1.1rem', maxWidth: '500px', margin: '10px auto' }}>
+                    Estamos preparando novidades incríveis para você. No momento, o portal está em modo de homologação técnica.
+                 </p>
               </div>
-          <div className="vini-portal-offers-grid" style={{ marginBottom: '50px' }}>
-            {viniOffers.map(offer => {
-              try {
-                const priceNum = offer.preco || 0;
-                const oldPriceNum = priceNum * 1.25; // Dummy discount
-                const discount = 20;
+            )}
 
-                return (
+            {isTestUser && (
+              <>
+                {/* O grid original de produtos fica aqui dentro */}
+                <div className="vini-portal-offers-grid" style={{ marginBottom: '50px' }}>
+                  {viniOffers.map(offer => {
+                    try {
+                      const priceNum = offer.preco || 0;
+                      const oldPriceNum = priceNum * 1.25;
+                      const discount = 20;
+
+                      return (
+                          <div 
+                            key={offer.id} 
+                            className="vini-portal-offer-card" 
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => setSelectedProduct(offer)}
+                          >
+                            <div className="vini-badge-offer">{discount}% OFF</div>
+                            <img src={offer.imagem_url || '/placeholder-food.png'} alt={offer.titulo} className="vini-portal-offer-img" />
+                            <div className="vini-portal-offer-body">
+                              <h4 className="vini-portal-offer-title">{offer.titulo}</h4>
+                              <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{offer.descricao}</p>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '12px', color: '#999', textDecoration: 'line-through' }}>R$ {Number(oldPriceNum || 0).toFixed(2).replace('.', ',')}</span>
+                                <div className="vini-portal-offer-price">R$ {Number(priceNum || 0).toFixed(2).replace('.', ',')}</div>
+                              </div>
+                              <div className="vini-badge-promo">PROMOÇÃO</div>
+                            </div>
+                          </div>
+                      );
+                    } catch(e) { return null; }
+                  })}
+                </div>
+
+                <h2 className="vini-portal-section-title">Nossas Categorias</h2>
+                <div className="vini-portal-category-grid" style={{ marginBottom: '40px' }}>
+                  {dbCategories.map(cat => (
                     <div 
-                      key={offer.id} 
-                      className="vini-portal-offer-card" 
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => setSelectedProduct(offer)}
+                      key={cat.id} 
+                      className={`vini-portal-category-card ${selectedCategory === cat.id ? 'active' : ''}`} 
+                      onClick={() => setSelectedCategory(cat.id)}
                     >
-                      <div className="vini-badge-offer">{discount}% OFF</div>
-                      <img src={offer.imagem_url || '/placeholder-food.png'} alt={offer.titulo} className="vini-portal-offer-img" />
-                      <div className="vini-portal-offer-body">
-                        <h4 className="vini-portal-offer-title">{offer.titulo}</h4>
-                        <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{offer.descricao}</p>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '12px', color: '#999', textDecoration: 'line-through' }}>R$ {Number(oldPriceNum || 0).toFixed(2).replace('.', ',')}</span>
-                          <div className="vini-portal-offer-price">R$ {Number(priceNum || 0).toFixed(2).replace('.', ',')}</div>
-                        </div>
-                        <div className="vini-badge-promo">PROMOÇÃO</div>
+                      <div className="vini-portal-category-card-img-wrap" style={{ backgroundColor: '#FEF2F2' }}>
+                        <Utensils size={24} color="#EA1D2C" />
                       </div>
+                      <span className="vini-portal-category-name">{cat.nome}</span>
                     </div>
-                );
-              } catch(e) { return null; }
-            })}
-          </div>
-
-          <h2 className="vini-portal-section-title">Nossas Categorias</h2>
-          <p className="vini-portal-section-subtitle">Escolha o que deseja saborear hoje!</p>
-
-          <div className="vini-portal-category-grid" style={{ marginBottom: '40px' }}>
-            {dbCategories.map(cat => (
-              <div 
-                key={cat.id} 
-                className={`vini-portal-category-card ${selectedCategory === cat.id ? 'active' : ''}`} 
-                onClick={() => setSelectedCategory(cat.id)}
-              >
-                <div className="vini-portal-category-card-img-wrap" style={{ backgroundColor: '#FEF2F2' }}>
-                  <Utensils size={24} color="#EA1D2C" />
+                  ))}
                 </div>
-                <span className="vini-portal-category-name">{cat.nome}</span>
-              </div>
-            ))}
-          </div>
 
-          {/* Dynamic Products Grid (Main Filtered Menu) */}
-          <div style={{ marginBottom: '50px' }}>
-            <h2 className="vini-portal-section-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-               {selectedCategory === 'todos' ? 'Todos os Produtos' : dbCategories.find(c => c.id === selectedCategory)?.nome}
-               <span style={{ fontSize: '14px', fontWeight: '400', color: '#999' }}>({filteredProducts.length} itens)</span>
-            </h2>
-            <div className="vini-portal-offers-grid">
-                {filteredProducts.map(product => (
-                  <div key={product.id} className="vini-portal-offer-card" style={{ cursor: 'pointer' }} onClick={() => setSelectedProduct(product)}>
-                     <img src={product.imagem_url || 'https://via.placeholder.com/300x200'} alt={product.titulo} className="vini-portal-offer-img" />
-                     <div className="vini-portal-offer-body">
-                        <h4 className="vini-portal-offer-title">{product.titulo}</h4>
-                        <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.descricao}</p>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                           <span className="vini-portal-offer-price">R$ {Number(product.preco || 0).toFixed(2).replace('.', ',')}</span>
-                           <button style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                              <ArrowRight size={16} color="var(--p-red)" />
-                           </button>
+                <div style={{ marginBottom: '50px' }}>
+                  <h2 className="vini-portal-section-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                     {selectedCategory === 'todos' ? 'Todos os Produtos' : dbCategories.find(c => c.id === selectedCategory)?.nome}
+                     <span style={{ fontSize: '14px', fontWeight: '400', color: '#999' }}>({filteredProducts.length} itens)</span>
+                  </h2>
+                  <div className="vini-portal-offers-grid">
+                      {filteredProducts.map(product => (
+                        <div key={product.id} className="vini-portal-offer-card" style={{ cursor: 'pointer' }} onClick={() => setSelectedProduct(product)}>
+                           <img src={product.imagem_url || 'https://via.placeholder.com/300x200'} alt={product.titulo} className="vini-portal-offer-img" />
+                           <div className="vini-portal-offer-body">
+                              <h4 className="vini-portal-offer-title">{product.titulo}</h4>
+                              <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.descricao}</p>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                                 <span className="vini-portal-offer-price">R$ {Number(product.preco || 0).toFixed(2).replace('.', ',')}</span>
+                                 <button style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                    <ArrowRight size={16} color="var(--p-red)" />
+                                 </button>
+                              </div>
+                           </div>
                         </div>
+                     ))}
+                  </div>
+                </div>
+
+                {stats.saldo > 0 && (
+                  <div style={{ marginTop: '40px', background: '#FEF2F2', padding: '25px', borderRadius: '16px', display: 'flex', gap: '20px' }}>
+                     <AlertTriangle color="var(--p-red)" size={32} />
+                     <div>
+                        <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Pendente de Pagamento</h3>
+                        <p style={{ margin: '5px 0 15px', color: '#666' }}>Seu saldo devedor é de R$ {stats.saldo.toFixed(2).replace('.', ',')}. Pague via PIX para continuar comprando.</p>
+                        <button onClick={() => setShowPix(!showPix)} className="vini-portal-search-btn" style={{ padding: '10px 20px', borderRadius: '8px' }}>Exibir QR Code PIX</button>
+                        {showPix && (
+                          <div style={{ marginTop: '15px', background: '#fff', padding: '15px', borderRadius: '8px', border: '2px dashed var(--p-red)' }}>
+                            <code style={{ fontSize: '11px', wordBreak: 'break-all' }}>00020126360014br.gov.bcb.pix0114051048450001855204000053039865802BR5925MARCOS VINICIUS DRESBACH D6009TAQUARA62070503***6304E2D2</code>
+                          </div>
+                        )}
                      </div>
                   </div>
-               ))}
-            </div>
-          </div>
-
-
-          {/* Finance Warning if balance > 0 */}
-          {stats.saldo > 0 && (
-            <div style={{ marginTop: '40px', background: '#FEF2F2', padding: '25px', borderRadius: '16px', display: 'flex', gap: '20px' }}>
-               <AlertTriangle color="var(--p-red)" size={32} />
-               <div>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Pendente de Pagamento</h3>
-                  <p style={{ margin: '5px 0 15px', color: '#666' }}>Seu saldo devedor é de R$ {stats.saldo.toFixed(2).replace('.', ',')}. Pague via PIX para continuar comprando.</p>
-                  <button 
-                    onClick={() => setShowPix(!showPix)}
-                    style={{ background: 'var(--p-red)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}
-                  >
-                    Exibir QR Code PIX
-                  </button>
-                  {showPix && (
-                    <div style={{ marginTop: '15px', background: '#fff', padding: '15px', borderRadius: '8px', border: '2px dashed var(--p-red)' }}>
-                      <code style={{ fontSize: '11px', wordBreak: 'break-all' }}>00020126360014br.gov.bcb.pix0114051048450001855204000053039865802BR5925MARCOS VINICIUS DRESBACH D6009TAQUARA62070503***6304E2D2</code>
-                    </div>
-                  )}
-               </div>
-            </div>
-          )}
+                )}
+              </>
+            )}
             </>
           )}
         </main>

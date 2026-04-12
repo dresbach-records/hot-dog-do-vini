@@ -46,3 +46,6 @@ export async function authMiddleware(req, res, next) {
     res.status(401).json({ success: false, error: 'Sessão inválida ou expirada' });
   }
 }
+
+export const authenticate = authMiddleware;
+

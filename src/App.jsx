@@ -48,6 +48,7 @@ import APIKeys from './pages/APIKeys';
 import Notificacoes from './pages/Notificacoes';
 import DesempenhoVendas from './pages/DesempenhoVendas';
 import AvaliacaoLojista from './pages/AvaliacaoLojista';
+import IFoodDashboard from './pages/admin/IFoodDashboard';
 
 // Portal do Consumidor Final (Rota Externa Pública)
 import PortalCliente from './pages/PortalCliente';
@@ -227,6 +228,7 @@ function App() {
                         <Route path="marketing" element={<Marketing />} />
                         <Route path="convenios" element={<ConveniosAdmin />} />
                         <Route path="integracoes" element={<Integracoes />} />
+                        <Route path="ifood" element={<IFoodDashboard />} />
                         <Route path="configuracoes" element={<Configuracoes />} />
                         <Route path="motoboys" element={<Motoboys />} />
                         <Route path="fiscal" element={<Fiscal />} />

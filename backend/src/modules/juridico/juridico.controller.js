@@ -56,5 +56,32 @@ export const juridicoController = {
     } catch (error) {
       res.status(500).json({ success: false, error: 'Erro ao cadastrar documento' });
     }
+  },
+
+  async updateTemplate(req, res) {
+    try {
+      const result = await juridicoService.updateTemplate(req.params.id, req.body);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Erro ao atualizar modelo' });
+    }
+  },
+
+  async listFiscalSales(req, res) {
+    try {
+      const data = await juridicoService.listFiscalSales();
+      res.json({ success: true, data });
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Erro ao buscar vendas fiscais' });
+    }
+  },
+
+  async createFiscalSale(req, res) {
+    try {
+      const result = await juridicoService.createFiscalSale(req.body);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ success: false, error: 'Erro ao registrar venda fiscal' });
+    }
   }
 };

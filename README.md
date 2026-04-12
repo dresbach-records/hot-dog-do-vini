@@ -1,69 +1,52 @@
-# 🌭 Vini's Delivery — Industrial ERP & Multi-Channel Portal
+# 🌭 Vini's Delivery ERP — Edição Industrial
 
-O ERP do **Vini's Delivery** é uma plataforma de gestão de foodservice de alta performance, projetada para total paridade com sistemas líderes de mercado como **Anota AI** e integração nativa com o ecossistema **iFood**.
+O Vini's Delivery ERP é uma solução robusta e automatizada para gestão de delivery, agora expandida com uma integração de nível **Enterprise** com o iFood. O sistema foi projetado para alta escalabilidade, segurança e visibilidade total da operação.
 
----
+## 🚀 iFood Command Center (Industrial)
 
-## 🚀 Novas Funcionalidades (v2.0 - Paridade Anota AI)
+A nova central de comando iFood oferece ferramentas avançadas para gestão de ponta a ponta:
 
-### 📊 Dashboard Financeiro Premium
-- **KPIs em Tempo Real**: Faturamento bruto, ticket médio, total de pedidos e novos clientes.
-- **Gráficos de Performance**: Visualização de fluxo de caixa e horários de pico via *Recharts*.
-- **Tema Light Industrial**: Interface limpa, rápida e otimizada para Desktop e Mobile.
+### 1. Motor de Sincronização & Auditoria
+- **Heartbeat Enterprise:** Processamento em segundo plano via **BullMQ (Redis)** que sincroniza eventos a cada 30 segundos.
+- **Idempotência Log:** Registro rigoroso de cada evento na tabela `ifood_events_log` para evitar duplicidade e garantir integridade.
+- **Webhook HMAC:** Validação de segurança SHA256 em todos os payloads recebidos do portal do parceiro.
 
-### 🥪 iFood Pro Sync
-- **Polling Loop (30s)**: Sincronização automática de pedidos vindo do iFood diretamente para o Kanban local.
-- **Auto-Acknowledgment**: O sistema confirma pedidos automaticamente para garantir que nenhum lead seja perdido.
-- **Multi-Canal**: Gestão unificada (Portal Vini's + iFood) em uma única tela.
+### 2. Inteligência Financeira V3
+- **Consolidação de Impacto:** Algoritmo que distingue automaticamente faturamentos **Com Impacto** (Online) de faturamentos **Sem Impacto** (Dinheiro/VA/VR recebidos na entrega).
+- **Conciliação Direta:** Visibilidade total de comissões, vendas válidas e saldo líquido real a receber.
 
-### 🛰️ Logística & Mapas (OpenStreetMap)
-- **Monitoramento Geográfico**: Mapa interativo via *Leaflet* com geocodificação via *Nominatim*.
-- **Roteirização**: Visualização de pedidos ativos em Taquara/RS para otimização de motoboys.
-- **Taxas por Bairro**: Cálculo automático de entrega baseado na localização do cliente.
+### 3. Logística V2 & Shipping
+- **Rastreamento em Tempo Real:** Mapa de entregas integrado para pedidos iFood.
+- **Shipping On-Demand:** Possibilidade de solicitar entregadores iFood diretamente para pedidos originados via WhatsApp ou balcão.
+- **Verificação de PIN:** Suporte completo à verificação de código de entrega mandatório.
 
-### 💳 Pagamentos & Fiscal
-- **Integração Pagar.me (Stone)**: Suporte nativo a **PIX instantâneo** e Cartão de Crédito com conciliação automática via Webhook.
-- **Módulo Fiscal (FocusNFE)**: Emissão automatizada de NFC-e após a confirmação de pagamento.
-- **Contingência PIX**: Fluxo de upload de comprovantes para garantir vendas mesmo em quedas de API.
+### 4. Gestão de Reputação V2
+- Dashboard dedicado para leitura e resposta de avaliações.
+- Filtros inteligentes e monitoramento da janela de 5 dias para respostas públicas.
 
-### 📦 Gestão de Estoque Híbrida
-- **Leitor de Código de Barras**: Módulo de produtos compatível com scanners USB HID.
-- **Ficha Técnica**: Baixa automática de insumos (pão, salsicha, etc) no momento da venda.
-- **Auditoria**: Logs de todas as movimentações de entrada e saída.
+### 5. Interação com iFood Widget
+- Botão "balão" flutuante integrado nos portais Admin e Cliente.
+- Chat em tempo real com suporte e clientes iFood.
+- Rastreio nativo visível para o consumidor.
 
 ---
 
-## 🛠️ Stack Tecnológica
+## 🏗️ Infraestrutura & Subdomínios
 
-- **Frontend**: React.js, Vite, TailwindCSS (Lite), Lucide Icons, Recharts.
-- **Backend**: Node.js, Express, MariaDB.
-- **Real-time**: Socket.io (Monitor de Cozinha).
-- **Integrations**: Pagar.me v5, iFood Merchant API, OpenStreetMap, FocusNFE.
-- **Automation**: ViniBot (WhatsApp API).
+O ecossistema opera sobre um proxy reverso Nginx com múltiplos subdomínios:
+
+- `erp.hotdogdovini.com.br`: Dashboard Administrativo.
+- `webhook.hotdogdovini.com.br`: Ponto de entrada p/ eventos iFood.
+- `api.hotdogdovini.com.br`: Backend Core.
+- `checkout.hotdogdovini.com.br`: Gateway de pagamentos.
+- `confirmacao.hotdogdovini.com.br`: Redirects de segurança.
+
+## 🔐 Restrições de Homologação (Medida de Teste)
+
+Durante a fase atual de homologação técnica (Abril/2026), o **Cardápio Online** e a **Sacola de Compras** no portal do cliente estão habilitados **exclusivamente** para o usuário de teste:
+- **Email:** `viniamaral2026@gmail.com`
+
+Demais usuários visualizarão uma tela de "Em Breve" até a liberação total do sistema.
 
 ---
-
-## 🏗️ Arquitetura de Redirecionamento
-Configuração de DNS para controle logístico:
-- `api.hotdogdovini.com.br`: Endpoint Central de dados.
-- `confirmacao.hotdogdovini.com.br`: Landing de sucesso após cadastro/pagamento.
-- `redireciona.hotdogdovini.com.br`: Gateway de logística e mapas.
-
----
-
-## 📦 Instalação & Desenvolvimento
-
-```bash
-# 1. Instalar dependências (Root & Backend)
-npm install && npm run install:all
-
-# 2. Configurar .env (backend/.env)
-# DB_HOST, DB_USER, DB_PASS, DB_NAME
-# PAGARME_SECRET_KEY, IFOOD_CLIENT_ID, IFOOD_CLIENT_SECRET
-# OSM_CLIENT_ID, OSM_CLIENT_SECRET
-
-# 3. Iniciar ambiente dev (Vite + Node)
-npm run dev
-```
-
-© 2026 Vini's Delivery — Industrializando o sabor de Taquara/RS.
+Desenvolvido com ❤️ por Marcos Dresbach & **Antigravity**.

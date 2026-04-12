@@ -1,3 +1,4 @@
+
 -- MIGRATION: INDUSTRIALIZAÇÃO V1 (ENTERPRISE)
 -- Vini's Delivery ERP
 
@@ -57,3 +58,57 @@ INSERT IGNORE INTO horarios_funcionamento (dia_semana, inicio, fim) VALUES
 -- Populando Mesas Iniciais (se vazia)
 INSERT IGNORE INTO mesas (numero) VALUES 
 ('001'), ('002'), ('003'), ('004'), ('005'), ('006'), ('007'), ('008'), ('009'), ('010');
+
+-- 5. iFood Industrial: Configurações e Tokens (Multi-Merchant)
+CREATE TABLE IF NOT EXISTS ifood_config (
+  merchant_id VARCHAR(100) PRIMARY KEY,
+  client_id VARCHAR(255) NOT NULL,
+  client_secret VARCHAR(255) NOT NULL,
+  access_token TEXT,
+  refresh_token TEXT,
+  expires_at DATETIME,
+  last_heartbeat DATETIME,
+  status_operacional VARCHAR(50) DEFAULT 'AVAILABLE',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 6. iFood Industrial: Auditoria de Eventos (Idempotência)
+CREATE TABLE IF NOT EXISTS ifood_events_log (
+  event_id VARCHAR(255) PRIMARY KEY,
+  merchant_id VARCHAR(100) NOT NULL,
+  order_id VARCHAR(100) NOT NULL,
+  event_code VARCHAR(10) NOT NULL,
+  payload_bruto JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_order (order_id),
+  INDEX idx_merchant (merchant_id)
+);
+
+-- 7. iFood Industrial: Plataforma de Negociação (Disputas)
+CREATE TABLE IF NOT EXISTS ifood_negotiations (
+  order_id VARCHAR(100) PRIMARY KEY,
+  merchant_id VARCHAR(100) NOT NULL,
+  negotiation_id VARCHAR(255),
+  reason TEXT,
+  status VARCHAR(50) DEFAULT 'PENDING',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 8. iFood Industrial: Eventos Financeiros e Conciliação (V3)
+CREATE TABLE IF NOT EXISTS ifood_financial_log (
+  id VARCHAR(255) PRIMARY KEY,
+  merchant_id VARCHAR(100) NOT NULL,
+  order_id VARCHAR(100),
+  event_type VARCHAR(100), -- CANCEL, SALE, COMMISSION, FEE
+  event_date DATETIME,
+  amount DECIMAL(10,2),
+  status VARCHAR(50), -- PENDING, SETTLED
+  period_id VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_period (period_id),
+  INDEX idx_merchant_date (merchant_id, event_date)
+);
+
+

@@ -18,9 +18,8 @@ import rhRoutes from '../modules/rh/rh.routes.js';
 import estoqueRoutes from '../modules/estoque/estoque.routes.js';
 import filiaisRoutes from '../modules/filiais/filiais.routes.js';
 import marketingRoutes from '../modules/marketing/marketing.routes.js';
-import { ifoodController } from '../modules/integrations/ifood/ifood.controller.js';
-import { ifoodService } from '../modules/integrations/ifood/ifood.service.js';
 import { uploadComprovante } from '../middlewares/upload.middleware.js';
+import ifoodRoutes from '../modules/integrations/ifood/ifood.routes.js';
 import { handlePagarmeWebhook } from '../modules/integrations/pagarme/pagarme.webhook.js';
 import pagarmeRoutes from '../modules/integrations/pagarme/pagarme.routes.js';
 import anotaaiRoutes from '../modules/integrations/anotaai/anotaai.routes.js';
@@ -80,67 +79,8 @@ router.use('/whatsapp', botRoutes);
 
 /**
  * 📡 MÓDULO: INTEGRAÇÕES iFOOD (/api/ifood)
- * Proxy Seguro para Merchant API
  */
-
-// Login iFood: Inicia Fluxo
-router.post('/ifood/auth/start', ifoodController.startAuth);
-
-// Login iFood: Confirma
-router.post('/ifood/auth/confirm', ifoodController.confirmAuth);
-
-// Status iFood
-router.get('/ifood/status', async (req, res) => {
-  try {
-    const tokens = ifoodService.lerTokens();
-    if (!tokens) return res.json({ success: true, connected: false });
-    
-    // Testa validade do token
-    await ifoodService.getAccessToken();
-    res.json({ success: true, connected: true });
-  } catch (err) {
-    res.json({ success: true, connected: false, error: err.message });
-  }
-});
-
-// Lista Pedidos iFood (Proxy)
-router.get('/ifood/orders', async (req, res) => {
-  try {
-    const data = await ifoodService.listOrders();
-    res.json({ success: true, data });
-  } catch (err) {
-    res.status(500).json({ success: false, error: 'Erro ao buscar pedidos no iFood' });
-  }
-});
-
-// Importação de Cardápio para MariaDB
-router.post('/ifood/catalog/import', ifoodController.importCatalog);
-
-// Busca Real de Cardápio no iFood (Preview)
-router.get('/ifood/catalog/fetch', async (req, res) => {
-  try {
-    const data = await ifoodService.fetchCatalog();
-    res.json({ success: true, data });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// MÓDULO ANOTA AI
-router.use('/anotaai', anotaaiRoutes);
-
-// WEBHOOK IFOOD: Recebe eventos de novos pedidos e mudanças de status
-router.post('/ifood/webhook', async (req, res) => {
-  try {
-    const events = req.body;
-    console.log('[iFood Webhook] Eventos recebidos:', events);
-    // TODO: Processar eventos (Confirmar, Cancelar, etc) e atualizar no banco
-    res.status(200).send();
-  } catch (err) {
-    console.error('[iFood Webhook Error]', err);
-    res.status(500).send();
-  }
-});
+router.use('/ifood', ifoodRoutes);
 
 // IMPRESSÃO LOCAL: Dispara o agente de impressão
 router.post('/print', async (req, res) => {

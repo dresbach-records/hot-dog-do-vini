@@ -5,6 +5,10 @@ export const motoboysService = {
   async list() {
     return await query('SELECT * FROM motoboys ORDER BY nome ASC');
   },
+  async update(id, data) {
+    const fields = Object.keys(data);
+    const values = [...Object.values(data), id];
+    const sets = fields.map(field => `${field} = ?`).join(', ');
 
     await query(`UPDATE motoboys SET ${sets} WHERE id = ?`, values);
     return { id, ...data };

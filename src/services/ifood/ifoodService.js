@@ -1,70 +1,59 @@
 import api from '../api';
 
 /**
- * iFood Service - Lógica de Importação e Normalização
- * Responsável por conectar à API do iFood e converter para o padrão Vini's.
+ * iFood Service - Suíte Industrial (V2/V3)
+ * Centraliza as chamadas à Merchant API via Proxy Backend.
  */
 const ifoodService = {
   
+  // --- STATUS & AUTH ---
+  getStatus: () => api.get('/ifood/status'),
+  authStart: () => api.post('/ifood/auth/start'),
+  authConfirm: (code) => api.post('/ifood/auth/confirm', { code }),
+
+  // --- PEDIDOS & LOGÍSTICA ---
+  listOrders: () => api.get('/ifood/orders'),
+  confirmOrder: (orderId) => api.post(`/ifood/orders/${orderId}/confirm`),
+  dispatchOrder: (orderId) => api.post(`/ifood/orders/${orderId}/dispatch`),
+  getOrderTracking: (orderId) => api.get(`/ifood/orders/${orderId}/tracking`),
+
+  // --- SHIPPING (V2) ---
+  checkShippingAvailability: (orderData) => api.post('/ifood/shipping/availabilities', { orderData }),
+  requestDriver: (shippingData) => api.post('/ifood/shipping/request', { shippingData }),
+  getShippingStatus: (deliveryId) => api.get(`/ifood/shipping/${deliveryId}`),
+
+  // --- REPUTAÇÃO (REVIEWS V2) ---
+  listReviews: (params) => api.get('/ifood/reviews', { params }),
+  getReviewSummary: () => api.get('/ifood/reviews/summary'),
+  answerReview: (reviewId, text) => api.post(`/ifood/reviews/${reviewId}/answers`, { text }),
+
+  // --- FINANCEIRO (V3) ---
+  getSales: (params) => api.get('/ifood/finance/sales', { params }),
+  getFinancialEvents: (params) => api.get('/ifood/finance/events', { params }),
+  getSettlements: (params) => api.get('/ifood/finance/settlements', { params }),
+  getFinanceConsolidation: (params) => api.get('/ifood/finance/consolidation', { params }),
+
+  // --- CATÁLOGO ---
+  listCatalogs: () => api.get('/ifood/catalog'),
+  importCatalog: (catalogData) => api.post('/ifood/catalog/import', { catalog: catalogData }),
+
   /**
-   * Busca o cardápio do iFood (Simulado para teste)
-   * Em produção: Chama a API do iFood via Merchant ID / Auth Token
+   * Inicializa o iFood Widget para Chat e Tracking
    */
-  buscarCardapio: async (merchantId, onProgress) => {
-    console.log(`[iFoodService] Solicitando busca real ao backend: ${merchantId}`);
-    
-    if (onProgress) onProgress(20, 'Consultando Merchant API...');
-    
-    try {
-      const res = await api.get('/ifood/catalog/fetch');
-      if (!res.success) throw new Error(res.error);
-      
-      if (onProgress) onProgress(80, 'Normalizando dados do marketplace...');
-      return ifoodService.normalizar(res.data);
-    } catch (error) {
-      console.error('[iFoodService] Erro na busca real:', error);
-      throw error;
+  initWidget: async (merchantIds) => {
+    if (!window.iFoodWidget) {
+      console.warn('[iFood Service] Widget script não carregado');
+      return;
     }
-  },
-
-  /**
-   * Converte a estrutura do iFood para o padrão do Banco de Dados Vini's
-   */
-  normalizar: (data) => {
-    return data.map(category => ({
-      nome: category.name,
-      ifood_id: category.id,
-      produtos: category.items.map(product => ({
-        titulo: product.name,
-        descricao: product.description,
-        preco: product.price,
-        imagem_url: product.image,
-        ifood_id: product.id,
-        disponivel: true
-      }))
-    }));
-  },
-
-  /**
-   * Grava os dados normalizados do iFood no MariaDB (via Backend API)
-   */
-  confirmarImportacao: async (viniData) => {
-    try {
-      console.log('[iFoodService] Solicitando importação ao Backend MariaDB...');
-      
-      const response = await api.post('/ifood/catalog/import', {
-        catalog: viniData
-      });
-
-      if (!response.success) {
-        throw new Error(response.error || 'Erro desconhecido na importação');
-      }
-
-      return { success: true };
-    } catch (error) {
-      console.error('[iFoodService] Erro ao salvar importação:', error);
-      return { success: false, error: error.message };
-    }
+    
+    window.iFoodWidget.init({
+      widgetId: '30d4c191-92a7-4e1a-b859-1e1ca9b2b803',
+      merchantIds,
+      autoShow: true
+    });
+    
+    await window.iFoodWidget.ready;
+    console.log('[iFood Service] Widget inicializado com sucesso');
   }
 };
 
