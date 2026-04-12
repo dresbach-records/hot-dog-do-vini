@@ -4,7 +4,8 @@ services:
     container_name: vinis-redis
     restart: unless-stopped
     # Mapeamento removido pois a VPS já tem Redis na 6379
-    # Ports: ["6379:6379"]
+    # ports:
+    #   - "6379:6379"
 
   vinis-api:
     build: .
