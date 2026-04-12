@@ -69,7 +69,7 @@ function App() {
 
   const checkAuth = async () => {
     const token = localStorage.getItem('vinis_auth_token');
-    
+
     if (!token) {
       setSession(null);
       setLoading(false);
@@ -111,31 +111,12 @@ function App() {
       }
     };
 
-    const handleKeyDown = (e) => {
-      if (
-        e.keyCode === 123 || 
-        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) ||
-        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 67 || e.keyCode === 80))
-      ) {
-        e.preventDefault();
-        return false;
-      }
-    };
-
-    const handleContextMenu = (e) => {
-      e.preventDefault();
-      return false;
-    };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('contextmenu', handleContextMenu);
+    // Bloqueios de F12 e clique direito removidos para facilitar Manutenção e Debugging.
 
     return () => {
       window.removeEventListener('auth_change', handleAuthChange);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('contextmenu', handleContextMenu);
     };
   }, []);
 
@@ -144,11 +125,13 @@ function App() {
       <h3>Carregando Vini's Cloud...</h3>
     </div>
   );
-  
+
   // Detecção de Subdomínio para Roteamento Inteligente
   const hostname = window.location.hostname;
-  const isERP = hostname.startsWith('erp.');
-  const isCliente = hostname.startsWith('cliente.');
+  const pathname = window.location.pathname;
+  // Detecção Robusta: Funciona mesmo com www.erp... ou apenas erp...
+  const isERP = hostname.includes('erp.') || pathname.startsWith('/admin') || pathname.startsWith('/login');
+  const isCliente = hostname.includes('cliente.') || pathname.startsWith('/cliente.') || pathname.startsWith('/login.vinis');
 
   const isAdmin = session && session.user?.role !== 'cliente';
 
@@ -161,9 +144,9 @@ function App() {
               {/* == LÓGICA DE SUBDOMÍNIO (ROOT REDIRECTS) == */}
               {/* == LÓGICA DE SUBDOMÍNIO (ROOT REDIRECTS) == */}
               <Route path="/" element={
-                 isERP ? (session ? (isAdmin ? <Navigate to="/admin/dashboard" /> : <Navigate to="/cliente.vinis" />) : <Navigate to="/login" />) :
-                 isCliente ? (session ? (!isAdmin ? <Navigate to="/cliente.vinis" /> : <Navigate to="/admin/dashboard" />) : <Navigate to="/login.vinis" />) :
-                 <Home />
+                isERP ? (session ? (isAdmin ? <Navigate to="/admin/dashboard" /> : <Navigate to="/cliente.vinis" />) : <Navigate to="/login" />) :
+                  isCliente ? (session ? (!isAdmin ? <Navigate to="/cliente.vinis" /> : <Navigate to="/admin/dashboard" />) : <Navigate to="/login.vinis" />) :
+                    <Home />
               } />
 
               {/* == LANDING PAGE PÚBLICA == */}
@@ -171,7 +154,7 @@ function App() {
 
               {/* == LOGIN PORTAL DO CLIENTE == */}
               <Route path="/login.vinis" element={session && !isAdmin ? <Navigate to="/cliente.vinis" /> : <LoginCliente />} />
-              
+
               {/* == PORTAL DO CLIENTE (PROTEGIDO) == */}
               <Route path="/cliente.vinis" element={
                 session && !isAdmin ? <PortalCliente session={session} /> : <Navigate to="/login.vinis" />
@@ -188,7 +171,7 @@ function App() {
               <Route path="/cliente/pedidos" element={
                 session && !isAdmin ? <MeusPedidos session={session} /> : <Navigate to="/login.vinis" />
               } />
-              
+
               <Route path="/cliente/perfil" element={
                 session && !isAdmin ? <Perfil session={session} /> : <Navigate to="/login.vinis" />
               } />
@@ -206,7 +189,7 @@ function App() {
               } />
 
               {/* == LOGIN ADMIN ERP == */}
-              <Route path="/login" element={session && isAdmin ? <Navigate to="/admin/dashboard" /> : <Login onLogin={() => {}} />} />
+              <Route path="/login" element={session && isAdmin ? <Navigate to="/admin/dashboard" /> : <Login onLogin={() => { }} />} />
 
               {/* == ÁREA ADMINISTRATIVA CLOUD (PROTEGIDA) == */}
               <Route path="/admin/*" element={
@@ -245,7 +228,7 @@ function App() {
                         <Route path="cupons" element={<Cupons />} />
                         <Route path="pagamentos" element={<Cobrancas />} />
                         <Route path="juridico" element={<Juridico />} />
-                        
+
                         {/* Financeiro 360° Routes */}
                         <Route path="financas-hub" element={<FinancasHub />} />
                         <Route path="cobrancas" element={<Cobrancas />} />

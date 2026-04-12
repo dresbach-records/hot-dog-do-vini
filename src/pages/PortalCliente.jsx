@@ -29,6 +29,7 @@ import {
   CreditCard,
   ArrowRight
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useClientes } from '../context/ClientesContext';
 import { products as apiProducts, categories as apiCategories } from '../services/api';
 import ProductModal from '../components/Site/ProductModal';
@@ -38,6 +39,7 @@ import '../styles/cliente/dashboard.css';
 import '../styles/cliente/convenios.css';
 
 const PortalCliente = ({ session }) => {
+  const navigate = useNavigate();
   const { clientes, loading: contextLoading, adicionarCliente } = useClientes();
   const [provisioning, setProvisioning] = useState(false);
   const provisionAttempted = useRef(false);
@@ -107,7 +109,7 @@ const PortalCliente = ({ session }) => {
         console.log("Deslogando por inatividade...");
         localStorage.removeItem('vinis_auth_token');
         window.dispatchEvent(new Event('auth_change'));
-        window.location.href = '/login.vinis';
+        navigate('/login.vinis');
       }, 30 * 60 * 1000); // 30 minutos em ms
     };
 
@@ -131,9 +133,9 @@ const PortalCliente = ({ session }) => {
         setProvisioning(true);
         try {
           await adicionarCliente({
-            nome: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
-            codigo_vini: session.user.id,
-            email: session.user.email,
+            nome: session?.user?.name || session?.user?.email?.split('@')[0] || 'Novo Cliente',
+            codigo_vini: session?.user?.id,
+            email: session?.user?.email,
             total_cliente: 0,
             saldo_devedor: 0
           });
@@ -208,9 +210,9 @@ const PortalCliente = ({ session }) => {
 
   const handleCheckout = useCallback(() => {
     localStorage.setItem('vini-cart', JSON.stringify(cartItems));
-    window.location.href = '/checkout';
+    navigate('/checkout');
     setIsCartOpen(false);
-  }, [cartItems]);
+  }, [cartItems, navigate]);
 
   if (contextLoading || provisioning) {
     return (
@@ -288,11 +290,6 @@ const PortalCliente = ({ session }) => {
                   <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/perfil'}>
                     <Settings size={20} color="#64748b" /> Meus Dados
                   </div>
-                  <div className="vini-dropdown-item" onClick={() => {
-                    localStorage.removeItem('vinis_auth_token');
-                    window.dispatchEvent(new Event('auth_change'));
-                    window.location.href = '/login.vinis';
-                  }} style={{ color: '#EA1D2C' }}>
                     <LogOut size={20} /> Encerrar Sessão
                   </div>
                 </div>
