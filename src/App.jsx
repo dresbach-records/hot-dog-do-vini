@@ -22,6 +22,7 @@ import AreaEntrega from './pages/AreaEntrega';
 import Clientes from './pages/Clientes';
 import Relatorios from './pages/Relatorios';
 import Sorteios from './pages/Sorteios';
+import AutoAtendimento from './pages/AutoAtendimento';
 import Marketing from './pages/Marketing';
 import Integracoes from './pages/Integracoes';
 import ConveniosAdmin from './pages/ConveniosAdmin';
@@ -33,6 +34,8 @@ import Fiscal from './pages/Fiscal';
 import PDVBalcao from './pages/PDVBalcao';
 import Estoque from './pages/Estoque';
 import Juridico from './pages/Juridico';
+import Garcom from './pages/Garcom';
+import Entregador from './pages/Entregador';
 
 // Novos Módulos Financeiros ERP
 import FinancasHub from './pages/FinancasHub';
@@ -43,6 +46,8 @@ import Transferencias from './pages/Transferencias';
 import KYCStatus from './pages/KYCStatus';
 import APIKeys from './pages/APIKeys';
 import Notificacoes from './pages/Notificacoes';
+import DesempenhoVendas from './pages/DesempenhoVendas';
+import AvaliacaoLojista from './pages/AvaliacaoLojista';
 
 // Portal do Consumidor Final (Rota Externa Pública)
 import PortalCliente from './pages/PortalCliente';
@@ -203,6 +208,8 @@ function App() {
                       <Routes>
                         <Route path="" element={<Navigate to="/admin/dashboard" />} />
                         <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="desempenho" element={<DesempenhoVendas />} />
+                        <Route path="avaliacoes" element={<AvaliacaoLojista />} />
                         <Route path="pedidos" element={<Pedidos />} />
                         <Route path="cardapio" element={<Cardapio />} />
                         <Route path="entregas" element={<Entregas />} />
@@ -228,6 +235,8 @@ function App() {
                         <Route path="cupons" element={<Cupons />} />
                         <Route path="pagamentos" element={<Cobrancas />} />
                         <Route path="juridico" element={<Juridico />} />
+                        <Route path="garcom" element={<Garcom />} />
+                        <Route path="entregador" element={<Entregador />} />
 
                         {/* Financeiro 360° Routes */}
                         <Route path="financas-hub" element={<FinancasHub />} />

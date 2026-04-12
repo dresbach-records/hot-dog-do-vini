@@ -1,18 +1,67 @@
-import { Store, Building2, TrendingUp, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Store, Plus, MapPin, User, TrendingUp, MoreVertical, Trash2, Edit } from 'lucide-react';
+import api from '../services/api';
+import '../styles/admin/dashboard.css';
 
 function Filiais() {
+  const [filiais, setFiliais] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [novaFilial, setNovaFilial] = useState({ nome: '', endereco: '', responsavel: '', meta: 0 });
+
+  useEffect(() => {
+    fetchFiliais();
+  }, []);
+
+  const fetchFiliais = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/filiais');
+      if (res.success) setFiliais(res.data);
+    } catch (error) {
+      console.error('Erro ao buscar filiais:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.post('/filiais', novaFilial);
+      if (res.success) {
+        setIsModalOpen(false);
+        setNovaFilial({ nome: '', endereco: '', responsavel: '', meta: 0 });
+        fetchFiliais();
+      }
+    } catch (error) {
+      alert('Erro ao criar filial');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Excluir esta unidade permanentemente?')) {
+      try {
+        const res = await api.delete(`/filiais/${id}`);
+        if (res.success) fetchFiliais();
+      } catch (error) {
+        alert('Erro ao excluir');
+      }
+    }
+  };
+
   return (
-    <div className="dashboard-page animate-fade-in" style={{ padding: '1.5rem' }}>
-      <header className="page-header" style={{ marginBottom: '1.5rem' }}>
+    <div className="dashboard-page animate-fade-in" style={{ padding: '2rem' }}>
+      <header className="page-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2>Gestão de Filiais</h2>
-          <p className="text-secondary">Visão geral logística, faturamento e metas das unidades.</p>
+          <h2 style={{ fontSize: '2rem', fontWeight: '800' }}>Gestão de Filiais</h2>
+          <p className="text-secondary">Gerencie suas unidades físicas, metas e performance centralizada.</p>
         </div>
+        <button className="vini-btn-primary" onClick={() => setIsModalOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Plus size={18} /> Nova Unidade
+        </button>
       </header>
 
-      {/* METRICAS */}
-      <div className="stats-grid" style={{ marginBottom: '2rem' }}>
-        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="stat-icon-wrapper bg-blue-light">
             <Building2 size={24} color="var(--c-blue)" />
           </div>

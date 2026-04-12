@@ -16,7 +16,8 @@ import {
   AlertCircle,
   Trash2,
   FileUp,
-  Database
+  Database,
+  Plus
 } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
 import { toast } from 'react-hot-toast';
@@ -28,6 +29,7 @@ function Clientes() {
   const [filterDebtors, setFilterDebtors] = useState(false);
   
   // Modal States
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
   const [viewingHistory, setViewingHistory] = useState(null);
   const [isReceivingPayment, setIsReceivingPayment] = useState(null);
@@ -35,7 +37,7 @@ function Clientes() {
   const [importText, setImportText] = useState('');
   const [importPreview, setImportPreview] = useState([]);
 
-  // Form States for Edit
+  // Form States for New/Edit
   const [editForm, setEditForm] = useState({
     nome: '',
     telefone: '',
@@ -43,6 +45,7 @@ function Clientes() {
     saldo_devedor: 0,
     memo: ''
   });
+  const [saving, setSaving] = useState(false);
 
   // Form States for Payment
   const [payForm, setPayForm] = useState({
@@ -80,25 +83,44 @@ function Clientes() {
     setEditingClient(cliente);
   };
 
-  const handleSaveEdit = async () => {
+  const handleSaveClient = async () => {
     try {
-      const res = await atualizarCliente(editingClient.id, {
-        nome: editForm.nome,
-        telefone: editForm.telefone,
-        email: editForm.email,
-        saldo_devedor: Number(editForm.saldo_devedor),
-        memo: editForm.memo || 'Ajuste manual de dados/saldo'
-      });
-      
-      if (res.success) {
-        toast.success('Cliente atualizado com sucesso!');
-        setEditingClient(null);
-        fetchData();
+      if (editingClient) {
+        const res = await atualizarCliente(editingClient.id, {
+          nome: editForm.nome,
+          telefone: editForm.telefone,
+          email: editForm.email,
+          saldo_devedor: Number(editForm.saldo_devedor),
+          memo: editForm.memo || 'Ajuste manual de dados/saldo'
+        });
+        if (res.success) {
+          toast.success('Cliente atualizado com sucesso!');
+          setEditingClient(null);
+          fetchData();
+        } else {
+          toast.error(`Erro: ${res.error || 'Não foi possível salvar'}`);
+        }
       } else {
-        toast.error(`Erro: ${res.error || 'Não foi possível salvar'}`);
+        const res = await adicionarCliente({
+          nome: editForm.nome,
+          telefone: editForm.telefone,
+          email: editForm.email,
+          saldo_devedor: Number(editForm.saldo_devedor),
+          memo: editForm.memo || 'Cadastro manual'
+        });
+        if (res.success) {
+          toast.success('Cliente cadastrado com sucesso!');
+          setIsModalOpen(false);
+          setEditForm({ nome: '', telefone: '', email: '', saldo_devedor: 0, memo: '' });
+          fetchData();
+        } else {
+          toast.error(`Erro: ${res.error || 'Não foi possível cadastrar'}`);
+        }
       }
     } catch (err) {
       toast.error('Falha na comunicação com o servidor');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -225,6 +247,16 @@ function Clientes() {
           <p>Controle de quem deve, quem pagou e histórico financeiro detalhado.</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
+           <button 
+              className="btn vini-btn-primary"
+              onClick={() => {
+                setEditForm({ nome: '', telefone: '', email: '', saldo_devedor: 0, memo: '' });
+                setIsModalOpen(true);
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <Plus size={16} /> Novo Cliente
+            </button>
            <div className="search-box" style={{ position: 'relative' }}>
               <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input 
@@ -689,6 +721,74 @@ function Clientes() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+      {/* Modal de Novo Cliente */}
+      {isModalOpen && (
+        <div className="vini-modal-overlay">
+          <div className="vini-modal-content" style={{ maxWidth: '450px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+               <h3 style={{ margin: 0 }}>Cadastrar Novo Cliente</h3>
+               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20}/></button>
+            </div>
+            
+            <form onSubmit={(e) => {
+               e.preventDefault();
+               setSaving(true);
+               handleSaveClient();
+            }}>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>Nome Completo</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={editForm.nome}
+                      onChange={e => setEditForm({...editForm, nome: e.target.value})}
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-active)' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>E-mail</label>
+                    <input 
+                      type="email"
+                      value={editForm.email}
+                      onChange={e => setEditForm({...editForm, email: e.target.value})}
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-active)' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>Telefone (WhatsApp)</label>
+                    <input 
+                      type="text"
+                      placeholder="(00) 00000-0000"
+                      value={editForm.telefone}
+                      onChange={e => setEditForm({...editForm, telefone: e.target.value})}
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-active)' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>Saldo Devedor Inicial (Fiado)</label>
+                    <input 
+                      type="number"
+                      step="0.01"
+                      value={editForm.saldo_devedor}
+                      onChange={e => setEditForm({...editForm, saldo_devedor: e.target.value})}
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-active)' }}
+                    />
+                  </div>
+               </div>
+               
+               <div style={{ marginTop: '2rem', display: 'flex', gap: '10px' }}>
+                  <Button type="submit" disabled={saving} style={{ flex: 1 }}>
+                     {saving ? 'Salvando...' : 'Salvar Cliente'}
+                  </Button>
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="vini-btn-outline" style={{ flex: 1, padding: '12px', borderRadius: '10px' }}>
+                     Cancelar
+                  </button>
+               </div>
+            </form>
           </div>
         </div>
       )}

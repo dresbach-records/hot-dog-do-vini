@@ -16,10 +16,14 @@ import juridicoRoutes from '../modules/juridico/juridico.routes.js';
 import fiscalRoutes from '../modules/fiscal/fiscal.routes.js';
 import rhRoutes from '../modules/rh/rh.routes.js';
 import estoqueRoutes from '../modules/estoque/estoque.routes.js';
+import filiaisRoutes from '../modules/filiais/filiais.routes.js';
+import marketingRoutes from '../modules/marketing/marketing.routes.js';
 import { ifoodController } from '../modules/integrations/ifood/ifood.controller.js';
 import { ifoodService } from '../modules/integrations/ifood/ifood.service.js';
 import { uploadComprovante } from '../middlewares/upload.middleware.js';
 import { handlePagarmeWebhook } from '../modules/integrations/pagarme/pagarme.webhook.js';
+import pagarmeRoutes from '../modules/integrations/pagarme/pagarme.routes.js';
+import anotaaiRoutes from '../modules/integrations/anotaai/anotaai.routes.js';
 
 const router = express.Router();
 
@@ -57,6 +61,8 @@ router.use('/juridico', juridicoRoutes);
 router.use('/fiscal', fiscalRoutes);
 router.use('/rh', rhRoutes);
 router.use('/estoque', estoqueRoutes);
+router.use('/filiais', filiaisRoutes);
+router.use('/marketing', marketingRoutes);
 
 /**
  * 🛒 MÓDULO: PRODUTOS (/api/products)
@@ -64,8 +70,8 @@ router.use('/estoque', estoqueRoutes);
 router.use('/products', productsRoutes);
 
 router.use('/orders', ordersRoutes);
-
 router.use('/payments', paymentsRoutes);
+router.use('/pagarme', pagarmeRoutes);
 
 /**
  * 🤖 MÓDULO: WHATSAPP BOT (/api/whatsapp)
@@ -109,6 +115,19 @@ router.get('/ifood/orders', async (req, res) => {
 
 // Importação de Cardápio para MariaDB
 router.post('/ifood/catalog/import', ifoodController.importCatalog);
+
+// Busca Real de Cardápio no iFood (Preview)
+router.get('/ifood/catalog/fetch', async (req, res) => {
+  try {
+    const data = await ifoodService.fetchCatalog();
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// MÓDULO ANOTA AI
+router.use('/anotaai', anotaaiRoutes);
 
 // WEBHOOK IFOOD: Recebe eventos de novos pedidos e mudanças de status
 router.post('/ifood/webhook', async (req, res) => {

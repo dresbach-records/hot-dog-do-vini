@@ -1,55 +1,78 @@
-import React, { useState } from 'react';
-import { Megaphone, Ticket, Send, TrendingUp, MessageCircle, Copy, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  Megaphone, Users, MessageCircle, 
+  Plus, Calendar, BarChart3, 
+  Send, Trash2, CheckCircle, Tag, 
+  Scissors, Gift, RefreshCcw, X
+} from 'lucide-react';
+import api from '../services/api';
 import '../styles/admin/dashboard.css';
 
 function Marketing() {
-  const [activeTab, setActiveTab] = useState('cupons');
+  const [activeTab, setActiveTab] = useState('campaigns');
+  const [campaigns, setCampaigns] = useState([]);
+  const [coupons, setCoupons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({});
 
-  const cupons = [
-    { id: 1, codigo: 'VINIS10', desconto: '10%', tipo: 'Porcentagem', limite: 100, usados: 85, status: 'Ativo' },
-    { id: 2, codigo: 'FRETEOFF', desconto: 'R$ 5,00', tipo: 'Fixo', limite: 50, usados: 50, status: 'Esgotado' },
-    { id: 3, codigo: 'BOASVINDAS', desconto: '15%', tipo: 'Porcentagem', limite: 999, usados: 120, status: 'Ativo' },
-  ];
+  useEffect(() => {
+    fetchData();
+  }, [activeTab]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      if (activeTab === 'campaigns') {
+        const res = await api.get('/marketing/campanhas');
+        if (res.success) setCampaigns(res.data);
+      } else {
+        const res = await api.get('/marketing/cupons');
+        if (res.success) setCoupons(res.data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados de marketing:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    try {
+      const endpoint = activeTab === 'campaigns' ? '/marketing/campanhas' : '/marketing/cupons';
+      const res = await api.post(endpoint, formData);
+      if (res.success) {
+        setIsModalOpen(false);
+        setFormData({});
+        fetchData();
+      }
+    } catch (error) {
+      alert('Erro ao salvar');
+    }
+  };
+
+  const toggleCoupon = async (id, currentStatus) => {
+    try {
+      const res = await api.put(`/marketing/cupons/${id}/toggle`, { active: !currentStatus });
+      if (res.success) fetchData();
+    } catch (error) {
+      alert('Erro ao alterar cupom');
+    }
+  };
 
   return (
-    <div className="dashboard-page animate-fade-in" style={{ padding: '1.5rem', background: 'var(--bg-base)' }}>
-      <header className="page-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between' }}>
+    <div className="dashboard-page animate-fade-in" style={{ padding: '2rem' }}>
+      <header className="page-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2>Marketing & Vendas</h2>
-          <p className="text-secondary">Atração, retenção e engajamento: cupons, automações e disparo de WhatsApp.</p>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: '800' }}>Marketing & Engajamento</h2>
+          <p className="text-secondary">Crie campanhas de WhatsApp, gerencie cupons e fidelize seus clientes.</p>
         </div>
-        <div className="header-actions">
-          <button className="vini-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Megaphone size={18} /> Nova Campanha
-          </button>
-        </div>
+        <button className="vini-btn-primary" onClick={() => { setFormData({}); setIsModalOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Plus size={18} /> {activeTab === 'campaigns' ? 'Nova Campanha' : 'Novo Cupom'}
+        </button>
       </header>
 
-      {/* MÉTRICAS */}
-      <div className="stats-grid" style={{ marginBottom: '2rem' }}>
-        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="stat-icon-wrapper bg-blue-light">
-            <Ticket size={24} color="var(--c-blue)" />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Cupons Resgatados (Mês)</span>
-            <h3 className="stat-value">255</h3>
-            <span className="stat-trend positive">+15% vs Mês Anterior</span>
-          </div>
-        </div>
-
-        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="stat-icon-wrapper bg-green-light">
-            <TrendingUp size={24} color="var(--c-green)" />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Receita Induzida (Cupons)</span>
-            <h3 className="stat-value text-positive">R$ 8.950,00</h3>
-            <span className="stat-trend neutral">R$ 35,00 Ticket Médio</span>
-          </div>
-        </div>
-
-        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
           <div className="stat-icon-wrapper bg-green-light">
             <MessageCircle size={24} color="var(--c-green)" />
           </div>

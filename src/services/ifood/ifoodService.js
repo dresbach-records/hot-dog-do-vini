@@ -11,40 +11,20 @@ const ifoodService = {
    * Em produção: Chama a API do iFood via Merchant ID / Auth Token
    */
   buscarCardapio: async (merchantId, onProgress) => {
-    console.log(`[iFoodService] Buscando cardápio para o lojista: ${merchantId}`);
+    console.log(`[iFoodService] Solicitando busca real ao backend: ${merchantId}`);
     
-    if (onProgress) onProgress(10, 'Conectando ao iFood...');
-    await new Promise(resolve => setTimeout(resolve, 600));
+    if (onProgress) onProgress(20, 'Consultando Merchant API...');
     
-    if (onProgress) onProgress(30, 'Autenticando...');
-    await new Promise(resolve => setTimeout(resolve, 600));
-
-    if (onProgress) onProgress(60, 'Baixando categorias e produtos...');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Mock de dados retornados pelo iFood
-    const rawData = [
-      {
-        id: 'cat_001',
-        name: 'Hot Dogs Tradicionais',
-        items: [
-          { id: 'p_001', name: 'Dog Simples', description: 'Pão, salsicha, tomate e maio.', price: 18.50, image: 'https://placehold.co/600x400/png' },
-          { id: 'p_002', name: 'Dog Duplo', description: '2 Salsichas e molho especial.', price: 23.90, image: 'https://placehold.co/600x400/png' }
-        ]
-      },
-      {
-        id: 'cat_002',
-        name: 'Bebidas Geladas',
-        items: [
-          { id: 'p_003', name: 'Coca Cola 350ml', description: 'Lata gelada.', price: 7.00, image: 'https://placehold.co/600x400/png' }
-        ]
-      }
-    ];
-
-    if (onProgress) onProgress(90, 'Normalizando dados para o sistema Vini...');
-    await new Promise(resolve => setTimeout(resolve, 600));
-
-    return ifoodService.normalizar(rawData);
+    try {
+      const res = await api.get('/ifood/catalog/fetch');
+      if (!res.success) throw new Error(res.error);
+      
+      if (onProgress) onProgress(80, 'Normalizando dados do marketplace...');
+      return ifoodService.normalizar(res.data);
+    } catch (error) {
+      console.error('[iFoodService] Erro na busca real:', error);
+      throw error;
+    }
   },
 
   /**

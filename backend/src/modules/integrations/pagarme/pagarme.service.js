@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { query } from '../../../config/database.js';
 
 class PagarmeService {
   constructor() {
@@ -87,6 +88,43 @@ class PagarmeService {
     } catch (error) {
       console.error('[PagarmeService Card Error]', error.response?.data || error.message);
       return { success: false, error: 'Falha no processamento do cartão' };
+    }
+  }
+
+  /**
+   * Busca o saldo da conta Pagar.me (Saldo Disponível e a Receber)
+   */
+  async getBalance() {
+    try {
+      const response = await axios.get(`${this.baseUrl}/balance`, {
+        headers: {
+          'Authorization': `Basic ${this.auth}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('[PagarmeService] Erro ao buscar saldo:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Lista pedidos/cobranças do Pagar.me com filtros
+   */
+  async listOrders(params = { page: 1, size: 10 }) {
+    try {
+      const response = await axios.get(`${this.baseUrl}/orders`, {
+        headers: {
+          'Authorization': `Basic ${this.auth}`,
+          'Content-Type': 'application/json'
+        },
+        params
+      });
+      return response.data;
+    } catch (error) {
+      console.error('[PagarmeService] Erro ao listar pedidos:', error.response?.data || error.message);
+      throw error;
     }
   }
 }

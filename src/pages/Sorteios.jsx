@@ -36,7 +36,9 @@ function Sorteios() {
 
       const clienteRefinado = {
         ...cliente,
-        codigoID: cliente.id.split('-')[1] || (1000 + index), // Reaproveitando o numeral do ID real para o display simplificado
+        codigoID: (cliente.id && typeof cliente.id === 'string' && cliente.id.includes('-')) 
+          ? cliente.id.split('-')[1] 
+          : (cliente.codigo_vini || (1000 + index)), 
         valorFiado,
         gastoAculumado: gastoCliente,
         isEligible,
@@ -204,7 +206,7 @@ function Sorteios() {
       </div>
 
       {/* LINHA 3: TABELA E HISTÓRICO */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'reapete(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem' }}>
         
         <div className="vini-glass-panel" style={{ padding: '0', overflow: 'hidden', flex: 2 }}>
           <div className="section-header" style={{ padding: '1.5rem 1.5rem 0.5rem' }}>

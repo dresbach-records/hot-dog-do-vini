@@ -36,7 +36,11 @@ const AbrirCaixaModal = () => {
           <DoorOpen size={32} color="#166534" />
         </div>
 
-        <h2 style={{ margin: '0 0 0.5rem 0', color: '#0f172a', fontWeight: '800' }}>Abrir Novo Turno</h2>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h2 style={{ margin: 0, color: '#0f172a', fontWeight: '800' }}>Abrir Novo Turno</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.5rem', color: '#64748b' }}>&times;</button>
+        </header>
+
         <p style={{ color: '#64748b', marginBottom: '2rem', fontSize: '0.9rem' }}>
           Para começar a vender no PDV, informe o valor inicial em fundo de caixa.
         </p>
@@ -58,20 +62,28 @@ const AbrirCaixaModal = () => {
              />
           </div>
 
-          <button 
-            type="submit"
-            disabled={loading}
-            className="vini-btn-primary"
-            style={{ padding: '18px', fontSize: '1.1rem', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}
-          >
-            {loading ? 'Abrindo...' : 'Confirmar e Abrir Caixa'}
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              type="submit"
+              disabled={loading}
+              className="vini-btn-primary"
+              style={{ flex: 1, padding: '18px', fontSize: '1.1rem', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}
+            >
+              {loading ? 'Abrindo...' : 'Confirmar'}
+            </button>
+            <button 
+              type="button" 
+              className="vini-btn-outline" 
+              style={{ flex: 1, padding: '18px', fontSize: '1.1rem', background: '#fff', color: '#0f172a', border: '1px solid #e2e8f0', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}
+              onClick={onClose}
+            >
+              Cancelar
+            </button>
+          </div>
         </form>
       </div>
     </div>
   );
 };
-
-export default AbrirCaixaModal;
 
 export default AbrirCaixaModal;

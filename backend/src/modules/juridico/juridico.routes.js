@@ -9,16 +9,15 @@ router.post('/templates', juridicoController.createTemplate);
 router.put('/templates/:id', juridicoController.updateTemplate);
 
 // Contratos
-router.get('/contratos', juridicoController.listContracts);
-router.post('/contratos/gerar', juridicoController.generateContract);
-router.patch('/contratos/:id/status', juridicoController.updateContractStatus);
+router.get('/contracts', juridicoController.listContracts);
+router.post('/contracts', juridicoController.generateContract);
 
 // Documentos
-router.get('/documentos', juridicoController.listDocuments);
-router.post('/documentos', juridicoController.createDocument);
+router.get('/documents', juridicoController.listDocuments);
+router.post('/documents', juridicoController.createDocument);
 
 // Fiscal / Vendas Manuais
-router.get('/fiscal-records', juridicoController.listFiscalSales);
-router.post('/fiscal-records', juridicoController.createFiscalSale);
+router.get('/fiscal-sales', juridicoController.listFiscalSales);
+router.post('/fiscal-sales', juridicoController.createFiscalSale);
 
 export default router;

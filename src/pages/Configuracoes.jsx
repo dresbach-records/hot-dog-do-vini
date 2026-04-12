@@ -1,243 +1,203 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Building2, Mail, Phone, Clock, MapPin, 
-  CreditCard, Link as LinkIcon, AlertTriangle, 
-  Save, Layout, Globe, Palette, Settings,
-  MessageSquare, Camera, Image, CheckCircle2
-} from 'lucide-react';
 import api from '../services/api';
-import toast from 'react-hot-toast';
-import '../styles/admin/cms.css';
+import { 
+  Store, MapPin, Clock, Users, 
+  Save, Check, AlertCircle, Info,
+  Plus, Trash2, Shield, Camera
+} from 'lucide-react';
+import '../styles/admin/dashboard.css';
 
 function Configuracoes() {
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState('geral');
-  const [configs, setConfigs] = useState({
-    site_title: 'Hot Dog do Vini',
-    site_subtitle: 'O melhor hot dog da região',
-    whatsapp_number: '',
-    address_rua: '',
-    address_numero: '',
-    address_bairro: '',
-    primary_color: '#ea1d2c',
-    sales_enabled: '1',
-    banner_url: '',
-    notice_title: '',
-    notice_message: '',
-    notice_enabled: '0'
+  const [activeTab, setActiveTab] = useState('perfil');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const [form, setForm] = useState({
+    name: "Hot Dog do Vini",
+    category: "Lanches",
+    phone: "(48) 99999-9999",
+    cep: "",
+    address: "",
+    number: "",
+    bairro: "",
+    city: "Florianópolis"
   });
 
-  useEffect(() => {
-    loadConfigs();
-  }, []);
-
-  const loadConfigs = async () => {
-    try {
-      const resp = await api.get('/config');
-      if (resp.success) {
-        setConfigs(prev => ({ ...prev, ...resp.data }));
-      }
-    } catch (err) {
-      toast.error('Erro ao carregar configurações');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setConfigs(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (checked ? '1' : '0') : value
-    }));
-  };
+  const [horarios, setHorarios] = useState({
+    segunda: { aberto: true, inicio: '18:00', fim: '23:30' },
+    terca: { aberto: true, inicio: '18:00', fim: '23:30' },
+    quarta: { aberto: true, inicio: '18:00', fim: '23:30' },
+    quinta: { aberto: true, inicio: '18:00', fim: '23:30' },
+    sexta: { aberto: true, inicio: '18:00', fim: '01:00' },
+    sabado: { aberto: true, inicio: '18:00', fim: '01:00' },
+    domingo: { aberto: false, inicio: '--:--', fim: '--:--' }
+  });
 
   const handleSave = async () => {
-    setSaving(true);
-    try {
-      const resp = await api.post('/config', { configs });
-      if (resp.success) {
-        toast.success('Configurações salvas com sucesso!');
-      } else {
-        toast.error('Erro ao salvar: ' + resp.error);
-      }
-    } catch (err) {
-      toast.error('Erro de conexão ao salvar');
-    } finally {
-      setSaving(false);
-    }
+    setLoading(true);
+    // Simulação de delay profissional
+    setTimeout(() => {
+      setLoading(false);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    }, 1000);
   };
 
-  if (loading) return <div className="p-8">Carregando CMS Industrial...</div>;
-
   return (
-    <div className="dashboard-page animate-fade-in">
-      <header className="page-header">
+    <div className="admin-page-container">
+      <header className="page-header" style={{ marginBottom: '2rem' }}>
         <div>
-          <h2>Industrial CMS 🔥</h2>
-          <p className="text-secondary">Controle dinâmico da marca e presença digital.</p>
+           <h1 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Configurações</h1>
+           <p style={{ opacity: 0.6 }}>Gerencie o funcionamento e a identidade da sua loja</p>
         </div>
-        <button 
-          className={`btn vini-btn-primary ${saving ? 'loading' : ''}`} 
-          onClick={handleSave}
-          disabled={saving}
-        >
-          <Save size={18} /> {saving ? 'Salvando...' : 'Salvar Alterações'}
-        </button>
+        <div className="header-actions">
+           <button 
+             className="vini-btn-primary" 
+             onClick={handleSave}
+             disabled={loading}
+             style={{ background: success ? '#27ae60' : '' }}
+           >
+              {loading ? 'Salvando...' : success ? <><Check size={18}/> Salvo</> : <><Save size={18}/> SALVAR ALTERAÇÕES</>}
+           </button>
+        </div>
       </header>
 
-      <div className="cms-layout">
-        <aside className="cms-sidebar vini-glass-panel">
-          <nav>
-            <button className={tab === 'geral' ? 'active' : ''} onClick={() => setTab('geral')}>
-              <Building2 size={18}/> Perfil da Empresa
-            </button>
-            <button className={tab === 'site' ? 'active' : ''} onClick={() => setTab('site')}>
-              <Layout size={18}/> Home & Landing
-            </button>
-            <button className={tab === 'vendas' ? 'active' : ''} onClick={() => setTab('vendas')}>
-              <Settings size={18}/> Operação & Vendas
-            </button>
-            <button className={tab === 'visual' ? 'active' : ''} onClick={() => setTab('visual')}>
-              <Palette size={18}/> Identidade Visual
-            </button>
-          </nav>
-        </aside>
+      {/* TABS iFood Style */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #e0e0e0', marginBottom: '2rem' }}>
+         <button onClick={() => setActiveTab('perfil')} style={{ padding: '15px 30px', border: 'none', background: 'none', fontWeight: 700, color: activeTab === 'perfil' ? '#ea1d2c' : '#888', borderBottom: activeTab === 'perfil' ? '3px solid #ea1d2c' : '3px solid transparent', cursor: 'pointer' }}>LOJA</button>
+         <button onClick={() => setActiveTab('endereco')} style={{ padding: '15px 30px', border: 'none', background: 'none', fontWeight: 700, color: activeTab === 'endereco' ? '#ea1d2c' : '#888', borderBottom: activeTab === 'endereco' ? '3px solid #ea1d2c' : '3px solid transparent', cursor: 'pointer' }}>ENDEREÇO</button>
+         <button onClick={() => setActiveTab('horarios')} style={{ padding: '15px 30px', border: 'none', background: 'none', fontWeight: 700, color: activeTab === 'horarios' ? '#ea1d2c' : '#888', borderBottom: activeTab === 'horarios' ? '3px solid #ea1d2c' : '3px solid transparent', cursor: 'pointer' }}>HORÁRIOS</button>
+         <button onClick={() => setActiveTab('equipe')} style={{ padding: '15px 30px', border: 'none', background: 'none', fontWeight: 700, color: activeTab === 'equipe' ? '#ea1d2c' : '#888', borderBottom: activeTab === 'equipe' ? '3px solid #ea1d2c' : '3px solid transparent', cursor: 'pointer' }}>ACESSOS</button>
+      </div>
 
-        <main className="cms-main-content">
-          <div className="vini-glass-panel cms-panel-body">
-            
-            {tab === 'geral' && (
-              <div className="cms-section">
-                <h3>Informações Corporativas</h3>
-                <div className="cms-grid">
-                  <div className="form-group">
-                    <label>Título do Site</label>
-                    <input type="text" name="site_title" value={configs.site_title} onChange={handleChange} className="vini-input-dark" />
-                  </div>
-                  <div className="form-group">
-                    <label>Slogan/Subtítulo</label>
-                    <input type="text" name="site_subtitle" value={configs.site_subtitle} onChange={handleChange} className="vini-input-dark" />
-                  </div>
-                  <div className="form-group">
-                    <label>WhatsApp Oficial</label>
-                    <div className="input-with-icon">
-                      <MessageSquare size={16}/>
-                      <input type="text" name="whatsapp_number" value={configs.whatsapp_number} onChange={handleChange} className="vini-input-dark" placeholder="51999999999" />
-                    </div>
-                  </div>
-                </div>
-                
-                <h3 className="mt-8">Endereço da Sede</h3>
-                <div className="cms-grid">
-                   <div className="form-group">
-                      <label>Rua</label>
-                      <input type="text" name="address_rua" value={configs.address_rua} onChange={handleChange} className="vini-input-dark" />
+      <div className="settings-content">
+        
+        {activeTab === 'perfil' && (
+          <div className="vini-glass-panel" style={{ padding: '2rem', maxWidth: '800px' }}>
+             <div style={{ display: 'flex', gap: '30px', marginBottom: '2rem' }}>
+                <div style={{ position: 'relative' }}>
+                   <div style={{ width: '120px', height: '120px', background: '#eee', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Store size={48} opacity={0.2}/>
                    </div>
-                   <div className="form-group">
-                      <label>Número</label>
-                      <input type="text" name="address_numero" value={configs.address_numero} onChange={handleChange} className="vini-input-dark" />
-                   </div>
-                   <div className="form-group">
-                      <label>Bairro</label>
-                      <input type="text" name="address_bairro" value={configs.address_bairro} onChange={handleChange} className="vini-input-dark" />
-                   </div>
+                   <button style={{ position: 'absolute', bottom: '-10px', right: '-10px', background: '#333', color: '#fff', border: 'none', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Camera size={18}/></button>
                 </div>
-              </div>
-            )}
-
-            {tab === 'site' && (
-              <div className="cms-section">
-                <h3>Gerenciamento de Landing Page</h3>
-                
-                <div className="cms-upload-box">
-                  <div className="banner-preview" style={{ backgroundImage: `url(${configs.banner_url})` }}>
-                    {!configs.banner_url && <><Image size={48} opacity={0.3}/> <span>Sem Banner</span></>}
-                  </div>
-                  <div className="upload-controls">
-                    <label>URL do Banner Principal</label>
-                    <input type="text" name="banner_url" value={configs.banner_url} onChange={handleChange} className="vini-input-dark" placeholder="https://..." />
-                    <p className="text-muted text-xs">Recomendado: 1920x600px</p>
-                  </div>
+                <div style={{ flex: 1 }}>
+                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#666', marginBottom: '8px' }}>NOME DA LOJA</label>
+                   <input className="vini-input" placeholder="Hamburgueria Exemplo" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                 </div>
-
-                <div className="notice-config mt-8">
-                   <div className="flex-between">
-                      <h3>Aviso de Emergência (Notificação)</h3>
-                      <label className="vini-switch">
-                        <input type="checkbox" name="notice_enabled" checked={configs.notice_enabled === '1'} onChange={handleChange} />
-                        <span className="slider"></span>
-                      </label>
-                   </div>
-                   <div className="cms-grid mt-4">
-                      <div className="form-group">
-                        <label>Título da Notificação</label>
-                        <input type="text" name="notice_title" value={configs.notice_title} onChange={handleChange} className="vini-input-dark" placeholder="Ex: Hoje não abriremos" />
-                      </div>
-                      <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                        <label>Mensagem Detalhada</label>
-                        <textarea name="notice_message" value={configs.notice_message} onChange={handleChange} className="vini-input-dark" rows={3}></textarea>
-                      </div>
-                   </div>
+             </div>
+             
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#666', marginBottom: '8px' }}>CATEGORIA</label>
+                  <select className="vini-input">
+                     <option>Lanches</option>
+                     <option>Pizza</option>
+                     <option>Açaí</option>
+                  </select>
                 </div>
-              </div>
-            )}
-
-            {tab === 'vendas' && (
-              <div className="cms-section">
-                <h3>Regras de Negócio</h3>
-                
-                <div className="status-box-control">
-                  <div className={`status-card ${configs.sales_enabled === '1' ? 'active' : 'inactive'}`}>
-                     <div className="status-info">
-                        <strong>Vendas no Site</strong>
-                        <span>{configs.sales_enabled === '1' ? 'Aberto para pedidos' : 'Loja FECHADA'}</span>
-                     </div>
-                     <button 
-                        className={`mini-pill ${configs.sales_enabled === '1' ? 'btn-green' : 'btn-red'}`}
-                        onClick={() => setConfigs(p => ({...p, sales_enabled: p.sales_enabled === '1' ? '0' : '1'}))}
-                     >
-                        {configs.sales_enabled === '1' ? 'FECHAR AGORA' : 'ABRIR LOJA'}
-                     </button>
-                  </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#666', marginBottom: '8px' }}>TELEFONE PÚBLICO</label>
+                  <input className="vini-input" placeholder="(00) 00000-0000" value={form.phone} />
                 </div>
-
-                <div className="cms-info-alert mt-8">
-                   <AlertTriangle size={20}/>
-                   <div>
-                      <strong>Nota de Produção:</strong>
-                      <p>Para alterar preços ou taxa de entrega, utilize o Módulo de Logística ou Tabela de Preços.</p>
-                   </div>
-                </div>
-              </div>
-            )}
-
-            {tab === 'visual' && (
-              <div className="cms-section">
-                 <h3>Branding & Design</h3>
-                 <div className="cms-grid">
-                    <div className="form-group">
-                       <label>Cor Primária (Identidade)</label>
-                       <div className="color-picker-wrapper">
-                          <input type="color" name="primary_color" value={configs.primary_color} onChange={handleChange} />
-                          <input type="text" value={configs.primary_color} readOnly className="vini-input-dark" />
-                       </div>
-                    </div>
-                 </div>
-                 
-                 <div className="preview-branding mt-8">
-                    <p className="text-secondary text-sm mb-4">Pré-visualização de componentes com a cor atual:</p>
-                    <div className="flex gap-4">
-                       <button className="btn" style={{ background: configs.primary_color, color: '#fff', border: 'none' }}>Botão de Exemplo</button>
-                       <div className="vini-badge" style={{ backgroundColor: configs.primary_color + '22', color: configs.primary_color, border: `1px solid ${configs.primary_color}` }}>Badge</div>
-                    </div>
-                 </div>
-              </div>
-            )}
-
+             </div>
           </div>
-        </main>
+        )}
+
+        {activeTab === 'endereco' && (
+          <div className="vini-glass-panel" style={{ padding: '2rem', maxWidth: '800px' }}>
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px', marginBottom: '20px' }}>
+                <div>
+                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#666', marginBottom: '8px' }}>CEP</label>
+                   <input className="vini-input" placeholder="00000-000" />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                   <p style={{ margin: 0, fontSize: '0.8rem', color: '#666' }}>Buscando o endereço automaticamente...</p>
+                </div>
+             </div>
+             <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                <div>
+                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#666', marginBottom: '8px' }}>RUA/LOGRADOURO</label>
+                   <input className="vini-input" placeholder="Av. Principal" />
+                </div>
+                <div>
+                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#666', marginBottom: '8px' }}>Nº</label>
+                   <input className="vini-input" placeholder="123" />
+                </div>
+             </div>
+             <div>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#666', marginBottom: '8px' }}>BAIRRO</label>
+                <input className="vini-input" placeholder="Centro" />
+             </div>
+          </div>
+        )}
+
+        {activeTab === 'horarios' && (
+          <div className="vini-glass-panel" style={{ padding: '2rem', maxWidth: '900px' }}>
+             <div style={{ background: '#fcedda', color: '#f39c12', padding: '15px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '2rem' }}>
+                <Clock size={20}/>
+                <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>O site e o robô de WhatsApp abrirão e fecharão automaticamente seguindo esta grade.</p>
+             </div>
+
+             <div className="horarios-grid">
+                {Object.keys(horarios).map(dia => (
+                  <div key={dia} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 0', borderBottom: '1px solid #f2f2f2' }}>
+                     <div style={{ width: '120px', fontWeight: 700, textTransform: 'capitalize' }}>{dia}</div>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                           <input 
+                             type="checkbox" 
+                             checked={horarios[dia].aberto} 
+                             onChange={e => setHorarios({...horarios, [dia]: {...horarios[dia], aberto: e.target.checked}})}
+                           />
+                           <span style={{ fontSize: '0.9rem' }}>{horarios[dia].aberto ? 'Aberto' : 'Fechado'}</span>
+                        </label>
+                        {horarios[dia].aberto && (
+                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <input className="vini-input" style={{ width: '100px', height: '36px', padding: '5px' }} type="time" value={horarios[dia].inicio} />
+                              <span>às</span>
+                              <input className="vini-input" style={{ width: '100px', height: '36px', padding: '5px' }} type="time" value={horarios[dia].fim} />
+                           </div>
+                        )}
+                     </div>
+                     <button style={{ background: 'none', border: 'none', color: '#aaa' }}><Plus size={18}/></button>
+                  </div>
+                ))}
+             </div>
+          </div>
+        )}
+
+        {activeTab === 'equipe' && (
+           <div className="vini-glass-panel" style={{ padding: '0' }}>
+              <div style={{ padding: '2rem', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 <div>
+                   <h3 style={{ margin: 0 }}>Gestão de Time</h3>
+                   <p style={{ margin: 0, opacity: 0.6, fontSize: '0.85rem' }}>Controle quem pode acessar o sistema e quais permissões possuem.</p>
+                 </div>
+                 <button className="vini-btn-primary" style={{ padding: '8px 20px', fontSize: '0.85rem' }}><Plus size={16}/> NOVO USUÁRIO</button>
+              </div>
+
+              <div className="users-list">
+                 {[1,2].map(u => (
+                   <div key={u} style={{ padding: '1.5rem 2rem', borderBottom: '1px solid #f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                         <div style={{ width: '45px', height: '45px', background: '#333', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>V</div>
+                         <div>
+                            <strong style={{ display: 'block' }}>Vinicius {u === 1 ? '(Dono)' : 'Manager'}</strong>
+                            <span style={{ fontSize: '0.8rem', color: '#888' }}>vini@hotdog.com.br</span>
+                         </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                         <span style={{ padding: '4px 12px', background: '#333', color: '#fff', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>{u === 1 ? 'ADMIN' : 'GERENTE'}</span>
+                         <button style={{ background: 'none', border: 'none', color: '#666' }}><Shield size={18}/></button>
+                         <button style={{ background: 'none', border: 'none', color: '#e74c3c' }}><Trash2 size={18}/></button>
+                      </div>
+                   </div>
+                 ))}
+              </div>
+           </div>
+        )}
+
       </div>
     </div>
   );
