@@ -93,8 +93,11 @@ export const ifoodService = {
    * Inicia fluxo OAuth (UserCode - Distributed)
    */
   async authStart(clientId) {
+    const cid = clientId || process.env.IFOOD_CLIENT_ID;
+    if (!cid) throw new Error('IFOOD_CLIENT_ID não fornecido nem encontrado no ambiente.');
+    
     const response = await axios.post(`${IFOOD_AUTH}/oauth/userCode`, new URLSearchParams({
-      clientId: clientId,
+      clientId: cid,
     }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 });
     return response.data;
   },

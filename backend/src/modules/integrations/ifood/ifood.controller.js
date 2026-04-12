@@ -11,7 +11,9 @@ export const ifoodController = {
    */
   async startAuth(req, res) {
     try {
-      const data = await ifoodService.authStart();
+      const clientId = process.env.IFOOD_CLIENT_ID;
+      if (!clientId) throw new Error('IFOOD_CLIENT_ID não configurado nas variáveis de ambiente (.env)');
+      const data = await ifoodService.authStart(clientId);
       res.json({ success: true, data });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
