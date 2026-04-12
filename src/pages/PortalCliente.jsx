@@ -313,7 +313,7 @@ const PortalCliente = ({ session }) => {
                 <div className="vini-saldo-labels">
                   <span className="vini-saldo-label-main">SALDO CONVÊNIO</span>
                   <span className="vini-saldo-label-sub">
-                    Disponível: <span className="vini-saldo-val-highlight">R$ {stats.disponivel.toFixed(2).replace('.', ',')}</span>
+                    Disponível: <span className="vini-saldo-val-highlight">R$ {Number(stats.disponivel || 0).toFixed(2).replace('.', ',')}</span>
                   </span>
                 </div>
              </div>
@@ -391,8 +391,8 @@ const PortalCliente = ({ session }) => {
                         <h4 className="vini-portal-offer-title">{offer.titulo}</h4>
                         <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{offer.descricao}</p>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '12px', color: '#999', textDecoration: 'line-through' }}>R$ {oldPriceNum.toFixed(2).replace('.', ',')}</span>
-                          <div className="vini-portal-offer-price">R$ {priceNum.toFixed(2).replace('.', ',')}</div>
+                          <span style={{ fontSize: '12px', color: '#999', textDecoration: 'line-through' }}>R$ {Number(oldPriceNum || 0).toFixed(2).replace('.', ',')}</span>
+                          <div className="vini-portal-offer-price">R$ {Number(priceNum || 0).toFixed(2).replace('.', ',')}</div>
                         </div>
                         <div className="vini-badge-promo">PROMOÇÃO</div>
                       </div>
@@ -434,7 +434,7 @@ const PortalCliente = ({ session }) => {
                         <h4 className="vini-portal-offer-title">{product.titulo}</h4>
                         <p className="vini-portal-offer-subtitle" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.descricao}</p>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                           <span className="vini-portal-offer-price">R$ {product.preco.toFixed(2).replace('.', ',')}</span>
+                           <span className="vini-portal-offer-price">R$ {Number(product.preco || 0).toFixed(2).replace('.', ',')}</span>
                            <button style={{ background: '#f5f5f5', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                               <ArrowRight size={16} color="var(--p-red)" />
                            </button>

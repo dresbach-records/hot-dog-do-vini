@@ -259,7 +259,7 @@ function PDVBalcao() {
             <div style={{ padding: '2rem', background: '#1c2229', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                   <span style={{ fontSize: '1.2rem', opacity: 0.7 }}>TOTAL À PAGAR</span>
-                  <span style={{ fontSize: '2.5rem', fontWeight: '900', color: '#22c55e' }}>R$ {total.toFixed(2)}</span>
+                  <span style={{ fontSize: '2.5rem', fontWeight: '900', color: '#22c55e' }}>R$ {Number(total || 0).toFixed(2)}</span>
                </div>
                <button 
                 onClick={() => setPasso('pagamento')}
@@ -281,8 +281,8 @@ function PDVBalcao() {
              
              <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '20px' }}>
                 <span style={{ fontSize: '0.9rem', opacity: 0.6, display: 'block' }}>TOTAL DO PEDIDO</span>
-                <h1 style={{ margin: '5px 0', fontSize: '3rem', fontWeight: '900' }}>R$ {total.toFixed(2)}</h1>
-                {metodosPagamento.length > 0 && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>Faltam: R$ {valorRestante.toFixed(2)}</span>}
+                <h1 style={{ margin: '5px 0', fontSize: '3rem', fontWeight: '900' }}>R$ {Number(total || 0).toFixed(2)}</h1>
+                {metodosPagamento.length > 0 && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>Faltam: R$ {Number(valorRestante || 0).toFixed(2)}</span>}
              </div>
 
              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

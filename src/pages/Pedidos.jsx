@@ -109,7 +109,7 @@ function Pedidos() {
         </div>
 
         <div className="order-summary-items">
-          {order.itens?.length || 0} intens • R$ {Number(order.total).toFixed(2)}
+          {order.itens?.length || 0} itens • R$ {Number(order.total || 0).toFixed(2)}
         </div>
 
         <div className="card-footer">
@@ -228,7 +228,7 @@ function Pedidos() {
               <div className="modal-footer">
                  <div className="total-row">
                     <span>Total a pagar</span>
-                    <strong>R$ {Number(selectedOrder.total).toFixed(2)}</strong>
+                    <strong className="total-val">R$ {Number(selectedOrder.total || 0).toFixed(2)}</strong>
                  </div>
                  <div className="footer-btns">
                     <button className="btn-outline"><Printer size={18}/> Imprimir</button>

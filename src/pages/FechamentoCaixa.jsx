@@ -99,7 +99,7 @@ function FechamentoCaixa() {
                       <DollarSign size={18} color="var(--c-green)" />
                       <span>Dinheiro Esperado</span>
                    </div>
-                   <strong style={{ fontSize: '1.1rem' }}>R$ {esperados.dinheiro.toFixed(2)}</strong>
+                   <strong style={{ fontSize: '1.1rem' }}>R$ {Number(esperados.dinheiro || 0).toFixed(2)}</strong>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
@@ -107,7 +107,7 @@ function FechamentoCaixa() {
                       <Zap size={18} color="var(--c-yellow)" />
                       <span>Pix Esperado</span>
                    </div>
-                   <strong style={{ fontSize: '1.1rem' }}>R$ {esperados.pix.toFixed(2)}</strong>
+                   <strong style={{ fontSize: '1.1rem' }}>R$ {Number(esperados.pix || 0).toFixed(2)}</strong>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
@@ -115,13 +115,13 @@ function FechamentoCaixa() {
                       <CreditCard size={18} color="var(--c-blue)" />
                       <span>Cartão Esperado</span>
                    </div>
-                   <strong style={{ fontSize: '1.1rem' }}>R$ {esperados.cartao.toFixed(2)}</strong>
+                   <strong style={{ fontSize: '1.1rem' }}>R$ {Number(esperados.cartao || 0).toFixed(2)}</strong>
                 </div>
 
                 <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)' }}>
                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                       <span style={{ fontWeight: '700' }}>TOTAL BRUTO</span>
-                      <span style={{ fontWeight: '900', fontSize: '1.5rem', color: 'var(--c-green)' }}>R$ {esperados.total?.toFixed(2) || '0.00'}</span>
+                      <span style={{ fontWeight: '900', fontSize: '1.5rem', color: 'var(--c-green)' }}>R$ {Number(esperados.total || 0).toFixed(2)}</span>
                    </div>
                 </div>
               </div>
@@ -147,7 +147,7 @@ function FechamentoCaixa() {
                 {diferenca !== 0 && conferencia.dinheiroGaveta !== '' && (
                   <div style={{ padding: '12px', borderRadius: '8px', background: diferenca > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: diferenca > 0 ? 'var(--c-green)' : 'var(--c-red)', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem' }}>
                     {diferenca > 0 ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                    <span>Diferença: <strong>R$ {diferenca.toFixed(2)}</strong> ({diferenca > 0 ? 'Sobra' : 'Quebra'})</span>
+                    <span>Diferença: <strong>R$ {Number(diferenca || 0).toFixed(2)}</strong> ({diferenca >= 0 ? 'Sobra' : 'Quebra'})</span>
                   </div>
                 )}
 
