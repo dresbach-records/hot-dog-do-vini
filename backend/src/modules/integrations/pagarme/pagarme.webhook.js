@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import ordersService from '../../orders/orders.service.js';
+import { ordersService } from '../../orders/orders.service.js';
 
 export const handlePagarmeWebhook = async (req, res) => {
   const signature = req.headers['x-hub-signature-256'];
