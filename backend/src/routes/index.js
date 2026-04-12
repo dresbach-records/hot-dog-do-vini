@@ -17,6 +17,7 @@ import fiscalRoutes from '../modules/fiscal/fiscal.routes.js';
 import rhRoutes from '../modules/rh/rh.routes.js';
 import estoqueRoutes from '../modules/estoque/estoque.routes.js';
 import { ifoodController } from '../modules/integrations/ifood/ifood.controller.js';
+import { ifoodService } from '../modules/integrations/ifood/ifood.service.js';
 import { uploadComprovante } from '../middlewares/upload.middleware.js';
 import { handlePagarmeWebhook } from '../modules/integrations/pagarme/pagarme.webhook.js';
 
