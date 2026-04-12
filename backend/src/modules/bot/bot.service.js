@@ -183,8 +183,39 @@ export const botService = {
      } catch (err) {
         console.error('❌ [processIncomingMessage Error]:', err.message);
      }
+  },
+
+  async sendOrderUpdate(phone, orderId, status, extraData = {}) {
+     if (!sock) {
+        console.warn('⚠️ [ViniBot] Tentativa de envio de notificação com bot desconectado.');
+        return;
+     }
+
+     const jid = phone.includes('@s.whatsapp.net') ? phone : `${phone.replace(/\D/g, '')}@s.whatsapp.net`;
+     let message = '';
+
+     switch (status) {
+        case 'preparo':
+           message = `🌭 *Notícia boa!* Seu pedido #${orderId.toString().slice(-4)} já entrou em preparo na cozinha do Vini! Estamos caprichando. 🔥`;
+           break;
+        case 'em_rota':
+           message = `🛵 *Seu pedido saiu para entrega!* O motoboy ${extraData.motoboy || ''} já está a caminho com o seu Hot Dog quentinho. 💨`;
+           break;
+        case 'finalizado':
+           message = `✅ *Pedido Finalizado!* Esperamos que aproveite seu Hot Dog do Vini. Se puder, nos conte o que achou! ⭐⭐⭐⭐⭐`;
+           break;
+        case 'aguardando_confirmacao':
+           message = `💰 *Aguardando Confirmação:* Recebemos seu pedido #${orderId.toString().slice(-4)}. Assim que nosso sistema validar seu PIX, iniciaremos o preparo! 🚀`;
+           break;
+        default:
+           return;
+     }
+
+     try {
+        await sock.sendMessage(jid, { text: message });
+        console.log(`🤖 [ViniBot] Notificação de status (${status}) enviada para ${phone}`);
+     } catch (err) {
+        console.error(`❌ [ViniBot Send Error] Falha ao enviar ${status} para ${phone}:`, err.message);
+     }
   }
 };
-
-
-

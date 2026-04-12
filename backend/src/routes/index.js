@@ -17,8 +17,28 @@ import fiscalRoutes from '../modules/fiscal/fiscal.routes.js';
 import rhRoutes from '../modules/rh/rh.routes.js';
 import estoqueRoutes from '../modules/estoque/estoque.routes.js';
 import { ifoodController } from '../modules/integrations/ifood/ifood.controller.js';
+import { uploadComprovante } from '../middlewares/upload.middleware.js';
+import { handlePagarmeWebhook } from '../modules/integrations/pagarme/pagarme.webhook.js';
 
 const router = express.Router();
+
+/**
+ * 📡 INTEGRAÇÃO: Pagar.me (Stone)
+ */
+// Webhook precisa do corpo bruto para validar assinatura
+router.post('/pagarme/webhook', express.raw({ type: 'application/json' }), handlePagarmeWebhook);
+
+/**
+ * 📡 UPLOAD: Comprovantes PIX
+ */
+router.post('/upload/comprovante', uploadComprovante.single('comprovante'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'Arquivo não enviado' });
+  }
+  
+  const fileUrl = `${req.protocol}://${req.get('host')}/uploads/comprovantes/${req.file.filename}`;
+  res.json({ success: true, url: fileUrl });
+});
 
 /**
  * 🛒 MÓDULO: PRODUTOS (/api/products)

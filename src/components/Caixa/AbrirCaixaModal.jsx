@@ -12,38 +12,38 @@ const AbrirCaixaModal = () => {
     setLoading(true);
     const success = await abrirCaixa(parseFloat(valor));
     setLoading(false);
-    if (!success.success) {
-      alert(success.error);
+    if (!success?.success) {
+      alert(success?.error || 'Erro ao abrir caixa');
     }
   };
 
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-      background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+      background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
     }}>
       <div style={{
-        background: '#161a1f', padding: '2.5rem', borderRadius: '24px',
-        width: '400px', border: '1px solid rgba(255,255,255,0.1)',
-        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', textAlign: 'center'
+        background: '#fff', padding: '2.5rem', borderRadius: '24px',
+        width: '400px', border: '1px solid #e2e8f0',
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.1)', textAlign: 'center'
       }}>
         <div style={{
-          width: '70px', height: '70px', background: 'rgba(34, 197, 94, 0.1)',
+          width: '70px', height: '70px', background: '#dcfce7',
           borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 1.5rem', border: '1px solid rgba(34, 197, 94, 0.2)'
+          margin: '0 auto 1.5rem', border: '1px solid #bbf7d0'
         }}>
-          <DoorOpen size={32} color="#22c55e" />
+          <DoorOpen size={32} color="#166534" />
         </div>
 
-        <h2 style={{ margin: '0 0 0.5rem 0', color: '#fff' }}>Abrir Novo Turno</h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
+        <h2 style={{ margin: '0 0 0.5rem 0', color: '#0f172a', fontWeight: '800' }}>Abrir Novo Turno</h2>
+        <p style={{ color: '#64748b', marginBottom: '2rem', fontSize: '0.9rem' }}>
           Para começar a vender no PDV, informe o valor inicial em fundo de caixa.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           <div style={{ position: 'relative' }}>
-             <DollarSign size={18} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)' }} />
+             <DollarSign size={18} color="#94a3b8" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)' }} />
              <input 
                type="number" 
                step="0.01"
@@ -52,8 +52,8 @@ const AbrirCaixaModal = () => {
                placeholder="0.00"
                style={{
                  width: '100%', padding: '15px 15px 15px 45px', borderRadius: '12px',
-                 background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                 color: '#fff', fontSize: '1.2rem', fontWeight: '700', outline: 'none'
+                 background: '#f8fafc', border: '1px solid #e2e8f0',
+                 color: '#0f172a', fontSize: '1.2rem', fontWeight: '700', outline: 'none'
                }}
              />
           </div>
@@ -62,7 +62,7 @@ const AbrirCaixaModal = () => {
             type="submit"
             disabled={loading}
             className="vini-btn-primary"
-            style={{ padding: '15px', fontSize: '1.1rem' }}
+            style={{ padding: '18px', fontSize: '1.1rem', background: '#0f172a', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer' }}
           >
             {loading ? 'Abrindo...' : 'Confirmar e Abrir Caixa'}
           </button>
@@ -71,5 +71,7 @@ const AbrirCaixaModal = () => {
     </div>
   );
 };
+
+export default AbrirCaixaModal;
 
 export default AbrirCaixaModal;

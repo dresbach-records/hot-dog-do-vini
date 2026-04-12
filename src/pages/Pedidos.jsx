@@ -1,22 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { 
-  Clock, ArrowRight, ArrowLeft, MoreHorizontal, 
-  AlertCircle, CheckCircle2, Truck, ChefHat, 
+  Clock, ArrowRight, AlertCircle, CheckCircle2, Truck, ChefHat, 
   MapPin, CreditCard, X, Volume2, Printer, 
-  Phone, User, MessageSquare, Bike
+  Phone, User, MessageSquare, Plus, QrCode
 } from 'lucide-react';
 import '../styles/admin/pedidos.css';
+import { useNavigate } from 'react-router-dom';
 
 function Pedidos() {
   const [ordersList, setOrdersList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [motoboys, setMotoboys] = useState([]);
+  const navigate = useNavigate();
   
   const lastOrderCount = useRef(0);
-
-  // Status flow profissional
   const statusFlow = ['novos', 'preparo', 'entrega', 'finalizado'];
 
   const fetchOrders = async () => {
@@ -37,24 +35,15 @@ function Pedidos() {
     }
   };
 
-  const fetchMotoboys = async () => {
-    try {
-      const resp = await api.get('/motoboys');
-      if (resp.success) setMotoboys(resp.data || []);
-    } catch (err) {}
-  };
-
   useEffect(() => {
     fetchOrders();
-    fetchMotoboys();
-    const interval = setInterval(fetchOrders, 20000); // Polling 20s
+    const interval = setInterval(fetchOrders, 10000);
     return () => clearInterval(interval);
   }, []);
 
   const handleNewOrderAlert = (order) => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
     audio.play().catch(() => {});
-    
     if ('speechSynthesis' in window) {
       const msg = new SpeechSynthesisUtterance(`Novo pedido de ${order.cliente_nome || 'Cliente'}`);
       msg.lang = 'pt-BR';
@@ -71,17 +60,17 @@ function Pedidos() {
     }
   };
 
-  const assignMotoboy = async (orderId, motoboyId) => {
-    try {
-      const res = await api.put(`/orders/${orderId}/motoboy`, { motoboy_id: motoboyId });
-      if (res.success) {
-        alert('Motoboy atribuído!');
-        fetchOrders();
-        setSelectedOrder(null);
-      }
-    } catch (err) {
-      alert('Erro ao atribuir motoboy');
-    }
+  // Drag & Drop
+  const onDragStart = (e, orderId) => {
+    e.dataTransfer.setData("orderId", orderId);
+    e.currentTarget.style.opacity = '0.4';
+  };
+  const onDragEnd = (e) => e.currentTarget.style.opacity = '1';
+  const onDragOver = (e) => e.preventDefault();
+  const onDrop = (e, newStatus) => {
+    e.preventDefault();
+    const orderId = e.dataTransfer.getData("orderId");
+    updateStatus(orderId, newStatus);
   };
 
   const renderOrderCard = (order) => {
@@ -91,6 +80,9 @@ function Pedidos() {
     return (
       <div 
         key={order.id} 
+        draggable
+        onDragStart={(e) => onDragStart(e, order.id)}
+        onDragEnd={onDragEnd}
         className={`kanban-card status-${order.status} ${isUrgent ? 'urgent-border' : ''}`}
         onClick={() => setSelectedOrder(order)}
       >
@@ -100,35 +92,26 @@ function Pedidos() {
              <Clock size={12} /> {timeAgo}m
           </span>
         </div>
-
         <div className="customer-name">{order.cliente_nome || 'Cliente Balcão'}</div>
-        
         <div className="order-context-info">
-          <div className="info-item"><MapPin size={12} /> {order.bairro || 'Balcão'}</div>
-          <div className="info-item"><CreditCard size={12} /> {order.forma_pagamento || 'Dinheiro'}</div>
+          <div className="info-item"><MapPin size={12} /> {order.bairro || 'Retirada'}</div>
+          {order.pagamento_comprovante && <div className="info-item text-orange"><QrCode size={12}/> Pix Anexo</div>}
         </div>
-
-        <div className="order-summary-items">
-          {order.itens?.length || 0} itens • R$ {Number(order.total || 0).toFixed(2)}
-        </div>
-
         <div className="card-footer">
-          <div className="card-actions" onClick={e => e.stopPropagation()}>
-             {order.status !== 'novos' && (
-               <button onClick={() => updateStatus(order.id, statusFlow[statusFlow.indexOf(order.status) - 1])}><ArrowLeft size={14}/></button>
-             )}
-             {order.status !== 'finalizado' && (
-               <button className="btn-next" onClick={() => updateStatus(order.id, statusFlow[statusFlow.indexOf(order.status) + 1])}>
-                 Próximo <ArrowRight size={14}/>
-               </button>
-             )}
-          </div>
+           <button className="btn-next" onClick={(e) => {
+             e.stopPropagation();
+             updateStatus(order.id, statusFlow[statusFlow.indexOf(order.status) + 1]);
+           }}>
+             Avançar <ArrowRight size={14}/>
+           </button>
         </div>
       </div>
     );
   };
 
   const getOrders = (status) => ordersList.filter(o => o.status === status);
+
+  if (loading) return <div className="loading-vini">Carregando Monitor...</div>;
 
   return (
     <div className="pedidos-kanban-page">
@@ -138,13 +121,21 @@ function Pedidos() {
           <p>Operação em tempo real • {ordersList.length} pedidos ativos</p>
         </div>
         <div className="header-actions">
+           <button className="vini-btn-primary" onClick={() => navigate('/admin/pdv')}>
+              <Plus size={18}/> Novo Pedido
+           </button>
            <button className="vini-btn-outline"><Volume2 size={18}/> Som Ativo</button>
         </div>
       </header>
 
       <div className="kanban-container">
-        {['novos', 'preparo', 'entrega', 'finalizado'].map(status => (
-           <div key={status} className={`kanban-col col-${status}`}>
+        {statusFlow.map(status => (
+           <div 
+             key={status} 
+             className={`kanban-col col-${status}`}
+             onDragOver={onDragOver}
+             onDrop={(e) => onDrop(e, status)}
+           >
               <div className="col-header">
                  <h3>
                    {status === 'novos' && <AlertCircle size={18}/>}
@@ -157,83 +148,77 @@ function Pedidos() {
               </div>
               <div className="col-body">
                  {getOrders(status).map(renderOrderCard)}
-                 {getOrders(status).length === 0 && <div className="empty-state">Vazio</div>}
+                 {getOrders(status).length === 0 && <div className="empty-state">Sem pedidos</div>}
               </div>
            </div>
         ))}
       </div>
 
-      {/* DETALHE DO PEDIDO (MODAL INDUSTRIAL) */}
       {selectedOrder && (
         <div className="vini-modal-overlay" onClick={() => setSelectedOrder(null)}>
            <div className="vini-glass-panel order-detail-modal" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
-                 <h3>Pedido #{selectedOrder.id.toString().slice(-6)}</h3>
-                 <button onClick={() => setSelectedOrder(null)}><X/></button>
+                 <h3>Pedido #{selectedOrder.id.toString().slice(-4)}</h3>
+                 <button className="close-btn" onClick={() => setSelectedOrder(null)}><X/></button>
               </div>
 
               <div className="modal-scroll-body">
                  <div className="detail-section">
-                    <div className="section-title"><User size={16}/> Informações do Cliente</div>
+                    <div className="section-title"><User size={16}/> Cliente</div>
                     <div className="user-card">
                        <div className="user-main">
                           <strong>{selectedOrder.cliente_nome}</strong>
-                          <span><Phone size={14}/> {selectedOrder.cliente_telefone || 'Sem telefone'}</span>
+                          <div className="user-meta">{selectedOrder.cliente_email}</div>
+                          <div className="user-meta"><Phone size={14}/> {selectedOrder.cliente_telefone || 'Sem telefone'}</div>
                        </div>
                        <div className="user-actions">
                           <button className="btn-circle"><MessageSquare size={16}/></button>
-                          <button className="btn-circle text-green"><Phone size={16}/></button>
                        </div>
                     </div>
+
+                    {selectedOrder.pagamento_comprovante && (
+                      <div className="pix-validation-box">
+                         <div className="pix-val-header"><QrCode size={18} /> Comprovante PIX</div>
+                         <a href={selectedOrder.pagamento_comprovante} target="_blank" rel="noreferrer">
+                            <img src={selectedOrder.pagamento_comprovante} alt="Comprovante" className="receipt-img" />
+                         </a>
+                         <p className="pix-val-tip">Clique para ampliar e validar o valor</p>
+                      </div>
+                    )}
+
                     <div className="address-box">
-                       <MapPin size={16}/> {selectedOrder.rua}, {selectedOrder.numero} - {selectedOrder.bairro}
-                       {selectedOrder.complemento && <div className="complement">{selectedOrder.complemento}</div>}
+                       <MapPin size={16}/> {selectedOrder.tipo_entrega === 'retirada' ? 'RETIRADA NA LOJA' : `${selectedOrder.rua}, ${selectedOrder.numero} - ${selectedOrder.bairro}`}
                     </div>
                  </div>
 
                  <div className="detail-section">
-                    <div className="section-title">📦 Itens do Pedido</div>
+                    <div className="section-title">📦 Itens</div>
                     <div className="items-list">
                        {selectedOrder.itens?.map((item, idx) => (
                           <div key={idx} className="item-row">
                              <div className="item-main">
                                 <span className="item-qty">{item.quantidade}x</span>
                                 <span className="item-name">{item.titulo}</span>
+                                <span className="item-price">R$ {(item.preco_unitario * item.quantidade).toFixed(2)}</span>
                              </div>
-                             <span className="item-price">R$ {(Number(item.preco_unitario) * item.quantidade).toFixed(2)}</span>
-                             {item.variacao_nome && <div className="item-sub">• {item.variacao_nome}</div>}
-                             {item.adicionais?.map((a, i) => (
-                               <div key={i} className="item-sub">+ {a.nome}</div>
-                             ))}
                           </div>
                        ))}
                     </div>
-                 </div>
-
-                 <div className="detail-section">
-                    <div className="section-title"><Bike size={16}/> Entrega (Motoboy)</div>
-                    <select 
-                      className="vini-select-dark"
-                      value={selectedOrder.motoboy_id || ''}
-                      onChange={(e) => assignMotoboy(selectedOrder.id, e.target.value)}
-                    >
-                       <option value="">Atribuir Motoboy...</option>
-                       {motoboys.map(m => (
-                         <option key={m.id} value={m.id}>{m.nome} ({m.veiculo})</option>
-                       ))}
-                    </select>
                  </div>
               </div>
 
               <div className="modal-footer">
                  <div className="total-row">
-                    <span>Total a pagar</span>
-                    <strong className="total-val">R$ {Number(selectedOrder.total || 0).toFixed(2)}</strong>
+                    <span>Total</span>
+                    <strong>R$ {Number(selectedOrder.total || 0).toFixed(2)}</strong>
                  </div>
                  <div className="footer-btns">
-                    <button className="btn-outline"><Printer size={18}/> Imprimir</button>
-                    <button className="btn-primary" onClick={() => updateStatus(selectedOrder.id, statusFlow[statusFlow.indexOf(selectedOrder.status) + 1])}>
-                       Avançar Pedido
+                    <button className="vini-btn-outline"><Printer size={18}/> Imprimir</button>
+                    <button className="vini-btn-primary" onClick={() => {
+                        updateStatus(selectedOrder.id, statusFlow[statusFlow.indexOf(selectedOrder.status) + 1]);
+                        setSelectedOrder(null);
+                    }}>
+                       {selectedOrder.status === 'finalizado' ? 'Concluir' : 'Avançar Etapa'}
                     </button>
                  </div>
               </div>

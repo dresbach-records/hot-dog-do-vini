@@ -1,314 +1,227 @@
-import React, { useMemo } from 'react';
-import { DollarSign, ShoppingCart, Activity, AlertCircle } from 'lucide-react';
-import { useClientes } from '../context/ClientesContext';
+import React, { useMemo, useState, useEffect } from 'react';
+import { 
+  DollarSign, ShoppingCart, TrendingUp, Users, 
+  Clock, Package, Star, ArrowUpRight, ArrowDownRight
+} from 'lucide-react';
 import api from '../services/api';
 import { 
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 import '../styles/admin/dashboard.css';
 
 function Dashboard() {
-  const { clientes, resumenContext, pagamentosConfirmados } = useClientes();
-  const [stats, setStats] = React.useState({
+  const [stats, setStats] = useState({
     totalSales: 0,
     totalOrders: 0,
-    totalIncome: 0,
-    totalExpense: 0,
-    totalPending: 0
+    avgTicket: 0,
+    newCustomers: 0,
+    growth: 12.5
   });
-  const [charts, setCharts] = React.useState({
+
+  const [charts, setCharts] = useState({
     dailySales: [],
-    cashFlow: [],
-    topProducts: [],
-    agingVencimentos: []
+    paymentMethods: [],
+    orderChannels: [
+      { name: 'WhatsApp', value: 65 },
+      { name: 'PDV Balcão', value: 25 },
+      { name: 'iFood', value: 10 }
+    ]
   });
-  const [asaasBalance, setAsaasBalance] = React.useState(0);
-  const [loading, setLoading] = React.useState(true);
+
+  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
-      const [statsRes, chartsRes, balanceRes] = await Promise.all([
-        api.get('/dashboard/stats'),
-        api.get('/dashboard/charts'),
-        api.get('/payments/balance')
-      ]);
-
-      if (statsRes.success) setStats(statsRes.data);
-      if (chartsRes.success) setCharts(chartsRes.data);
-      if (balanceRes.success) setAsaasBalance(balanceRes.balance.balance);
+      const resp = await api.get('/dashboard/stats');
+      if (resp.success) {
+        setStats(prev => ({ ...prev, ...resp.data }));
+      }
+      
+      const chartsResp = await api.get('/dashboard/charts');
+      if (chartsResp.success) {
+        setCharts(prev => ({ ...prev, ...chartsResp.data }));
+      }
     } catch (err) {
-      console.error('Error fetching dashboard data', err);
+      console.error('Erro ao buscar dados do dashboard', err);
     } finally {
       setLoading(false);
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000); // 30s auto-refresh
-    return () => clearInterval(interval);
   }, []);
 
-  const metrics = useMemo(() => {
-    // Top devedores calculados a partir da lista de clientes (já real no Context)
-    const clientesDevedores = clientes
-      .filter(c => Number(c.saldo_devedor) > 0)
-      .map(c => ({ nome: c.nome, valor: Number(c.saldo_devedor) }))
-      .sort((a, b) => b.valor - a.valor)
-      .slice(0, 5);
+  const COLORS = ['#EA1D2C', '#3b82f6', '#10b981', '#f59e0b'];
 
-    const pizzaRecebimentos = [
-      { name: 'Recebido (Caixa)', value: stats.totalIncome },
-      { name: 'Em Aberto (Fiado)', value: stats.totalPending },
-    ];
-
-    return { 
-      totalSales: stats.totalSales, 
-      totalPago: stats.totalIncome, 
-      totalFiado: stats.totalPending, 
-      totalItems: stats.totalOrders, 
-      topDevedores: clientesDevedores, 
-      pizzaRecebimentos 
-    };
-  }, [clientes, stats]);
-
-  // Cores personalizadas e Tooltip padronizado
-  const PIE_COLORS = ['#22c55e', '#ef4444']; 
-  const customTooltipStyle = { backgroundColor: 'var(--bg-surface-elevated)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', fontSize: '0.9rem' };
+  if (loading) return <div className="loading-vini">Gerando Inteligência Artificial...</div>;
 
   return (
-    <div className="dashboard-page animate-fade-in" style={{ padding: '1rem' }}>
-      <header className="page-header" style={{ marginBottom: '1.5rem' }}>
+    <div className="vini-dashboard-premium animate-fade-in">
+      <header className="page-header">
         <div>
-          <h2>Painel Executivo</h2>
-          <p className="text-secondary">Indicadores essenciais de Faturamento e Controle de Fiados.</p>
+          <h1>Meu Desempenho 🚀</h1>
+          <p>Visão geral de hoje para o Vini's Cloud</p>
+        </div>
+        <div className="date-picker-mock">
+          <Clock size={16} /> Últimos 30 dias
         </div>
       </header>
 
-      {/* 8. KPI (CARDS NO TOPO) */}
-      <section className="stats-grid" style={{ marginBottom: '2.5rem' }}>
-        <div className="vini-card-stat vini-glass-panel">
-          <div className="stat-icon-wrapper blue">
-            <DollarSign size={24} />
+      {/* KPI GRID */}
+      <section className="kpi-grid">
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <div className="kpi-icon-wrap bg-red-soft"><DollarSign size={20} color="#EA1D2C" /></div>
+            <span className="kpi-badge positive"><ArrowUpRight size={12}/> {stats.growth}%</span>
           </div>
-          <div className="stat-info">
-            <span className="stat-label">Total Vendido</span>
-            <h3 className="stat-value">R$ {metrics.totalSales.toFixed(2).replace('.', ',')}</h3>
-            <span className="stat-trend neutral">Volume bruto comercializado</span>
-          </div>
-        </div>
-
-        <div className="vini-card-stat vini-glass-panel">
-          <div className="stat-icon-wrapper green">
-            <Activity size={24} />
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Total Recebido (Caixa)</span>
-            <h3 className="stat-value text-positive" style={{ color: '#22c55e' }}>R$ {metrics.totalPago.toFixed(2).replace('.', ',')}</h3>
-            <span className="stat-trend positive">
-               {metrics.totalSales > 0 ? ((metrics.totalPago / metrics.totalSales)*100).toFixed(0) : 0}% convertido
-            </span>
+          <div className="kpi-body">
+            <span className="kpi-label">Faturamento Total</span>
+            <h3 className="kpi-value">R$ {Number(stats.totalSales || 0).toFixed(2).replace('.', ',')}</h3>
           </div>
         </div>
 
-        <div className="vini-card-stat vini-glass-panel" style={{ borderLeft: '4px solid #ef4444' }}>
-          <div className="stat-icon-wrapper red">
-            <AlertCircle size={24} />
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <div className="kpi-icon-wrap bg-blue-soft"><ShoppingCart size={20} color="#3b82f6" /></div>
           </div>
-          <div className="stat-info">
-            <span className="stat-label">Total Em Aberto (Fiado)</span>
-            <h3 className="stat-value text-negative" style={{ color: '#ef4444' }}>R$ {metrics.totalFiado.toFixed(2).replace('.', ',')}</h3>
-            <span className="stat-trend negative">
-              {metrics.totalSales > 0 ? ((metrics.totalFiado / metrics.totalSales)*100).toFixed(0) : 0}% em risco
-            </span>
+          <div className="kpi-body">
+            <span className="kpi-label">Pedidos Realizados</span>
+            <h3 className="kpi-value">{stats.totalOrders} <small>un.</small></h3>
           </div>
         </div>
 
-         <div className="vini-card-stat vini-glass-panel" style={{ borderLeft: '4px solid var(--c-blue)' }}>
-           <div className="stat-icon-wrapper blue">
-             <Activity size={24} color="var(--c-blue)" />
-           </div>
-           <div className="stat-info">
-             <span className="stat-label">Saldo Disponível (Asaas)</span>
-             <h3 className="stat-value" style={{ color: 'var(--c-blue)' }}>R$ {Number(asaasBalance).toFixed(2).replace('.', ',')}</h3>
-             <span className="stat-trend neutral">Cash on hand (Real-time)</span>
-           </div>
-         </div>
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <div className="kpi-icon-wrap bg-green-soft"><TrendingUp size={20} color="#10b981" /></div>
+          </div>
+          <div className="kpi-body">
+            <span className="kpi-label">Ticket Médio</span>
+            <h3 className="kpi-value">R$ {Number(stats.avgTicket || (stats.totalSales / stats.totalOrders) || 0).toFixed(2).replace('.', ',')}</h3>
+          </div>
+        </div>
 
-         <div className="vini-card-stat vini-glass-panel">
-           <div className="stat-icon-wrapper yellow">
-             <ShoppingCart size={24} />
-           </div>
-           <div className="stat-info">
-             <span className="stat-label">Nº de Pedidos</span>
-             <h3 className="stat-value">{metrics.totalItems} un.</h3>
-             <span className="stat-trend neutral">Logística despachada</span>
-           </div>
-         </div>
+        <div className="kpi-card">
+          <div className="kpi-header">
+            <div className="kpi-icon-wrap bg-yellow-soft"><Users size={20} color="#f59e0b" /></div>
+          </div>
+          <div className="kpi-body">
+            <span className="kpi-label">Novos Clientes</span>
+            <h3 className="kpi-value">{stats.newCustomers || 0}</h3>
+          </div>
+        </div>
       </section>
 
-      {/* MEIO: FATURAMENTO (LINHA) & RECEBIDO VS ABERTO (PIZZA) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      {/* MAIN CHARTS SECTION */}
+      <div className="dashboard-main-layout">
         
-        {/* 1. FATURAMENTO */}
-        <div className="vini-glass-panel" style={{ padding: '1.5rem', flex: 2 }}>
-          <div className="section-header" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>FATURAMENTO</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--c-blue)' }}>Evolução de vendas por dia</span>
+        {/* EVOLUÇÃO DE VENDAS */}
+        <div className="vini-chart-card main-area">
+          <div className="chart-header">
+            <h3>Evolução de Vendas</h3>
+            <p>Faturamento diário em Reais</p>
           </div>
-          <div style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-              <LineChart data={charts.dailySales} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-                <XAxis dataKey="dia" stroke="var(--text-secondary)" fontSize={12} tickMargin={10} />
-                <YAxis stroke="var(--text-secondary)" fontSize={12} tickFormatter={(value) => `R$${value}`} />
-                <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value.toFixed(2)}`} />
-                <Line type="monotone" dataKey="vendas" stroke="var(--c-blue)" strokeWidth={3} dot={{ r: 4, fill: 'var(--c-blue)' }} activeDot={{ r: 6 }} />
-              </LineChart>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={charts.dailySales}>
+                <defs>
+                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#EA1D2C" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#EA1D2C" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="dia" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                  itemStyle={{ color: '#EA1D2C', fontWeight: 'bold' }}
+                />
+                <Area type="monotone" dataKey="vendas" stroke="#EA1D2C" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* 2. RECEBIDO VS EM ABERTO */}
-        <div className="vini-glass-panel" style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div className="section-header" style={{ marginBottom: '0.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>RECEBIDO VS EM ABERTO</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--c-red)' }}>Indicador crítico de liquidez (Dados Reais)</span>
+        {/* CANAIS DE VENDA */}
+        <div className="vini-chart-card side-pizza">
+          <div className="chart-header">
+            <h3>Canais de Venda</h3>
+            <p>Origem dos pedidos</p>
           </div>
-          <div style={{ width: '100%', flex: 1, minHeight: 300 }}>
-            <ResponsiveContainer>
+          <div className="chart-container">
+            <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
-                  data={metrics.pizzaRecebimentos}
+                  data={charts.orderChannels}
                   cx="50%"
                   cy="50%"
-                  innerRadius={70}
-                  outerRadius={100}
+                  innerRadius={60}
+                  outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
-                  stroke="none"
                 >
-                  {metrics.pizzaRecebimentos.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  {charts.orderChannels.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value.toFixed(2)}`} />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                <Tooltip />
               </PieChart>
             </ResponsiveContainer>
+            <div className="pie-legend">
+               {charts.orderChannels.map((item, idx) => (
+                 <div key={idx} className="legend-item">
+                    <span className="dot" style={{ background: COLORS[idx] }}></span>
+                    <span className="name">{item.name}</span>
+                    <span className="val">{item.value}%</span>
+                 </div>
+               ))}
+            </div>
           </div>
         </div>
+
       </div>
 
-      {/* ABAIXO: 5 Gráficos Analíticos */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+      <div className="dashboard-secondary-layout">
+         {/* FORMAS DE PAGAMENTO */}
+         <div className="vini-chart-card">
+            <div className="chart-header">
+              <h3>Formas de Pagamento</h3>
+              <p>Preferência do cliente</p>
+            </div>
+            <div className="chart-container">
+               <ResponsiveContainer width="100%" height={200}>
+                 <BarChart data={charts.paymentMethods}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="metodo" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11}} />
+                    <YAxis axisLine={false} tickLine={false} hide />
+                    <Tooltip cursor={{fill: '#f8fafc'}} />
+                    <Bar dataKey="valor" fill="#EA1D2C" radius={[4, 4, 0, 0]} barSize={30} />
+                 </BarChart>
+               </ResponsiveContainer>
+            </div>
+         </div>
 
-        {/* 3. CLIENTES DEVEDORES */}
-        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="section-header" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>CLIENTES DEVEDORES</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Ranking (Dados Reais do Caixa)</span>
-          </div>
-          <div style={{ width: '100%', height: 250 }}>
-            <ResponsiveContainer>
-              <BarChart data={metrics.topDevedores} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-color)" />
-                <XAxis type="number" stroke="var(--text-secondary)" fontSize={12} />
-                <YAxis dataKey="nome" type="category" stroke="var(--text-secondary)" fontSize={12} width={80} />
-                <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value.toFixed(2)}`} />
-                <Bar dataKey="valor" fill="var(--c-red)" radius={[0, 4, 4, 0]} barSize={20}>
-                   {metrics.topDevedores.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={index === 0 ? '#b91c1c' : '#ef4444'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* 4. PRODUTOS MAIS VENDIDOS */}
-        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="section-header" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>PRODUTOS MAIS VENDIDOS</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>O que mais sai na cozinha</span>
-          </div>
-          <div style={{ width: '100%', height: 250 }}>
-            <ResponsiveContainer>
-              <BarChart data={charts.topProducts} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border-color)" />
-                <XAxis type="number" stroke="var(--text-secondary)" fontSize={12} />
-                <YAxis dataKey="nome" type="category" stroke="var(--text-secondary)" fontSize={12} width={80} />
-                <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `${value} un.`} />
-                <Bar dataKey="qtd" fill="#eab308" radius={[0, 4, 4, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* 5. VENDAS POR DIA DA SEMANA */}
-        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="section-header" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>VENDAS POR DIA</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Média semanal financeira</span>
-          </div>
-          <div style={{ width: '100%', height: 250 }}>
-            <ResponsiveContainer>
-              <BarChart data={charts.dailySales} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                <XAxis dataKey="dia" stroke="var(--text-secondary)" fontSize={12} />
-                <YAxis stroke="var(--text-secondary)" fontSize={12} />
-                <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value}`} />
-                <Bar dataKey="vendas" fill="var(--c-blue)" radius={[4, 4, 0, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* 6. FIADO POR VENCIMENTO */}
-        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="section-header" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>FIADO VENCIMENTO</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Visão temporal do risco</span>
-          </div>
-          <div style={{ width: '100%', height: 250 }}>
-            <ResponsiveContainer>
-              <BarChart data={charts.agingVencimentos} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                <XAxis dataKey="status" stroke="var(--text-secondary)" fontSize={10} />
-                <YAxis stroke="var(--text-secondary)" fontSize={12} />
-                <Tooltip contentStyle={customTooltipStyle} formatter={(value) => `R$ ${value.toFixed(2).replace('.', ',')}`} />
-                <Bar dataKey="valor" radius={[4, 4, 0, 0]} barSize={20}>
-                  {charts.agingVencimentos.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.status === 'Atrasado' ? '#ef4444' : entry.status === 'Hoje' ? '#eab308' : '#22c55e'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* 7. FLUXO DE CAIXA */}
-        <div className="vini-glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="section-header" style={{ marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>FLUXO DE CAIXA</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Entradas x Saídas Reais</span>
-          </div>
-          <div style={{ width: '100%', height: 250 }}>
-            <ResponsiveContainer>
-              <LineChart data={charts.cashFlow} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                <XAxis dataKey="dia" stroke="var(--text-secondary)" fontSize={10} />
-                <YAxis stroke="var(--text-secondary)" fontSize={11} />
-                <Tooltip contentStyle={customTooltipStyle} />
-                <Legend verticalAlign="top" height={30} iconType="plainline" wrapperStyle={{ fontSize: '11px' }}/>
-                <Line type="monotone" name="Entradas" dataKey="entradas" stroke="#22c55e" strokeWidth={2} dot={{ r: 2 }} />
-                <Line type="monotone" name="Saídas" dataKey="saidas" stroke="#ef4444" strokeWidth={2} dot={{ r: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
+         {/* TOP PRODUTOS */}
+         <div className="vini-chart-card">
+            <div className="chart-header">
+              <h3>Produtos Estrela ⭐</h3>
+              <p>Os mais vendidos da semana</p>
+            </div>
+            <div className="top-product-list">
+               {(charts.topProducts || []).slice(0, 4).map((prod, i) => (
+                 <div key={i} className="prod-rank-item">
+                    <div className="rank-num">{i+1}</div>
+                    <div className="prod-info">
+                       <span className="p-name">{prod.nome}</span>
+                       <span className="p-qty">{prod.qtd} vendidos</span>
+                    </div>
+                    <div className="prod-trend"><TrendingUp size={14} color="#10b981"/></div>
+                 </div>
+               ))}
+            </div>
+         </div>
       </div>
     </div>
   );

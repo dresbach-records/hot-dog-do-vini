@@ -3,7 +3,7 @@ import api from '../services/api';
 import { 
   ShoppingBag, Trash2, User, Zap, CreditCard, DollarSign, 
   Plus, Minus, CheckCircle2, XCircle, Search, 
-  ArrowLeft, Printer, MoreVertical, Layers
+  ArrowLeft, Printer, MoreVertical, Layers, Mail, Store, Truck
 } from 'lucide-react';
 import { useClientes } from '../context/ClientesContext';
 import { useCaixa } from '../context/CaixaContext';
@@ -21,11 +21,15 @@ function PDVBalcao() {
   const [finalizando, setFinalizando] = useState(false);
   const [passo, setPasso] = useState('venda'); // venda, pagamento, sucesso
   
-  // States para Split Payment
-  const [metodosPagamento, setMetodosPagamento] = useState([]); // [{metodo, valor}]
+  // Dados do Cliente
+  const [clienteNome, setClienteNome] = useState('');
+  const [clienteEmail, setClienteEmail] = useState('');
+  const [tipoEntrega, setTipoEntrega] = useState('retirada'); // retirada, entrega
+
+  // Estados para Split Payment
+  const [metodosPagamento, setMetodosPagamento] = useState([]);
   const [valorRestante, setValorRestante] = useState(0);
   
-  // Customizações
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -96,6 +100,11 @@ function PDVBalcao() {
       return;
     }
 
+    if (!clienteNome) {
+      alert("Por favor, insira o nome do cliente.");
+      return;
+    }
+
     setFinalizando(true);
     try {
       const orderData = {
@@ -105,9 +114,13 @@ function PDVBalcao() {
           selectedVariacao: i.selectedVariacao,
           selectedAdicionais: i.selectedAdicionais
         })),
+        cliente_nome: clienteNome,
+        cliente_email: clienteEmail,
+        tipo_entrega: tipoEntrega,
         pagamentos: metodosPagamento,
         sessao_id: sessaoAtiva?.id,
-        origem_venda: 'pdv'
+        origem_venda: 'pdv',
+        status: 'preparo' // Venda de balcão vai direto para preparo
       };
 
       const response = await api.post('/orders', orderData);
@@ -115,9 +128,11 @@ function PDVBalcao() {
         setPasso('sucesso');
         setCarrinho([]);
         setMetodosPagamento([]);
-        setTimeout(() => setPasso('venda'), 4000);
+        setClienteNome('');
+        setClienteEmail('');
+        setTimeout(() => setPasso('venda'), 3000);
       } else {
-        alert('Erro: ' + response.error);
+        alert('Erro: ' + (response.error || 'Falha ao salvar pedido'));
       }
     } catch (err) {
       alert('Erro de rede ao finalizar');
@@ -127,107 +142,102 @@ function PDVBalcao() {
   };
 
   if (caixaLoading || loading) return <div className="p-8 text-center text-red-500">Iniciando motor gráfico do PDV...</div>;
-
   if (!sessaoAtiva) return <AbrirCaixaModal />;
 
   return (
-    <div className="pdv-container" style={{ display: 'grid', gridTemplateColumns: '1fr 480px', height: 'calc(100vh - 80px)', background: '#0b0e11', color: '#fff', overflow: 'hidden' }}>
-      
-      {/* LADO ESQUERDO: GRID DE PRODUTOS */}
-      <div className="pdv-main" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', overflowY: 'hidden' }}>
+    <div className="pdv-premium-page">
+      <div className="pdv-main-content">
         
-        {/* HEADER PDV & BUSCA */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
-           <div style={{ position: 'relative', flex: 1 }}>
-              <Search style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} size={20} />
+        {/* HEADER DE BUSCA LIGHT */}
+        <div className="pdv-header">
+           <div className="search-box">
+              <Search size={20} color="#94a3b8" />
               <input 
                 type="text" 
-                placeholder="Buscar produto por nome ou código..."
+                placeholder="Buscar produto ou código..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ 
-                  width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                  padding: '15px 15px 15px 45px', borderRadius: '12px', color: '#fff', outline: 'none'
-                }}
               />
            </div>
-           <button className="vini-btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '52px' }}>
-              <User size={18} /> Selecionar Cliente
-           </button>
+           
+           <div className="delivery-mode-toggles">
+              <button 
+                className={tipoEntrega === 'retirada' ? 'active' : ''} 
+                onClick={() => setTipoEntrega('retirada')}
+              >
+                <Store size={18} /> Retirada
+              </button>
+              <button 
+                className={tipoEntrega === 'entrega' ? 'active' : ''} 
+                onClick={() => setTipoEntrega('entrega')}
+              >
+                <Truck size={18} /> Entrega
+              </button>
+           </div>
         </div>
 
-        {/* CATEGORIAS (GLASSMORPHISM) */}
-        <div style={{ display: 'flex', gap: '0.6rem', overflowX: 'auto', paddingBottom: '5px' }}>
+        {/* CATEGORIAS CLARAS */}
+        <div className="pdv-categories">
           {categorias.map(cat => (
             <button 
               key={cat.id} 
               onClick={() => setActiveCat(cat.id)}
-              style={{ 
-                padding: '12px 20px', borderRadius: '14px', border: 'none', cursor: 'pointer',
-                background: activeCat === cat.id ? 'var(--c-red)' : 'rgba(255,255,255,0.03)',
-                color: '#fff', fontWeight: '700', whiteSpace: 'nowrap', transition: '0.2s',
-                boxShadow: activeCat === cat.id ? '0 10px 15px -3px rgba(239, 68, 68, 0.3)' : 'none'
-              }}
+              className={activeCat === cat.id ? 'active' : ''}
             >
               {cat.titulo}
             </button>
           ))}
         </div>
 
-        {/* GRID DE PRODUTOS */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', 
-          gap: '1.2rem', 
-          overflowY: 'auto',
-          paddingRight: '10px'
-        }}>
+        {/* PRODUTOS LIGHT MODE */}
+        <div className="pdv-products-grid">
           {produtos.filter(p => (activeCat ? p.categoria_id === activeCat : true) && p.titulo.toLowerCase().includes(searchQuery.toLowerCase())).map(p => (
-            <div 
-              key={p.id} 
-              className="pdv-product-card" 
-              onClick={() => setSelectedProduct(p)}
-              style={{ 
-                background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', 
-                padding: '1.2rem', borderRadius: '24px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.3s ease'
-              }}
-            >
-              <div style={{ width: '100%', height: '110px', background: 'rgba(0,0,0,0.2)', borderRadius: '20px', marginBottom: '12px', overflow: 'hidden' }}>
-                <img 
-                  src={p.imagem_url || 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&q=80&w=200'} 
-                  alt={p.titulo} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                />
+            <div key={p.id} className="pdv-prod-card" onClick={() => setSelectedProduct(p)}>
+              <div className="prod-img">
+                <img src={p.imagem_url || 'https://via.placeholder.com/150'} alt={p.titulo} />
               </div>
-              <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', fontWeight: '800' }}>{p.titulo}</h4>
-              <strong style={{ color: '#22c55e', fontSize: '1.2rem' }}>R$ {Number(p.preco).toFixed(2)}</strong>
+              <div className="prod-info">
+                <h3>{p.titulo}</h3>
+                <span className="price">R$ {Number(p.preco || 0).toFixed(2)}</span>
+              </div>
+              <button className="add-btn"><Plus size={18} /></button>
             </div>
           ))}
         </div>
       </div>
 
-      {/* LADO DIREITO: CARRINHO & PAGAMENTO (FRENTE DE CAIXA) */}
-      <div className="pdv-sidebar" style={{ background: '#12161b', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        
-        {/* HEADER COLUNA DIREITA */}
-        <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.01)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-           <div>
-             <h3 style={{ margin: 0 }}>Venda Atual</h3>
-             <span style={{ fontSize: '0.8rem', color: '#22c55e' }}>● Caixa Aberto ({sessaoAtiva?.id?.substring(0,8)})</span>
-           </div>
-           <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="pdv-util-btn"><Printer size={18} /></button>
-              <button className="pdv-util-btn"><MoreVertical size={18} /></button>
-           </div>
+      {/* CARRINHO LATERAL - BRANCO E LIMPO */}
+      <div className="pdv-sidebar">
+        <div className="sidebar-header">
+          <h3>Sua Venda</h3>
+          <span className="badge">PDV Operativo</span>
         </div>
 
         {passo === 'venda' && (
           <>
-            {/* LISTA DE ITENS NO CARRINHO */}
-            <div style={{ flex: 1, padding: '1.2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="customer-info-fields">
+               <div className="input-group">
+                  <User size={16} color="#94a3b8" />
+                  <input 
+                    placeholder="Nome do Cliente (Obrigatório)" 
+                    value={clienteNome}
+                    onChange={(e) => setClienteNome(e.target.value)}
+                  />
+               </div>
+               <div className="input-group">
+                  <Mail size={16} color="#94a3b8" />
+                  <input 
+                    placeholder="E-mail do Cliente (Opcional)" 
+                    value={clienteEmail}
+                    onChange={(e) => setClienteEmail(e.target.value)}
+                  />
+               </div>
+            </div>
+
+            <div className="cart-items">
               {carrinho.length === 0 ? (
-                <div style={{ textAlign: 'center', marginTop: '6rem', opacity: 0.2 }}>
-                   <ShoppingBag size={64} style={{ margin: '0 auto 1rem' }} />
+                <div className="empty-cart">
+                   <ShoppingBag size={48} />
                    <p>Adicione itens para começar</p>
                 </div>
               ) : (
@@ -237,17 +247,14 @@ function PDVBalcao() {
                   if (item.selectedAdicionais?.length > 0) precoFinal += item.selectedAdicionais.reduce((s, a) => s + Number(a.preco), 0);
                   
                   return (
-                    <div key={item.tempId} style={{ display: 'flex', gap: '12px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '16px', position: 'relative' }}>
-                       <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: '800', fontSize: '0.95rem' }}>{item.quantidade}x {item.titulo}</div>
-                          {item.selectedVariacao && <div style={{ fontSize: '0.8rem', opacity: 0.6 }}>• {item.selectedVariacao.nome}</div>}
-                          {item.selectedAdicionais?.map(a => (
-                            <div key={a.id} style={{ fontSize: '0.8rem', opacity: 0.6 }}>+ {a.nome}</div>
-                          ))}
-                          <div style={{ fontWeight: '900', color: '#22c55e', marginTop: '4px' }}>R$ {(precoFinal * item.quantidade).toFixed(2)}</div>
+                    <div key={item.tempId} className="cart-item">
+                       <div className="item-details">
+                          <strong>{item.quantidade}x {item.titulo}</strong>
+                          {item.selectedVariacao && <span>• {item.selectedVariacao.nome}</span>}
+                          <strong className="item-price-val">R$ {(precoFinal * item.quantidade).toFixed(2)}</strong>
                        </div>
-                       <button onClick={() => removeCarrinho(item.tempId)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', borderRadius: '8px', width: '36px', height: '36px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Trash2 size={16} color="#ef4444" />
+                       <button onClick={() => removeCarrinho(item.tempId)} className="remove-btn">
+                          <Trash2 size={16} />
                        </button>
                     </div>
                   );
@@ -255,119 +262,145 @@ function PDVBalcao() {
               )}
             </div>
 
-            {/* RESUMO DE VALORES E BOTÕES FIXOS */}
-            <div style={{ padding: '2rem', background: '#1c2229', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                  <span style={{ fontSize: '1.2rem', opacity: 0.7 }}>TOTAL À PAGAR</span>
-                  <span style={{ fontSize: '2.5rem', fontWeight: '900', color: '#22c55e' }}>R$ {Number(total || 0).toFixed(2)}</span>
+            <div className="cart-summary">
+               <div className="total-label">
+                  <span>Subtotal</span>
+                  <strong>R$ {Number(total || 0).toFixed(2)}</strong>
                </div>
                <button 
-                onClick={() => setPasso('pagamento')}
-                disabled={carrinho.length === 0}
-                className="vini-btn-primary" 
-                style={{ width: '100%', padding: '22px', fontSize: '1.4rem', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}
+                 disabled={carrinho.length === 0} 
+                 onClick={() => setPasso('pagamento')}
+                 className="checkout-btn"
                >
-                 FINALIZAR VENDA <Zap size={24} fill="currentColor" />
+                 PAGAMENTO <Zap size={20} fill="currentColor" />
                </button>
             </div>
           </>
         )}
 
         {passo === 'pagamento' && (
-          <div style={{ padding: '2rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-             <button onClick={() => setPasso('venda')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}>
-                <ArrowLeft size={18} /> Editar Carrinho
-             </button>
-             
-             <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '20px' }}>
-                <span style={{ fontSize: '0.9rem', opacity: 0.6, display: 'block' }}>TOTAL DO PEDIDO</span>
-                <h1 style={{ margin: '5px 0', fontSize: '3rem', fontWeight: '900' }}>R$ {Number(total || 0).toFixed(2)}</h1>
-                {metodosPagamento.length > 0 && <span style={{ color: '#ef4444', fontWeight: 'bold' }}>Faltam: R$ {Number(valorRestante || 0).toFixed(2)}</span>}
-             </div>
+          <div className="payment-step">
+              <button onClick={() => setPasso('venda')} className="back-btn"><ArrowLeft size={16} /> Voltar</button>
+              
+              <div className="total-display">
+                <span className="label">TOTAL A RECEBER</span>
+                <span className="value">R$ {Number(total || 0).toFixed(2)}</span>
+                {metodosPagamento.length > 0 && <span className="remaining">Faltam: R$ {Number(valorRestante || 0).toFixed(2)}</span>}
+              </div>
 
-             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <button className="pdv-pay-option" onClick={() => handleAddPagamento('dinheiro', valorRestante)}>
-                   <DollarSign size={20} /> Dinheiro
-                </button>
-                <button className="pdv-pay-option" onClick={() => handleAddPagamento('pix', valorRestante)}>
-                   <Zap size={20} /> PIX (QR Code)
-                </button>
-                <button className="pdv-pay-option" onClick={() => handleAddPagamento('cartao_credito', valorRestante)}>
-                   <Layers size={20} /> C. Crédito
-                </button>
-                <button className="pdv-pay-option" onClick={() => handleAddPagamento('cartao_debito', valorRestante)}>
-                   <CreditCard size={20} /> C. Débito
-                </button>
-             </div>
+              <div className="payment-methods">
+                <button onClick={() => handleAddPagamento('dinheiro', valorRestante)}><DollarSign /> Dinheiro</button>
+                <button onClick={() => handleAddPagamento('pix', valorRestante)}><Zap /> PIX</button>
+                <button onClick={() => handleAddPagamento('cartao_credito', valorRestante)}><CreditCard /> Cartão</button>
+              </div>
 
-             {/* LISTA DE PAGAMENTOS REGISTRADOS (SPLIT) */}
-             <div style={{ flex: 1, overflowY: 'auto' }}>
-                {metodosPagamento.map((p, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: '12px', marginBottom: '8px' }}>
-                     <span style={{ fontWeight: '800' }}>{p.metodo.toUpperCase()}</span>
-                     <span style={{ fontWeight: '800' }}>R$ {p.valor.toFixed(2)}</span>
-                  </div>
+              <div className="payment-history">
+                {metodosPagamento.map((p, i) => (
+                  <div key={i} className="pay-tag">{p.metodo}: R$ {p.valor.toFixed(2)}</div>
                 ))}
-             </div>
+              </div>
 
-             <button 
-               onClick={finalizarVenda}
-               disabled={valorRestante > 0.01 || finalizando}
-               className="vini-btn-primary" 
-               style={{ width: '100%', padding: '20px', borderRadius: '16px' }}
-             >
-               {finalizando ? 'Processando...' : 'CONFIRMAR RECEBIMENTO'}
-             </button>
+              <button 
+                onClick={finalizarVenda}
+                disabled={valorRestante > 0.01 || finalizando}
+                className="confirm-btn"
+              >
+                {finalizando ? 'Gravando Pedido...' : 'FINALIZAR E IMPRIMIR'}
+              </button>
           </div>
         )}
 
         {passo === 'sucesso' && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', textAlign: 'center' }}>
-              <div style={{ width: '120px', height: '120px', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem' }}>
-                 <CheckCircle2 size={64} color="#22c55e" />
-              </div>
-              <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Venda Concluída!</h1>
-              <p style={{ opacity: 0.6, marginBottom: '2rem' }}>O cupom está sendo enviado para a impressora padrão.</p>
-              <button 
-                onClick={() => setPasso('venda')}
-                className="vini-btn-outline" 
-                style={{ width: '100%', padding: '18px' }}
-              >
-                Inicar Nova Venda
-              </button>
+          <div className="success-step">
+              <CheckCircle2 size={80} color="#22c55e" />
+              <h2>Venda Realizada!</h2>
+              <p>O pedido foi enviado para a cozinha.</p>
           </div>
         )}
       </div>
 
-      {/* MODAL DE CUSTOMIZAÇÃO (PRODUTO) */}
-      {selectedProduct && (
-        <ProductModal 
-          isOpen={!!selectedProduct} 
-          onClose={() => setSelectedProduct(null)}
-          product={selectedProduct}
-          onAddToCart={(p, v, a) => adicCarrinho(p,v,a)}
-          isPDV={true}
-        />
-      )}
-
       <style>{`
-        .pdv-product-card:hover {
-          background: rgba(255,255,255,0.08) !important;
-          border-color: var(--c-red) !important;
-          transform: translateY(-5px);
+        .pdv-premium-page {
+          display: grid;
+          grid-template-columns: 1fr 420px;
+          height: calc(100vh - 80px);
+          background: #f1f5f9;
+          color: #1e293b;
+          font-family: 'Inter', sans-serif;
         }
-        .pdv-util-btn {
-          width: 44px; height: 44px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-          background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
-          transition: 0.2s;
+
+        .pdv-main-content { padding: 1.5rem; display: flex; flexDirection: column; gap: 1rem; overflow: hidden; }
+
+        .pdv-header { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+        .search-box { 
+          flex: 1; display: flex; align-items: center; gap: 10px; background: #fff; padding: 0.8rem 1.2rem; 
+          border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
-        .pdv-util-btn:hover { background: var(--c-red); border-color: var(--c-red); }
-        .pdv-pay-option {
-          padding: 18px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
-          background: rgba(255,255,255,0.03); color: #fff; font-weight: 800; cursor: pointer;
-          display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.2s;
+        .search-box input { border: none; outline: none; width: 100%; font-weight: 500; color: #0f172a; }
+
+        .delivery-mode-toggles { display: flex; background: #fff; padding: 4px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .delivery-mode-toggles button { 
+          border: none; background: transparent; padding: 8px 16px; border-radius: 8px; cursor: pointer;
+          display: flex; align-items: center; gap: 6px; font-weight: 700; color: #94a3b8; transition: 0.2s;
         }
-        .pdv-pay-option:hover { background: rgba(34, 197, 94, 0.1); border-color: #22c55e; }
+        .delivery-mode-toggles button.active { background: #3b82f6; color: #fff; }
+
+        .pdv-categories { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
+        .pdv-categories button { 
+          background: #fff; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 10px; cursor: pointer;
+          font-weight: 700; color: #64748b; white-space: nowrap; transition: 0.2s;
+        }
+        .pdv-categories button.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+
+        .pdv-products-grid { 
+          display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; 
+          overflow-y: auto; padding-right: 8px; 
+        }
+        .pdv-prod-card { 
+          background: #fff; border-radius: 16px; padding: 1rem; cursor: pointer; border: 1px solid #e2e8f0;
+          transition: all 0.2s; display: flex; flex-direction: column;
+        }
+        .pdv-prod-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border-color: #3b82f6; }
+        .prod-img { width: 100%; height: 120px; border-radius: 12px; margin-bottom: 12px; overflow: hidden; background: #f8fafc; }
+        .prod-img img { width: 100%; height: 100%; object-fit: cover; }
+        .prod-info h3 { margin: 0; font-size: 0.95rem; font-weight: 800; color: #0f172a; }
+        .prod-info .price { color: #22c55e; font-weight: 800; font-size: 1.1rem; }
+
+        .pdv-sidebar { background: #fff; border-left: 1px solid #e2e8f0; display: flex; flex-direction: column; overflow: hidden; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-header h3 { margin: 0; font-weight: 800; color: #0f172a; }
+        .badge { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; }
+
+        .customer-info-fields { padding: 1rem 1.5rem; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 8px; }
+        .input-group { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 8px; }
+        .input-group input { border: none; outline: none; flex: 1; font-size: 0.85rem; }
+
+        .cart-items { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+        .cart-item { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; }
+        .item-details { display: flex; flex-direction: column; gap: 2px; }
+        .item-price-val { color: #22c55e; font-weight: 800; }
+        .remove-btn { color: #ef4444; border: none; background: transparent; cursor: pointer; }
+
+        .cart-summary { padding: 1.5rem; border-top: 1px solid #e2e8f0; }
+        .total-label { display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 1.2rem; font-weight: 800; }
+        .checkout-btn { width: 100%; padding: 20px; background: #3b82f6; color: #fff; border-radius: 12px; border: none; font-weight: 900; font-size: 1.2rem; cursor: pointer; }
+
+        .payment-step { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+        .total-display { text-align: center; padding: 1.5rem; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; }
+        .total-display .label { font-size: 0.8rem; font-weight: 800; color: #64748b; }
+        .total-display .value { display: block; font-size: 2.5rem; font-weight: 900; color: #0f172a; }
+        .total-display .remaining { color: #ef4444; font-weight: 800; }
+
+        .payment-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .payment-methods button { padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; font-weight: 800; font-size: 0.75rem; color: #64748b; }
+        .payment-methods button:hover { background: #f1f5f9; border-color: #3b82f6; color: #3b82f6; }
+
+        .payment-history { display: flex; flex-wrap: wrap; gap: 6px; }
+        .pay-tag { background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+        .confirm-btn { width: 100%; padding: 18px; background: #22c55e; color: #fff; border-radius: 12px; border: none; font-weight: 900; font-size: 1.1rem; cursor: pointer; }
+
+        .success-step { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; }
+        .success-step h2 { margin-top: 1rem; font-weight: 900; }
       `}</style>
     </div>
   );

@@ -23,49 +23,43 @@ import api from '../services/api';
 const Checkout = ({ session }) => {
   const { clientes, loading: contextLoading } = useClientes();
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [comprovanteFile, setComprovanteFile] = useState(null);
+  const [comprovanteUrl, setComprovanteUrl] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [address] = useState({
-    street: 'Rua Miguel Bauer',
-    number: '123',
-    neighborhood: 'Recreio',
-    city: 'Taquara',
-    cep: '95600-000'
-  });
 
-  const cliente = useMemo(() => {
-    return clientes.find(c => c.codigo_vini === session?.user?.id);
-  }, [clientes, session]);
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const isConvenioAtivo = cliente?.convenio_status === 'ativo';
-  const convenioSaldo = Number(cliente?.convenio_saldo || 0);
+    setComprovanteFile(file);
+    setIsUploading(true);
 
-  const [cartItems] = useState(() => {
-    const saved = localStorage.getItem('vini-cart');
-    return saved ? JSON.parse(saved) : [];
-  });
+    const formData = new FormData();
+    formData.append('comprovante', file);
 
-  const subtotal = cartItems.reduce((acc, item) => acc + (item.totalPrice || 0), 0);
-  const total = subtotal; // Taxa grátis para o Vini
-
-  // 1. Lógica de Limite Individual (Spillover)
-  const individualLimit = Number(cliente?.individual_limit || 0);
-  const currentDebt = Number(cliente?.saldo_devedor || 0);
-  const remainingLimit = Math.max(0, individualLimit - currentDebt);
-  const exceedsLimit = individualLimit > 0 && total > remainingLimit;
-  const chargeSelf = exceedsLimit ? remainingLimit : total;
-  const chargeLinked = exceedsLimit ? (total - remainingLimit) : 0;
-
-  // 2. Lógica de Responsabilidade Solidária (Vive / Davi / Jose)
-  const responsavel = useMemo(() => {
-     if (!cliente?.linked_account_id) return null;
-     return clientes.find(r => r.id === cliente.linked_account_id);
-  }, [cliente, clientes]);
-
-  const responsavelPendente = responsavel && Number(responsavel.saldo_devedor) > Number(responsavel.limite_credito);
+    try {
+      // Usando axios direto para upload de arquivo
+      const res = await fetch(`${import.meta.env.VITE_API_URL.replace('/api', '')}/api/upload/comprovante`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        setComprovanteUrl(data.url);
+      } else {
+        alert('Erro no upload: ' + data.error);
+      }
+    } catch (err) {
+      alert('Falha ao enviar comprovante');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const paymentOptions = [
-    { id: 'asaas_pix', name: 'Pix via Asaas', icon: <QrCode size={22} />, desc: 'Aprovação instantânea' },
-    { id: 'asaas_boleto', name: 'Boleto Bancário', icon: <FileText size={22} />, desc: 'Vencimento em 3 dias' },
+    { id: 'asaas_pix', name: 'Pix via Asaas', icon: <QrCode size={22} />, desc: 'Aprovação instantânea', disabled: true },
+    { id: 'manual_pix', name: 'Pix Manual (Anexar)', icon: <QrCode size={22} />, desc: 'Anexe o comprovante após pagar' },
     { id: 'cartao', name: 'Cartão de Crédito', icon: <CreditCard size={22} />, desc: 'Visa, Master e mais' },
     { 
       id: 'convenio', 
@@ -76,14 +70,48 @@ const Checkout = ({ session }) => {
     }
   ];
 
-  const handleFinish = async () => {
+   const [deliveryBoroughs, setDeliveryBoroughs] = useState([]);
+   const [deliveryFee, setDeliveryFee] = useState(0);
+
+   useEffect(() => {
+     const fetchDeliveryConfigs = async () => {
+       try {
+         const resp = await api.get('/config');
+         if (resp.success && resp.data.delivery_boroughs) {
+           const boroughs = JSON.parse(resp.data.delivery_boroughs);
+           setDeliveryBoroughs(boroughs);
+           
+           // Match com o bairro do endereço selecionado
+           const match = boroughs.find(b => 
+             b.nome.toLowerCase().trim() === address.neighborhood?.toLowerCase().trim()
+           );
+           if (match) {
+             setDeliveryFee(Number(match.taxa));
+           }
+         }
+       } catch (err) {
+         console.error('Erro ao carregar taxas de entrega', err);
+       }
+     };
+     fetchDeliveryConfigs();
+   }, [address.neighborhood]);
+
+   const subtotal = useMemo(() => {
+     return cartItems.reduce((acc, item) => acc + item.totalPrice, 0);
+   }, [cartItems]);
+
+   const total = useMemo(() => {
+     return subtotal + deliveryFee;
+   }, [subtotal, deliveryFee]);
+
+   const handleFinish = async () => {
     if (!paymentMethod) {
       alert("Por favor, selecione uma forma de pagamento.");
       return;
     }
 
-    if (paymentMethod === 'convenio' && total > convenioSaldo) {
-      alert("Saldo insuficiente no seu convênio corporativo.");
+    if (paymentMethod === 'manual_pix' && !comprovanteUrl) {
+      alert("Por favor, anexe o comprovante do PIX para continuar.");
       return;
     }
 
@@ -97,7 +125,10 @@ const Checkout = ({ session }) => {
         },
         itens: cartItems,
         endereco: address,
-        pagamento: { metodo: paymentMethod },
+        pagamento: { 
+          metodo: paymentMethod,
+          comprovante: comprovanteUrl 
+        },
         total: total
       };
 
@@ -178,7 +209,7 @@ const Checkout = ({ session }) => {
                     <CreditCard size={20} color="#EA1D2C" />
                     <h3>Método de Pagamento</h3>
                  </div>
-                 <div className="vini-payment-list">
+                  <div className="vini-payment-list">
                     {paymentOptions.map(opt => (
                        <div 
                          key={opt.id} 
@@ -197,6 +228,44 @@ const Checkout = ({ session }) => {
                        </div>
                     ))}
                  </div>
+
+                 {paymentMethod === 'manual_pix' && (
+                    <div className="vini-manual-pix-box" style={{ marginTop: '20px', padding: '20px', background: '#f8fafc', borderRadius: '16px', border: '2px dashed #e2e8f0' }}>
+                       <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+                          <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase' }}>Chave PIX CNPJ</span>
+                          <div style={{ fontSize: '18px', fontWeight: '900', color: '#EA1D2C', margin: '5px 0' }}>63.073.948/0001-97</div>
+                          <span style={{ fontSize: '13px', color: '#1e293b' }}>Marcos Vinicius Dresbach do Amaral</span>
+                       </div>
+
+                       <div className="vini-upload-zone" style={{ position: 'relative' }}>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleFileUpload}
+                            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 }} 
+                          />
+                          <div style={{ 
+                            padding: '20px', textAlign: 'center', background: '#fff', borderRadius: '12px', 
+                            border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' 
+                          }}>
+                             {isUploading ? (
+                               <span style={{ color: '#EA1D2C', fontWeight: 'bold' }}>Enviando...</span>
+                             ) : comprovanteUrl ? (
+                               <>
+                                 <CheckCircle2 size={24} color="#22C55E" />
+                                 <span style={{ color: '#16a34a', fontWeight: 'bold' }}>Comprovante Anexado!</span>
+                               </>
+                             ) : (
+                               <>
+                                 <ShoppingBag size={24} color="#64748b" />
+                                 <span style={{ fontWeight: 'bold' }}>Clique para anexar o comprovante</span>
+                                 <span style={{ fontSize: '11px', color: '#94a3b8' }}>PNG ou JPG até 5MB</span>
+                               </>
+                             )}
+                          </div>
+                       </div>
+                    </div>
+                 )}
               </section>
 
               {exceedsLimit && paymentMethod === 'convenio' && (
@@ -250,7 +319,9 @@ const Checkout = ({ session }) => {
                     </div>
                     <div className="vini-footer-row">
                        <span>Taxa de Entrega</span>
-                       <span style={{ color: '#22C55E', fontWeight: '800' }}>GRÁTIS</span>
+                       <span style={{ color: deliveryFee === 0 ? '#22C55E' : '#1e293b', fontWeight: '800' }}>
+                          {deliveryFee === 0 ? 'GRÁTIS' : `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`}
+                       </span>
                     </div>
                     <div className="vini-footer-row total">
                        <span>Total</span>

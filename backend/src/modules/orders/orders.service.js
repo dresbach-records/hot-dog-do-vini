@@ -1,6 +1,7 @@
 import { query } from '../../config/database.js';
 import { asaasService } from '../integrations/asaas/asaas.service.js';
 import { focusnfeService } from '../integrations/focusnfe/focusnfe.service.js';
+import { botService } from '../bot/bot.service.js';
 import crypto from 'node:crypto';
 
 /**
@@ -172,6 +173,23 @@ export const ordersService = {
        focusnfeService.emitirNFCe(id).catch(err => console.error('[Fatal Fiscal Hook]', err));
     }
 
+    // 🤖 GATILHO WHATSAPP: Notificar Cliente
+    try {
+      const [orderData] = await query(`
+         SELECT p.id, c.nome, c.telefone 
+         FROM pedidos p 
+         LEFT JOIN clientes c ON p.cliente_id = c.id 
+         WHERE p.id = ?`, 
+         [id]
+      );
+      
+      if (orderData && orderData.telefone) {
+         botService.sendOrderUpdate(orderData.telefone, id, status);
+      }
+    } catch (waErr) {
+      console.error('[WhatsApp Trigger Error]', waErr.message);
+    }
+
     return { success: true, status };
   },
 
@@ -185,6 +203,24 @@ export const ordersService = {
       'INSERT INTO system_logs (user_id, acao, modulo, dados_novos) VALUES (?, ?, ?, ?)',
       [userId, `Despachou pedido com motoboy ${motoboyId}`, 'logistica', JSON.stringify({ pedido_id: id, motoboy_id: motoboyId })]
     );
+
+    // 🤖 GATILHO WHATSAPP: Notificar Saída para Entrega
+    try {
+      const [data] = await query(`
+        SELECT p.id, c.telefone, f.nome as motoboy_nome 
+        FROM pedidos p 
+        LEFT JOIN clientes c ON p.cliente_id = c.id 
+        LEFT JOIN funcionarios f ON p.motoboy_id = f.id 
+        WHERE p.id = ?`, 
+        [id]
+      );
+
+      if (data && data.telefone) {
+        botService.sendOrderUpdate(data.telefone, id, 'em_rota', { motoboy: data.motoboy_nome });
+      }
+    } catch (waErr) {
+       console.error('[WhatsApp Dispatch Trigger Error]', waErr.message);
+    }
 
     return { success: true };
   },
