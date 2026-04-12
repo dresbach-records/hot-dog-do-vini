@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Store, Plus, MapPin, User, TrendingUp, MoreVertical, Trash2, Edit } from 'lucide-react';
+import { Store, Plus, MapPin, User, TrendingUp, MoreVertical, Trash2, Edit, Building2, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
 import '../styles/admin/dashboard.css';
 
@@ -61,7 +61,8 @@ function Filiais() {
           <Plus size={18} /> Nova Unidade
         </button>
       </header>
-
+      <div className="vini-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="stat-icon-wrapper bg-blue-light">
             <Building2 size={24} color="var(--c-blue)" />
           </div>

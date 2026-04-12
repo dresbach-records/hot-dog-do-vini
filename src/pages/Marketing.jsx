@@ -3,7 +3,8 @@ import {
   Megaphone, Users, MessageCircle, 
   Plus, Calendar, BarChart3, 
   Send, Trash2, CheckCircle, Tag, 
-  Scissors, Gift, RefreshCcw, X
+  Scissors, Gift, RefreshCcw, X,
+  Ticket, Copy, AlertCircle
 } from 'lucide-react';
 import api from '../services/api';
 import '../styles/admin/dashboard.css';
@@ -72,7 +73,8 @@ function Marketing() {
           <Plus size={18} /> {activeTab === 'campaigns' ? 'Nova Campanha' : 'Novo Cupom'}
         </button>
       </header>
-
+      <div className="vini-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="vini-card-stat vini-glass-panel" style={{ padding: '1.5rem' }}>
           <div className="stat-icon-wrapper bg-green-light">
             <MessageCircle size={24} color="var(--c-green)" />
           </div>

@@ -7,7 +7,7 @@ import {
   ChefHat, Truck, MessageCircle, Phone, User, QrCode
 } from 'lucide-react';
 import { useCaixa } from '../context/CaixaContext';
-import AbrirCaixaModal from '../components/caixa/AbrirCaixaModal';
+import AbrirCaixaModal from '../components/Caixa/AbrirCaixaModal';
 import '../styles/admin/pdv.css';
 import { useNavigate } from 'react-router-dom';
 
