@@ -14,16 +14,6 @@ function LoginCliente() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    // Verifica se já está logado
-    const token = localStorage.getItem('vinis_auth_token');
-    if (token) {
-      const user = JSON.parse(localStorage.getItem('vinis_user') || '{}');
-      if (user.role === 'cliente') {
-        navigate('/cliente.vinis');
-      }
-    }
-  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

@@ -159,9 +159,10 @@ function App() {
           <Router>
             <Routes>
               {/* == LÓGICA DE SUBDOMÍNIO (ROOT REDIRECTS) == */}
+              {/* == LÓGICA DE SUBDOMÍNIO (ROOT REDIRECTS) == */}
               <Route path="/" element={
-                 isERP ? <Navigate to="/admin/dashboard" /> :
-                 isCliente ? <Navigate to="/cliente.vinis" /> :
+                 isERP ? (session ? (isAdmin ? <Navigate to="/admin/dashboard" /> : <Navigate to="/cliente.vinis" />) : <Navigate to="/login" />) :
+                 isCliente ? (session ? (!isAdmin ? <Navigate to="/cliente.vinis" /> : <Navigate to="/admin/dashboard" />) : <Navigate to="/login.vinis" />) :
                  <Home />
               } />
 

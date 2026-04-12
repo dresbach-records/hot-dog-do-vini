@@ -11,13 +11,6 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Verifica se já está logado
-  useEffect(() => {
-    const token = localStorage.getItem('vinis_auth_token');
-    if (token) {
-      navigate('/admin/dashboard');
-    }
-  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
