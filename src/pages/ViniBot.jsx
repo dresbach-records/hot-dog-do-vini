@@ -45,7 +45,7 @@ import {
 import { io } from 'socket.io-client';
 import api from '../services/api';
 
-const SOCKET_URL = 'http://localhost:3001';
+const SOCKET_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
 function ViniBot() {
   const [conversations, setConversations] = useState([]);
