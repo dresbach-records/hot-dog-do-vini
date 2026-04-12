@@ -290,6 +290,11 @@ const PortalCliente = ({ session }) => {
                   <div className="vini-dropdown-item" onClick={() => window.location.href = '/cliente/perfil'}>
                     <Settings size={20} color="#64748b" /> Meus Dados
                   </div>
+                  <div className="vini-dropdown-item" onClick={() => {
+                    localStorage.removeItem('vinis_auth_token');
+                    window.dispatchEvent(new Event('auth_change'));
+                    navigate('/login.vinis');
+                  }} style={{ color: '#EA1D2C' }}>
                     <LogOut size={20} /> Encerrar Sessão
                   </div>
                 </div>
