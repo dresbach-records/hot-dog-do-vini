@@ -37,12 +37,18 @@ export const handlePagarmeWebhook = async (req, res) => {
 
     console.log(`[Pagarme Webhook] Evento: ${eventType} | Status: ${status} | Pedido: ${orderId}`);
 
-    // Mapeamento de Status Pagar.me -> ERP Vini
     if (eventType === 'order.paid') {
-      // Pedido Pago -> Mover para Preparo
-      // TODO: Buscar o ID interno do pedido no nosso banco usando o external_id (orderId do Pagar.me)
-      console.log('✅ Pagamento Confirmado! Atualizando Kanban...');
+      console.log('✅ Pagamento Confirmado! Acionando Fluxo Fiscal...');
+      // 1. Atualizar Status no ERP
       // await ordersService.updateStatusByExternalId(orderId, 'preparo');
+      
+      // 2. Emitir Nota Fiscal via NFE.io
+      try {
+        const { nfeService } = await import('../../../fiscal/nfe.service.js');
+        await nfeService.issueInvoice(data.data); // data.data contém os dados do pedido do Pagar.me
+      } catch (fiscError) {
+        console.error('⚠️ Falha ao acionar NFE.io:', fiscError.message);
+      }
     }
 
     if (eventType === 'order.payment_failed') {

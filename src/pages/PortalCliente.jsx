@@ -96,6 +96,25 @@ const PortalCliente = ({ session }) => {
     return clientes.find(c => c.codigo_vini === session.user.id);
   }, [clientes, session]);
 
+  // Trava de Segurança para Homologação
+  const isAuthorized = session?.user?.email === 'viniamaral2026@gmail.com';
+
+  const renderAccessRestriction = () => (
+    <div className="vini-glass-panel animate-pulse" style={{ 
+      margin: '2rem', 
+      padding: '2rem', 
+      background: 'rgba(234, 29, 44, 0.1)', 
+      border: '2px solid #ea1d2c',
+      textAlign: 'center',
+      borderRadius: '20px'
+    }}>
+      <AlertTriangle color="#ea1d2c" size={48} style={{ marginBottom: '1rem' }} />
+      <h2 style={{ color: '#ea1d2c', fontWeight: 800 }}>LOJA FECHADA PARA MANUTENÇÃO</h2>
+      <p style={{ opacity: 0.8 }}>Estamos realizando atualizações técnicas no ecossistema Vini's Delivery.</p>
+      <p style={{ fontSize: '0.8rem', marginTop: '1rem' }}>Acesso restrito para: <strong>{session?.user?.email}</strong></p>
+    </div>
+  );
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {

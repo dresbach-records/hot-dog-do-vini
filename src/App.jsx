@@ -39,6 +39,7 @@ import Entregador from './pages/Entregador';
 
 // Novos Módulos Financeiros ERP
 import FinancasHub from './pages/FinancasHub';
+import Rastreamento from './pages/Rastreamento';
 import Cobrancas from './pages/Cobrancas';
 import Assinaturas from './pages/Assinaturas';
 import Antecipacoes from './pages/Antecipacoes';
@@ -177,6 +178,8 @@ function App() {
               <Route path="/cliente/pedidos" element={
                 session && !isAdmin ? <MeusPedidos session={session} /> : <Navigate to="/login.vinis" />
               } />
+
+              <Route path="/rastreamento/:orderId" element={<Rastreamento />} />
 
               <Route path="/cliente/perfil" element={
                 session && !isAdmin ? <Perfil session={session} /> : <Navigate to="/login.vinis" />
